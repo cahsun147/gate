@@ -1,82 +1,171 @@
-Oke, jadi kamu **tidak ingin mengganti nama repositori di GitHub**, tapi lebih memilih untuk **membuat repositori baru** dengan nama `gate` dan mengarsipkan repo `testxgate` yang lama. Langkah-langkahnya akan lebih mudah, dan kamu bisa memulai dengan repositori baru tanpa mengganggu repositori yang lama di GitHub.
+**Peran:** Anda adalah *expert front-end developer* dengan spesialisasi migrasi UI *framework*.
 
-Berikut langkah-langkah untuk **migrasi project ke repositori baru**:
+**Tugas Utama:**
+Lakukan refaktor total pada proyek Next.js "gate" saya. Ganti seluruh *stack* UI dari **Shadcn UI / Tailwind CSS** menjadi **Arwes UI v1** (versi alpha terbaru). Proyek ini masih "bersih" (belum ada `node_modules`). Tujuan utamanya adalah estetika "hacker/sci-fi" yang imersif, jadi **animasi** dan **efek suara** adalah prioritas utama.
 
-### 1. **Clone repo `testxgate` ke folder lokal** (kalau belum dilakukan)
+**Rencana Eksekusi Langkah-demi-Langkah:**
 
-Kalau kamu belum meng-clone repositori `testxgate`, pertama-tama clone dulu project ke folder `gate`:
+-----
 
-```powershell
-cd D:\Project\gate
-git clone https://github.com/cahsun147/testxgate.git
-```
+**Langkah 1: Modifikasi `package.json`**
+Sebelum instalasi, modifikasi file `package.json`.
 
-Setelah itu, folder project kamu akan ada di `D:\Project\gate\testxgate`.
+1.  **Hapus Dependensi UI Lama:**
+    Hapus semua *library* berikut dari `"dependencies"`:
 
-### 2. **Pindahkan file ke folder baru**
+      * `@headlessui/react`
+      * Semua *package* `@radix-ui/...` (ada \~27 paket, hapus semua)
+      * `class-variance-authority`
+      * `clsx`
+      * `cmdk`
+      * `embla-carousel-react`
+      * `input-otp`
+      * `lucide-react`
+      * `next-themes`
+      * `react-hook-form`
+      * `react-resizable-panels`
+      * `sonner`
+      * `tailwind-merge`
+      * `tailwindcss-animate`
+      * `vaul`
+      * `zod` (Kecuali jika Anda gunakan di *backend*, jika hanya untuk form Shadcn, hapus)
 
-Pindahkan semua file dari folder `testxgate` ke folder `gate`. Misalnya, pindahkan konten folder `D:\Project\gate\testxgate` ke `D:\Project\gate`.
+2.  **Hapus Dependensi UI Lama (Dev):**
+    Hapus semua *library* berikut dari `"devDependencies"`:
 
-### 3. **Hapus folder `testxgate`**
+      * `autoprefixer`
+      * `postcss`
+      * `tailwindcss`
 
-Setelah memindahkan file, kamu bisa menghapus folder `testxgate` untuk menghindari kebingungannya, dan hanya menyisakan folder `gate`.
+3.  **Tambahkan Dependensi Arwes & Next.js 15:**
+    Tambahkan *library* berikut ke `"dependencies"`:
 
-```powershell
-rd /s /q testxgate
-```
+    ```json
+    "@arwes/core": "^1.0.0-alpha.19",
+    "@arwes/react": "^1.0.0-alpha.19",
+    "@arwes/sounds": "^1.0.0-alpha.19",
+    "@arwes/styles": "^1.0.0-alpha.19",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+    ```
 
-### 4. **Inisialisasi Git di folder `gate`**
+    *(Catatan: `next`, `react`, dan `react-dom` diubah ke `"latest"` untuk mendapatkan Next.js 15, dan dependensi non-UI lainnya seperti `puppeteer`, `chart.js`, `recharts` tetap dipertahankan).*
 
-Sekarang, masuk ke folder `gate` dan inisialisasi git:
+-----
 
-```powershell
-cd D:\Project\gate
-git init
-```
+**Langkah 2: Hapus File Konfigurasi & UI Lama**
+Hapus file dan direktori berikut dari proyek:
 
-### 5. **Buat repositori baru di GitHub**
+  * `tailwind.config.ts`
+  * `postcss.config.js`
+  * `components.json`
+  * `lib/utils.ts` (File ini berisi `cn` utility yang tidak diperlukan lagi).
+  * `components/theme-provider.tsx`
+  * Seluruh direktori `components/ui` (yang berisi file seperti `card.tsx`, `button.tsx`, `table.tsx`, dll.)
 
-Sekarang, buat repositori baru di GitHub dengan nama **`gate`**.
+-----
 
-1. Pergi ke [GitHub](https://github.com).
-2. Klik tombol **New** untuk membuat repositori baru.
-3. Beri nama repositori `gate`.
-4. Jangan centang **Initialize this repository with a README** karena repositori di lokal sudah ada.
-5. Klik **Create repository**.
+**Langkah 3: Refaktor Root Layout & Global CSS**
 
-### 6. **Hubungkan project lokal dengan repositori GitHub baru**
+1.  **File: `app/globals.css`**
+    Hapus **semua isi** file ini. Terutama 3 baris `@tailwind`. Biarkan file ini kosong.
 
-Sekarang, hubungkan repositori lokal kamu dengan repositori yang baru dibuat di GitHub:
+2.  **File: `app/layout.tsx`**
+    Ganti total isinya dengan kode berikut untuk menginisialisasi Arwes, *sound*, dan *style* dasar.
 
-```powershell
-git remote add origin https://github.com/cahsun147/gate.git
-```
+    ```tsx
+    // app/layout.tsx
+    'use client'; // Provider Arwes memerlukan Client Component
 
-### 7. **Commit dan Push ke repositori baru**
+    import React from 'react';
+    import { Inter } from "next/font/google";
 
-Sekarang kamu sudah bisa melakukan commit pertama dan push ke repositori baru:
+    // Hapus import "./globals.css" jika ada, atau biarkan jika filenya sudah kosong
+    import "./globals.css"; 
 
-```powershell
-git add .
-git commit -m "Initial commit with migrated project"
-git push -u origin master
-```
+    // Import provider Arwes
+    import {
+      ArwesProvider,
+      SoundsProvider,
+      StylesBaseline,
+      Global
+    } from '@arwes/react';
 
-**Catatan:** Jika branch kamu adalah `main`, ganti `master` dengan `main`.
+    // Import file suara (path ini akan valid setelah 'npm install')
+    import audioClick from '@arwes/sounds/assets/sounds/click.mp3';
+    import audioHover from '@arwes/sounds/assets/sounds/hover.mp3';
+    import audioType from '@arwes/sounds/assets/sounds/type.mp3';
 
-### 8. **Verifikasi di GitHub**
+    const inter = Inter({ subsets: ["latin"] });
 
-Cek repositori baru kamu di GitHub (`https://github.com/cahsun147/gate`) untuk memastikan bahwa project sudah ter-upload dengan benar.
+    // Definisikan audio untuk setiap aksi
+    const players = {
+      click: { sound: { src: [audioClick] } },
+      hover: { sound: { src: [audioHover] } },
+      type: { sound: { src: [audioType] }, loop: true }
+    };
 
----
+    export default function RootLayout({
+      children,
+    }: Readonly<{
+      children: React.ReactNode;
+    }>) {
+      return (
+        <html lang="en">
+          <body className={inter.className}>
+            {/* Ganti ThemeProvider Shadcn dengan ArwesProvider */}
+            <ArwesProvider>
+              <StylesBaseline /> {/* CSS Reset dari Arwes */}
+              <Global /> {/* Style font dan dasar Arwes */}
+              {/* Bungkus children dengan SoundsProvider */}
+              <SoundsProvider players={players}>
+                <main>{children}</main>
+              </SoundsProvider>
+            </ArwesProvider>
+          </body>
+        </html>
+      );
+    }
+    ```
 
-### Ringkasan:
+-----
 
-1. Clone project `testxgate` ke folder `gate`.
-2. Pindahkan semua file ke folder `gate` dan hapus folder `testxgate`.
-3. Inisialisasi repositori Git baru di folder `gate`.
-4. Buat repositori baru di GitHub dengan nama `gate`.
-5. Hubungkan repositori lokal dengan repositori GitHub yang baru.
-6. Commit dan push project ke repositori baru di GitHub.
+**Langkah 4: Aturan Refaktor Komponen & Halaman (Paradigma Baru)**
 
-Dengan begitu, repositori `testxgate` tetap terarsipkan di GitHub, sementara repositori baru `gate` akan menjadi tempat pengembangan project selanjutnya. Kalau ada yang perlu dibantu, tinggal bilang ya!
+Terapkan aturan ini ke semua file di `app/` dan `components/`:
+
+1.  **Tambahkan `'use client';`:** Tambahkan `'use client';` di baris paling atas setiap file halaman (`page.tsx`) dan komponen yang akan menggunakan komponen Arwes (karena Arwes menggunakan *hooks* dan *context*).
+2.  **Hapus `className`:** Hapus SEMUA *props* `className` yang terkait dengan Tailwind (`p-4`, `grid`, `flex`, `text-lg`, `font-bold`, `bg-card`, dll.) dari setiap elemen JSX.
+3.  **Ganti Layout:** Ganti *utility class* Tailwind dengan *prop* `style` atau komponen `@emotion/styled`.
+      * *Contoh:* `className="grid grid-cols-4 gap-4"` menjadi `style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}`.
+4.  **Bungkus Halaman dengan `<Animator>`:** Di setiap file `page.tsx` (misal, `app/dashboard/page.tsx`), bungkus seluruh konten utama halaman dengan komponen `<Animator>`. Ini penting untuk mengaktifkan animasi *staggered* (bergiliran).
+5.  **Ganti Komponen Shadcn dengan Arwes:**
+      * `Card`, `CardHeader`, `CardContent`, `CardTitle` -\> Ganti dengan satu komponen `<FrameLines as='div' padding={2} animator>...</FrameLines>`.
+      * `Button` -\> Ganti dengan `<Button animator>...</Button>` dari `@arwes/react`. (Tombol ini akan otomatis berbunyi saat diklik/hover).
+      * `h1`, `p`, `span`, `div` (untuk teks) -\> Ganti dengan `<Text as='h1' animator>`, `<Text as='p' animator>`, dll. dari `@arwes/react`.
+      * `Table`, `TableRow`, `TableCell` -\> **Arwes tidak punya komponen `Table`**. Jaga struktur HTML `<table>` tetap utuh, tapi hapus semua `className`-nya. Bungkus seluruh `<table>` dengan `<FrameLines as='div' animator>...</FrameLines>`.
+      * `Chart` (misal, `components/agent-dominance-chart.tsx`) -\> Jaga logika `recharts` tetap utuh. Hapus `className` dari *wrapper*-nya. Bungkus seluruh komponen chart dengan `<FrameLines as='div' animator padding={2}>...</FrameLines>`.
+      * `app-sidebar.tsx` dan `nav-*.tsx` -\> Ini adalah refaktor besar. Ganti semua `div` dan `button` dengan komponen Arwes. Seluruh sidebar harus dibungkus `<FrameLines>`. Setiap item navigasi (`<Link>`) harus diubah menjadi `<Button as='a' href='...' animator>...</Button>`.
+
+-----
+
+**Langkah 5: Terapkan Aturan Refaktor ke Semua File Terdampak**
+Terapkan **Langkah 4** ke semua file halaman dan komponen, termasuk (namun tidak terbatas pada):
+
+  * `app/dashboard/page.tsx`
+  * `app/pump-fun/page.tsx`
+  * `app/top-memecoin/page.tsx`
+  * `app/ai-agent/page.tsx`
+  * `app/page.tsx`
+  * `components/app-sidebar.tsx`
+  * `components/nav-main.tsx`
+  * `components/nav-projects.tsx`
+  * `components/nav-secondary.tsx`
+  * `components/nav-user.tsx`
+  * ...dan semua file komponen kustom yang tersisa di `components/` (seperti `agent-stats-table.tsx`, `agent-dominance-chart.tsx`, dll.)
+
+**Hasil Akhir:**
+Seluruh basis kode proyek 'gate' yang telah dimigrasi. Semua file `.tsx`, `.ts`, dan `.css` harus diperbarui untuk menggunakan **Arwes UI** dan **Emotion.js**. Proyek harus bebas 100% dari Shadcn UI dan Tailwind CSS, dan siap untuk `npm install` bersih yang hanya akan menginstal dependensi yang diperlukan.

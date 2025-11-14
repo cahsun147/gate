@@ -1,50 +1,79 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import { Card } from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
+import Image from 'next/image';
+import { FrameLines, Text } from '@arwes/react';
+import styled from '@emotion/styled';
+
+const GridContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+`;
+
+const AgentCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+`;
 
 export function TopAgentsGrid() {
   const agents = [
     {
-      name: "AVA",
-      image: "/agents/ava.png",
-      value: "4.22%",
-      change: "+2.2",
-      current: "4.22%"
+      name: 'AVA',
+      image: '/agents/ava.png',
+      value: '4.22%',
+      change: '+2.2',
+      current: '4.22%',
     },
     {
-      name: "BUDDY",
-      image: "/agents/buddy.png",
-      value: "2.75%",
-      change: "+2.03",
-      current: "2.75%"
+      name: 'BUDDY',
+      image: '/agents/buddy.png',
+      value: '2.75%',
+      change: '+2.03',
+      current: '2.75%',
     },
-    // Add more agents...
+    {
+      name: 'ECHO',
+      image: '/agents/echo.png',
+      value: '2.15%',
+      change: '+1.85',
+      current: '2.15%',
+    },
+    {
+      name: 'NEXUS',
+      image: '/agents/nexus.png',
+      value: '1.95%',
+      change: '+1.65',
+      current: '1.95%',
+    },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <GridContainer>
       {agents.map((agent, index) => (
-        <Card key={index} className="bg-black/50 border-gray-800 p-4">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10">
-              <Image
-                src={agent.image}
-                alt={agent.name}
-                width={40}
-                height={40}
-                className="rounded-full"
-              />
-            </Avatar>
-            <div>
-              <div className="font-medium">{agent.name}</div>
-              <div className="text-sm text-gray-400">{agent.current}</div>
-              <div className="text-sm text-green-500">{agent.change}</div>
-            </div>
-          </div>
-        </Card>
+        <FrameLines key={index} as="div" animator padding={1}>
+          <AgentCard>
+            <Image
+              src={agent.image}
+              alt={agent.name}
+              width={40}
+              height={40}
+              style={{ borderRadius: '50%' }}
+            />
+            <Text as="div" animator style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#00ffff' }}>
+              {agent.name}
+            </Text>
+            <Text as="div" animator style={{ fontSize: '0.75rem', color: '#00aaaa' }}>
+              {agent.current}
+            </Text>
+            <Text as="div" animator style={{ fontSize: '0.75rem', color: '#00ff00' }}>
+              {agent.change}
+            </Text>
+          </AgentCard>
+        </FrameLines>
       ))}
-    </div>
+    </GridContainer>
   );
-} 
+}

@@ -1,99 +1,185 @@
-"use client";
+'use client';
 
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { AgentMetricsCard } from "@/components/agent-metrics-card";
-import { AgentDominanceChart } from "@/components/agent-dominance-chart";
-import { TopAgentsGrid } from "@/components/top-agents-grid";
-import { AgentStatsTable } from "@/components/agent-stats-table";
-import { Search } from "lucide-react";
+import { useState } from 'react';
+import { AppSidebar } from '@/components/app-sidebar';
+import { AgentMetricsCard } from '@/components/agent-metrics-card';
+import { AgentDominanceChart } from '@/components/agent-dominance-chart';
+import { TopAgentsGrid } from '@/components/top-agents-grid';
+import { AgentStatsTable } from '@/components/agent-stats-table';
+import { Animator, FrameLines, Text, Button } from '@arwes/react';
+import { Search } from 'lucide-react';
+import styled from '@emotion/styled';
+
+const MainContainer = styled.div`
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  background: #000;
+`;
+
+const ContentArea = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: linear-gradient(135deg, rgba(0, 20, 40, 0.5) 0%, rgba(0, 10, 20, 0.5) 100%);
+  border-left: 1px solid rgba(0, 255, 255, 0.1);
+`;
+
+const Header = styled.header`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+  gap: 1rem;
+`;
+
+const ContentContainer = styled.div`
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+
+  @media (min-width: 1024px) {
+    grid-template-columns: 1fr 2fr;
+  }
+`;
+
+const TabsContainer = styled.div`
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+  overflow-x: auto;
+`;
+
+const TabButton = styled.button<{ active?: boolean }>`
+  padding: 0.5rem 1rem;
+  background: ${props => (props.active ? 'rgba(0, 255, 255, 0.1)' : 'transparent')};
+  border: 1px solid ${props => (props.active ? '#00ffff' : 'rgba(0, 255, 255, 0.2)')};
+  color: ${props => (props.active ? '#00ffff' : '#ffffff')};
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.875rem;
+
+  &:hover {
+    border-color: #00ffff;
+    color: #00ffff;
+  }
+`;
+
+const SearchContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 0.25rem;
+  margin: 1.5rem;
+  margin-bottom: 0;
+
+  input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    outline: none;
+    font-size: 0.875rem;
+
+    &::placeholder {
+      color: rgba(0, 255, 255, 0.5);
+    }
+  }
+`;
+
+const GridSection = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+`;
 
 export default function AIAgentIndex() {
+  const [activeTab, setActiveTab] = useState('all');
+
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="text-xl font-semibold">1477 agents tracked</div>
-        <div className="flex gap-4">
-          <Button variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
-            See Cookie DeFAI Hackathon Projects New
-          </Button>
-          <Button variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
-            Trade New
-          </Button>
-        </div>
-      </div>
-
-      {/* Navigation Tabs */}
-      <Tabs defaultValue="all" className="mb-6">
-        <TabsList className="bg-transparent border border-gray-800">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="agents">Agents</TabsTrigger>
-          <TabsTrigger value="infra">Infra</TabsTrigger>
-          <TabsTrigger value="defai">DeFAI</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      {/* Search Bar */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-        <Input 
-          placeholder="Search AI Agents or infrastructure" 
-          className="pl-10 bg-transparent border-gray-800"
-        />
-      </div>
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-12 gap-6">
-        {/* Metrics Section */}
-        <div className="col-span-12 lg:col-span-4">
-          <div className="grid gap-6">
-            <AgentMetricsCard 
-              title="Total market cap"
-              value="6.49B"
-              change="-3.52%"
-              period="24H"
-              chartData={[65, 59, 80, 81, 56, 55, 40]}
-              borderColor="#ff4444"
-              backgroundColor="rgba(255, 68, 68, 0.1)"
-            />
-            <AgentMetricsCard 
-              title="Smart Engagement"
-              value="7.09K"
-              change="-3.48%"
-              period="24H"
-              chartData={[28, 48, 40, 19, 86, 27, 90]}
-              borderColor="#4CAF50"
-              backgroundColor="rgba(76, 175, 80, 0.1)"
-            />
-          </div>
-        </div>
-
-        {/* Top Agents Section */}
-        <div className="col-span-12 lg:col-span-8">
-          <Card className="bg-black border-gray-800 p-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Top 10 AI Agents by Mindshare (last 24h)</h2>
+    <Animator>
+      <MainContainer>
+        <AppSidebar />
+        <ContentArea>
+          <Header>
+            <Text as="h1" animator style={{ fontSize: '1.25rem', color: '#00ffff', margin: 0 }}>
+              1477 agents tracked
+            </Text>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <Button animator style={{ fontSize: '0.875rem' }}>
+                See Cookie DeFAI Hackathon Projects
+              </Button>
+              <Button animator style={{ fontSize: '0.875rem' }}>
+                Trade
+              </Button>
             </div>
-            <TopAgentsGrid />
-          </Card>
-        </div>
+          </Header>
 
-        {/* Dominance Chart */}
-        <div className="col-span-12">
-          <Card className="bg-black border-gray-800 p-4">
-            <h2 className="text-lg font-semibold mb-4">Dominance</h2>
+          <TabsContainer>
+            {['all', 'agents', 'infra', 'defai'].map((tab) => (
+              <TabButton
+                key={tab}
+                active={activeTab === tab}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </TabButton>
+            ))}
+          </TabsContainer>
+
+          <SearchContainer>
+            <Search size={18} style={{ color: '#00ffff' }} />
+            <input placeholder="Search AI Agents or infrastructure" />
+          </SearchContainer>
+
+          <ContentContainer>
+            <GridSection>
+              <AgentMetricsCard
+                title="Total market cap"
+                value="6.49B"
+                change="-3.52%"
+                period="24H"
+                chartData={[65, 59, 80, 81, 56, 55, 40]}
+                borderColor="#ff4444"
+                backgroundColor="rgba(255, 68, 68, 0.1)"
+              />
+              <AgentMetricsCard
+                title="Smart Engagement"
+                value="7.09K"
+                change="-3.48%"
+                period="24H"
+                chartData={[28, 48, 40, 19, 86, 27, 90]}
+                borderColor="#4CAF50"
+                backgroundColor="rgba(76, 175, 80, 0.1)"
+              />
+            </GridSection>
+
+            <FrameLines as="div" animator padding={2}>
+              <Text as="h2" animator style={{ fontSize: '1rem', color: '#00ffff', marginBottom: '1rem' }}>
+                Top 10 AI Agents by Mindshare (last 24h)
+              </Text>
+              <TopAgentsGrid />
+            </FrameLines>
+          </ContentContainer>
+
+          <div style={{ padding: '1.5rem' }}>
             <AgentDominanceChart />
-          </Card>
-        </div>
+          </div>
 
-        {/* Stats Table */}
-        <div className="col-span-12">
-          <AgentStatsTable />
-        </div>
-      </div>
-    </div>
+          <div style={{ padding: '1.5rem' }}>
+            <AgentStatsTable />
+          </div>
+        </ContentArea>
+      </MainContainer>
+    </Animator>
   );
-} 
+}
