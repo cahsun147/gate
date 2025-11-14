@@ -1,0 +1,5 @@
+websockets
+aiohttp
+flask
+cloudscraper
+flask[async]

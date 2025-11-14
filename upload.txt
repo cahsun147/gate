@@ -1,0 +1,82 @@
+Oke, jadi kamu **tidak ingin mengganti nama repositori di GitHub**, tapi lebih memilih untuk **membuat repositori baru** dengan nama `gate` dan mengarsipkan repo `testxgate` yang lama. Langkah-langkahnya akan lebih mudah, dan kamu bisa memulai dengan repositori baru tanpa mengganggu repositori yang lama di GitHub.
+
+Berikut langkah-langkah untuk **migrasi project ke repositori baru**:
+
+### 1. **Clone repo `testxgate` ke folder lokal** (kalau belum dilakukan)
+
+Kalau kamu belum meng-clone repositori `testxgate`, pertama-tama clone dulu project ke folder `gate`:
+
+```powershell
+cd D:\Project\gate
+git clone https://github.com/cahsun147/testxgate.git
+```
+
+Setelah itu, folder project kamu akan ada di `D:\Project\gate\testxgate`.
+
+### 2. **Pindahkan file ke folder baru**
+
+Pindahkan semua file dari folder `testxgate` ke folder `gate`. Misalnya, pindahkan konten folder `D:\Project\gate\testxgate` ke `D:\Project\gate`.
+
+### 3. **Hapus folder `testxgate`**
+
+Setelah memindahkan file, kamu bisa menghapus folder `testxgate` untuk menghindari kebingungannya, dan hanya menyisakan folder `gate`.
+
+```powershell
+rd /s /q testxgate
+```
+
+### 4. **Inisialisasi Git di folder `gate`**
+
+Sekarang, masuk ke folder `gate` dan inisialisasi git:
+
+```powershell
+cd D:\Project\gate
+git init
+```
+
+### 5. **Buat repositori baru di GitHub**
+
+Sekarang, buat repositori baru di GitHub dengan nama **`gate`**.
+
+1. Pergi ke [GitHub](https://github.com).
+2. Klik tombol **New** untuk membuat repositori baru.
+3. Beri nama repositori `gate`.
+4. Jangan centang **Initialize this repository with a README** karena repositori di lokal sudah ada.
+5. Klik **Create repository**.
+
+### 6. **Hubungkan project lokal dengan repositori GitHub baru**
+
+Sekarang, hubungkan repositori lokal kamu dengan repositori yang baru dibuat di GitHub:
+
+```powershell
+git remote add origin https://github.com/cahsun147/gate.git
+```
+
+### 7. **Commit dan Push ke repositori baru**
+
+Sekarang kamu sudah bisa melakukan commit pertama dan push ke repositori baru:
+
+```powershell
+git add .
+git commit -m "Initial commit with migrated project"
+git push -u origin master
+```
+
+**Catatan:** Jika branch kamu adalah `main`, ganti `master` dengan `main`.
+
+### 8. **Verifikasi di GitHub**
+
+Cek repositori baru kamu di GitHub (`https://github.com/cahsun147/gate`) untuk memastikan bahwa project sudah ter-upload dengan benar.
+
+---
+
+### Ringkasan:
+
+1. Clone project `testxgate` ke folder `gate`.
+2. Pindahkan semua file ke folder `gate` dan hapus folder `testxgate`.
+3. Inisialisasi repositori Git baru di folder `gate`.
+4. Buat repositori baru di GitHub dengan nama `gate`.
+5. Hubungkan repositori lokal dengan repositori GitHub yang baru.
+6. Commit dan push project ke repositori baru di GitHub.
+
+Dengan begitu, repositori `testxgate` tetap terarsipkan di GitHub, sementara repositori baru `gate` akan menjadi tempat pengembangan project selanjutnya. Kalau ada yang perlu dibantu, tinggal bilang ya!

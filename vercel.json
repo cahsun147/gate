@@ -1,0 +1,67 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/test",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/test/dex",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/dex",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/v1/tokens/holder/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/v1/tokens/traders/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/v1/wallet/holdings/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/v1/wallet/flow/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/v1/wallet/activity/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/v1/wallet/statistics/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/v1/tokens/trends/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "package.json"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "package.json"
+    }
+  ]
+}
