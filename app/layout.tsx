@@ -1,26 +1,29 @@
 'use client';
 
 import React from 'react';
-import { Inter } from "next/font/google";
-import "./globals.css";
+import { Inter } from 'next/font/google';
+import './globals.css';
 
-import {
-  ArwesProvider,
-  SoundsProvider,
-  StylesBaseline,
-  Global
-} from '@arwes/react';
+import { type BleepsProviderSettings, BleepsProvider } from '@arwes/react';
 
-import audioClick from '@arwes/sounds/assets/sounds/click.mp3';
-import audioHover from '@arwes/sounds/assets/sounds/hover.mp3';
-import audioType from '@arwes/sounds/assets/sounds/type.mp3';
+const inter = Inter({ subsets: ['latin'] });
 
-const inter = Inter({ subsets: ["latin"] });
-
-const players = {
-  click: { sound: { src: [audioClick] } },
-  hover: { sound: { src: [audioHover] } },
-  type: { sound: { src: [audioType] }, loop: true }
+const bleepsSettings: BleepsProviderSettings = {
+  master: {
+    volume: 0.9
+  },
+  bleeps: {
+    intro: {
+      sources: [
+        { src: 'https://arwes.dev/assets/sounds/intro.mp3', type: 'audio/mpeg' }
+      ]
+    },
+    click: {
+      sources: [
+        { src: 'https://arwes.dev/assets/sounds/click.mp3', type: 'audio/mpeg' }
+      ]
+    }
+  }
 };
 
 export default function RootLayout({
@@ -36,13 +39,9 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body className={inter.className}>
-        <ArwesProvider>
-          <StylesBaseline />
-          <Global />
-          <SoundsProvider players={players}>
-            <main>{children}</main>
-          </SoundsProvider>
-        </ArwesProvider>
+        <BleepsProvider {...bleepsSettings}>
+          <main>{children}</main>
+        </BleepsProvider>
       </body>
     </html>
   );

@@ -3,18 +3,17 @@
 import * as React from 'react';
 import { useState } from 'react';
 import {
-  BookOpen,
-  Bot,
-  Frame,
-  LifeBuoy,
-  PieChart,
-  Send,
-  Settings2,
-  SquareTerminal,
-  ChevronDown,
-} from 'lucide-react';
+  FaTerminal,
+  FaRobot,
+  FaBook,
+  FaC,
+  FaLifeRing,
+  FaPaperPlane,
+  FaChartPie,
+  FaChevronDown,
+} from 'react-icons/fa6';
 import Image from 'next/image';
-import { FrameLines, Button, Text, Animator } from '@arwes/react';
+import { FrameLines, Animator } from '@arwes/react';
 import styled from '@emotion/styled';
 
 const SidebarContainer = styled.div`
@@ -67,7 +66,7 @@ const data = {
     {
       title: 'Playground',
       url: '#',
-      icon: SquareTerminal,
+      icon: 'terminal',
       isActive: true,
       items: [
         {
@@ -87,7 +86,7 @@ const data = {
     {
       title: 'Degen',
       url: '#',
-      icon: Bot,
+      icon: 'robot',
       items: [
         {
           title: 'Pumpfun Tracker',
@@ -110,7 +109,7 @@ const data = {
     {
       title: 'Documentation',
       url: '#',
-      icon: BookOpen,
+      icon: 'book',
       items: [
         {
           title: 'Introduction',
@@ -129,7 +128,7 @@ const data = {
     {
       title: 'Settings',
       url: '#',
-      icon: Settings2,
+      icon: 'settings',
       items: [
         {
           title: 'General',
@@ -154,29 +153,29 @@ const data = {
     {
       title: 'Support',
       url: '#',
-      icon: LifeBuoy,
+      icon: 'lifebuoy',
     },
     {
       title: 'Feedback',
       url: '#',
-      icon: Send,
+      icon: 'send',
     },
   ],
   projects: [
     {
       name: 'Pumpfun Bot',
       url: '#',
-      icon: Frame,
+      icon: 'chart',
     },
     {
       name: 'Gate Data',
       url: '#',
-      icon: PieChart,
+      icon: 'pie',
     },
     {
       name: 'Gate Buy bot',
       url: '#',
-      icon: Bot,
+      icon: 'robot',
     },
   ],
 };
@@ -184,13 +183,27 @@ const data = {
 interface NavItemData {
   title: string;
   url: string;
-  icon: React.ComponentType<{ size?: number }>;
+  icon: string;
   isActive?: boolean;
   items?: {
     title: string;
     url: string;
   }[];
 }
+
+const getIcon = (iconName: string) => {
+  const iconMap: { [key: string]: React.ComponentType<{ size?: number }> } = {
+    terminal: FaTerminal,
+    robot: FaRobot,
+    book: FaBook,
+    settings: FaC,
+    lifebuoy: FaLifeRing,
+    send: FaPaperPlane,
+    chart: FaChartPie,
+    pie: FaChartPie,
+  };
+  return iconMap[iconName] || FaTerminal;
+};
 
 const NavMainComponent: React.FC<{ items: NavItemData[] }> = ({ items }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
@@ -203,16 +216,16 @@ const NavMainComponent: React.FC<{ items: NavItemData[] }> = ({ items }) => {
 
   return (
     <NavSection>
-      <Text as="div" animator style={{ fontSize: '0.75rem', color: '#00ffff', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+      <div style={{ fontSize: '0.75rem', color: '#00ffff', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
         Platform
-      </Text>
+      </div>
       {items.map((item) => {
-        const Icon = item.icon;
+        const Icon = getIcon(item.icon);
         const isExpanded = expandedItems.includes(item.title);
         return (
           <div key={item.title}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <NavItem as="a" href={item.url} isActive={item.isActive} animator>
+              <NavItem href={item.url} isActive={item.isActive}>
                 <Icon size={18} />
                 <span>{item.title}</span>
               </NavItem>
@@ -227,14 +240,14 @@ const NavMainComponent: React.FC<{ items: NavItemData[] }> = ({ items }) => {
                     padding: '0.25rem',
                   }}
                 >
-                  <ChevronDown size={16} style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }} />
+                  <FaChevronDown size={16} style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }} />
                 </button>
               )}
             </div>
             {isExpanded && item.items && (
               <div style={{ marginLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 {item.items.map((subItem) => (
-                  <NavItem key={subItem.title} as="a" href={subItem.url} animator style={{ fontSize: '0.875rem', paddingLeft: '0.5rem' }}>
+                  <NavItem key={subItem.title} href={subItem.url} style={{ fontSize: '0.875rem', paddingLeft: '0.5rem' }}>
                     {subItem.title}
                   </NavItem>
                 ))}
@@ -247,16 +260,16 @@ const NavMainComponent: React.FC<{ items: NavItemData[] }> = ({ items }) => {
   );
 };
 
-const NavProjectsComponent: React.FC<{ projects: { name: string; url: string; icon: React.ComponentType<{ size?: number }> }[] }> = ({ projects }) => {
+const NavProjectsComponent: React.FC<{ projects: { name: string; url: string; icon: string }[] }> = ({ projects }) => {
   return (
     <NavSection>
-      <Text as="div" animator style={{ fontSize: '0.75rem', color: '#00ffff', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+      <div style={{ fontSize: '0.75rem', color: '#00ffff', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
         Coming Soon
-      </Text>
+      </div>
       {projects.map((project) => {
-        const Icon = project.icon;
+        const Icon = getIcon(project.icon);
         return (
-          <NavItem key={project.name} as="a" href={project.url} animator>
+          <NavItem key={project.name} href={project.url}>
             <Icon size={18} />
             <span>{project.name}</span>
           </NavItem>
@@ -266,13 +279,13 @@ const NavProjectsComponent: React.FC<{ projects: { name: string; url: string; ic
   );
 };
 
-const NavSecondaryComponent: React.FC<{ items: { title: string; url: string; icon: React.ComponentType<{ size?: number }> }[] }> = ({ items }) => {
+const NavSecondaryComponent: React.FC<{ items: { title: string; url: string; icon: string }[] }> = ({ items }) => {
   return (
     <NavSection>
       {items.map((item) => {
-        const Icon = item.icon;
+        const Icon = getIcon(item.icon);
         return (
-          <NavItem key={item.title} as="a" href={item.url} animator style={{ fontSize: '0.875rem' }}>
+          <NavItem key={item.title} href={item.url} style={{ fontSize: '0.875rem' }}>
             <Icon size={18} />
             <span>{item.title}</span>
           </NavItem>
@@ -286,7 +299,7 @@ export function AppSidebar() {
   return (
     <Animator>
       <SidebarContainer>
-        <FrameLines as="div" animator padding={1} style={{ marginBottom: '1rem' }}>
+        <FrameLines padding={1} style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Image
               src="/favicon.ico"
@@ -296,12 +309,12 @@ export function AppSidebar() {
               style={{ borderRadius: '0.5rem' }}
             />
             <div>
-              <Text as="div" animator style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#00ffff' }}>
+              <div style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#00ffff' }}>
                 Gate bibbop
-              </Text>
-              <Text as="div" animator style={{ fontSize: '0.75rem', color: '#00aaaa' }}>
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#00aaaa' }}>
                 Xdeployments
-              </Text>
+              </div>
             </div>
           </div>
         </FrameLines>
@@ -312,7 +325,7 @@ export function AppSidebar() {
           <NavSecondaryComponent items={data.navSecondary} />
         </div>
 
-        <FrameLines as="div" animator padding={1} style={{ marginTop: '1rem' }}>
+        <FrameLines padding={1} style={{ marginTop: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Image
               src={data.user.avatar}
@@ -322,12 +335,12 @@ export function AppSidebar() {
               style={{ borderRadius: '50%' }}
             />
             <div style={{ flex: 1 }}>
-              <Text as="div" animator style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
+              <div style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
                 {data.user.name}
-              </Text>
-              <Text as="div" animator style={{ fontSize: '0.75rem', color: '#00aaaa' }}>
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#00aaaa' }}>
                 {data.user.email}
-              </Text>
+              </div>
             </div>
           </div>
         </FrameLines>
