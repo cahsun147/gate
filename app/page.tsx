@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AppSidebar } from '@/components/app-sidebar';
-import { Animator, FrameLines, Text } from '@arwes/react';
+import { Animator, FrameLines } from '@arwes/react';
 import styled from '@emotion/styled';
 
 interface CoinData {
@@ -133,9 +133,9 @@ export default function Page() {
         <AppSidebar />
         <ContentArea>
           <Header>
-            <Text as="h1" animator style={{ fontSize: '1.5rem', color: '#00ffff', margin: 0 }}>
+            <h1 style={{ fontSize: '1.5rem', color: '#00ffff', margin: 0 }}>
               Top Meme Coins
-            </Text>
+            </h1>
           </Header>
 
           <TableContainer>
@@ -146,7 +146,7 @@ export default function Page() {
                 ))}
               </LoadingContainer>
             ) : (
-              <FrameLines as="div" animator padding={1}>
+              <FrameLines padding={1}>
                 <StyledTable>
                   <thead>
                     <tr>

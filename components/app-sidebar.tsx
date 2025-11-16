@@ -13,7 +13,7 @@ import {
   FaChevronDown,
 } from 'react-icons/fa6';
 import Image from 'next/image';
-import { FrameLines, Animator } from '@arwes/react';
+import { Animator } from '@arwes/react';
 import styled from '@emotion/styled';
 
 const SidebarContainer = styled.div`
@@ -26,6 +26,16 @@ const SidebarContainer = styled.div`
   padding: 1rem;
   gap: 1rem;
   overflow-y: auto;
+`;
+
+const FrameBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 0.25rem;
+  gap: 0.75rem;
 `;
 
 const NavSection = styled.div`
@@ -299,7 +309,7 @@ export function AppSidebar() {
   return (
     <Animator>
       <SidebarContainer>
-        <FrameLines padding={1} style={{ marginBottom: '1rem' }}>
+        <FrameBox>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Image
               src="/favicon.ico"
@@ -317,7 +327,7 @@ export function AppSidebar() {
               </div>
             </div>
           </div>
-        </FrameLines>
+        </FrameBox>
 
         <NavMainComponent items={data.navMain} />
         <NavProjectsComponent projects={data.projects} />
@@ -325,7 +335,7 @@ export function AppSidebar() {
           <NavSecondaryComponent items={data.navSecondary} />
         </div>
 
-        <FrameLines padding={1} style={{ marginTop: '1rem' }}>
+        <FrameBox>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Image
               src={data.user.avatar}
@@ -343,7 +353,7 @@ export function AppSidebar() {
               </div>
             </div>
           </div>
-        </FrameLines>
+        </FrameBox>
       </SidebarContainer>
     </Animator>
   );

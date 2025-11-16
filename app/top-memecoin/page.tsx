@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AppSidebar } from '@/components/app-sidebar';
-import { Animator, FrameLines, Text } from '@arwes/react';
+import { Animator, FrameLines } from '@arwes/react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import styled from '@emotion/styled';
 
@@ -191,9 +191,9 @@ export default function Page() {
         <AppSidebar />
         <ContentArea>
           <Header>
-            <Text as="h1" animator style={{ fontSize: '1.5rem', color: '#00ffff', margin: 0 }}>
+            <h1 style={{ fontSize: '1.5rem', color: '#00ffff', margin: 0 }}>
               Top Meme Coins
-            </Text>
+            </h1>
           </Header>
 
           <TabsContainer>
@@ -210,11 +210,11 @@ export default function Page() {
 
           {activeTab === 'chart' && (
             <ChartContainer>
-              <FrameLines as="div" animator padding={2}>
+              <FrameLines padding={2}>
                 <div style={{ marginBottom: '1rem' }}>
-                  <Text as="h2" animator style={{ fontSize: '1rem', color: '#00ffff', marginBottom: '0.5rem' }}>
+                  <h2 style={{ fontSize: '1rem', color: '#00ffff', marginBottom: '0.5rem' }}>
                     {selectedCoin ? coins.find((c) => c.id === selectedCoin)?.name : 'Select a coin'} Price Chart
-                  </Text>
+                  </h2>
                   <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                     {['7', '30', '60', '90'].map((days) => (
                       <button
@@ -238,9 +238,9 @@ export default function Page() {
 
                 {chartLoading ? (
                   <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Text as="p" animator style={{ color: '#00aaaa' }}>
+                    <p style={{ color: '#00aaaa' }}>
                       Loading chart...
-                    </Text>
+                    </p>
                   </div>
                 ) : chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
@@ -267,9 +267,9 @@ export default function Page() {
                   </ResponsiveContainer>
                 ) : (
                   <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Text as="p" animator style={{ color: '#00aaaa' }}>
+                    <p style={{ color: '#00aaaa' }}>
                       No chart data available
-                    </Text>
+                    </p>
                   </div>
                 )}
               </FrameLines>
@@ -294,7 +294,7 @@ export default function Page() {
                   ))}
                 </div>
               ) : (
-                <FrameLines as="div" animator padding={1}>
+                <FrameLines padding={1}>
                   <StyledTable>
                     <thead>
                       <tr>

@@ -7,7 +7,7 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "flask-dev": "set FLASK_DEBUG=1 pip install -r api/requirements.txt && py -m flask --app api/index run -p 5328",
+    "flask-dev": "set FLASK_DEBUG=1 && py -m flask --app api/index run -p 5328",
     "next-dev": "next dev",
     "dev": "concurrently \"npm run next-dev\" \"npm run flask-dev\"",
     "build": "next build",

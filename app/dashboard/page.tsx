@@ -1,7 +1,7 @@
 'use client';
 
 import { AppSidebar } from '@/components/app-sidebar';
-import { Animator, FrameLines, Text } from '@arwes/react';
+import { Animator, FrameLines } from '@arwes/react';
 import styled from '@emotion/styled';
 
 const MainContainer = styled.div`
@@ -55,37 +55,37 @@ export default function Page() {
         <AppSidebar />
         <ContentArea>
           <Header>
-            <Text as="h1" animator style={{ fontSize: '1.5rem', color: '#00ffff', margin: 0 }}>
+            <h1 style={{ fontSize: '1.5rem', color: '#00ffff', margin: 0 }}>
               Dashboard
-            </Text>
+            </h1>
           </Header>
 
           <ContentContainer>
-            <FrameLines as="div" animator padding={2}>
-              <Text as="h2" animator style={{ fontSize: '1rem', color: '#00ffff', marginBottom: '1rem' }}>
+            <FrameLines padding={2}>
+              <h2 style={{ fontSize: '1rem', color: '#00ffff', marginBottom: '1rem' }}>
                 Metric 1
-              </Text>
+              </h2>
               <CardPlaceholder>Coming Soon</CardPlaceholder>
             </FrameLines>
 
-            <FrameLines as="div" animator padding={2}>
-              <Text as="h2" animator style={{ fontSize: '1rem', color: '#00ffff', marginBottom: '1rem' }}>
+            <FrameLines padding={2}>
+              <h2 style={{ fontSize: '1rem', color: '#00ffff', marginBottom: '1rem' }}>
                 Metric 2
-              </Text>
+              </h2>
               <CardPlaceholder>Coming Soon</CardPlaceholder>
             </FrameLines>
 
-            <FrameLines as="div" animator padding={2}>
-              <Text as="h2" animator style={{ fontSize: '1rem', color: '#00ffff', marginBottom: '1rem' }}>
+            <FrameLines padding={2}>
+              <h2 style={{ fontSize: '1rem', color: '#00ffff', marginBottom: '1rem' }}>
                 Metric 3
-              </Text>
+              </h2>
               <CardPlaceholder>Coming Soon</CardPlaceholder>
             </FrameLines>
 
-            <FrameLines as="div" animator padding={2} style={{ gridColumn: '1 / -1' }}>
-              <Text as="h2" animator style={{ fontSize: '1rem', color: '#00ffff', marginBottom: '1rem' }}>
+            <FrameLines padding={2} style={{ gridColumn: '1 / -1' }}>
+              <h2 style={{ fontSize: '1rem', color: '#00ffff', marginBottom: '1rem' }}>
                 Full Width Section
-              </Text>
+              </h2>
               <CardPlaceholder style={{ minHeight: '400px' }}>Coming Soon</CardPlaceholder>
             </FrameLines>
           </ContentContainer>

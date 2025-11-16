@@ -6,8 +6,8 @@ import { AgentMetricsCard } from '@/components/agent-metrics-card';
 import { AgentDominanceChart } from '@/components/agent-dominance-chart';
 import { TopAgentsGrid } from '@/components/top-agents-grid';
 import { AgentStatsTable } from '@/components/agent-stats-table';
-import { Animator, FrameLines, Text, Button } from '@arwes/react';
-import { Search } from 'lucide-react';
+import { Animator, FrameLines } from '@arwes/react';
+import { FaSearch } from 'react-icons/fa6';
 import styled from '@emotion/styled';
 
 const MainContainer = styled.div`
@@ -111,16 +111,16 @@ export default function AIAgentIndex() {
         <AppSidebar />
         <ContentArea>
           <Header>
-            <Text as="h1" animator style={{ fontSize: '1.25rem', color: '#00ffff', margin: 0 }}>
+            <h1 style={{ fontSize: '1.25rem', color: '#00ffff', margin: 0 }}>
               1477 agents tracked
-            </Text>
+            </h1>
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <Button animator style={{ fontSize: '0.875rem' }}>
+              <button style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', background: 'rgba(0, 255, 255, 0.1)', border: '1px solid #00ffff', color: '#00ffff', cursor: 'pointer', borderRadius: '0.25rem' }}>
                 See Cookie DeFAI Hackathon Projects
-              </Button>
-              <Button animator style={{ fontSize: '0.875rem' }}>
+              </button>
+              <button style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', background: 'rgba(0, 255, 255, 0.1)', border: '1px solid #00ffff', color: '#00ffff', cursor: 'pointer', borderRadius: '0.25rem' }}>
                 Trade
-              </Button>
+              </button>
             </div>
           </Header>
 
@@ -137,7 +137,7 @@ export default function AIAgentIndex() {
           </TabsContainer>
 
           <SearchContainer>
-            <Search size={18} style={{ color: '#00ffff' }} />
+            <FaSearch size={18} style={{ color: '#00ffff' }} />
             <input placeholder="Search AI Agents or infrastructure" />
           </SearchContainer>
 
@@ -163,10 +163,10 @@ export default function AIAgentIndex() {
               />
             </GridSection>
 
-            <FrameLines as="div" animator padding={2}>
-              <Text as="h2" animator style={{ fontSize: '1rem', color: '#00ffff', marginBottom: '1rem' }}>
+            <FrameLines padding={2}>
+              <h2 style={{ fontSize: '1rem', color: '#00ffff', marginBottom: '1rem' }}>
                 Top 10 AI Agents by Mindshare (last 24h)
-              </Text>
+              </h2>
               <TopAgentsGrid />
             </FrameLines>
           </ContentContainer>
