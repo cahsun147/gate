@@ -1,10 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Tambahan dari Arwes (direkomendasikan)
+  reactStrictMode: false,
+
+  // Di bawah ini adalah konfigurasi PENTING Anda yang sudah ada
+  // (JANGAN DIHAPUS)
   eslint: {
     ignoreDuringBuilds: true,
   },
-  images: { 
-    unoptimized: true 
+  images: {
+    unoptimized: true
   },
   experimental: {
     serverActions: {
