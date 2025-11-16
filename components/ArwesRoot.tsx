@@ -3,6 +3,7 @@
 import { ReactNode } from 'react';
 import { Animator } from '@arwes/react-animator';
 import { BleepsProvider } from '@arwes/react-bleeps';
+import ArwesBackground from './ArwesBackground';
 
 // File suara ada di /public/sounds/
 const bleepsSettings = {
@@ -16,6 +17,7 @@ const bleepsSettings = {
 const ArwesRoot = ({ children }: { children: ReactNode }) => {
   return (
     <Animator active>
+      <ArwesBackground />
       <BleepsProvider {...bleepsSettings}>
         {children}
       </BleepsProvider>
