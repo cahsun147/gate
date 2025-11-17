@@ -2,6 +2,7 @@
 
 import { Animator } from '@arwes/react';
 import styled from '@emotion/styled';
+import GateHeader from '@/components/GateHeader';
 
 const ContentBox = styled.div`
   padding: 2rem;
@@ -13,7 +14,8 @@ const ContentBox = styled.div`
 export default function DashboardPage() {
   return (
     <Animator>
-      <ContentBox>
+      <GateHeader title="DASHBOARD" />
+      <ContentBox style={{ marginTop: '1rem' }}>
         <h1 style={{ fontSize: '2rem', color: '#00ffff', margin: '0 0 1rem 0' }}>
           Selamat Datang di XGate
         </h1>

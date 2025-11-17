@@ -1,33 +1,34 @@
 'use client';
 
-import React, { type ReactElement, useState, useEffect } from 'react';
+import { type ReactElement, useState, useEffect } from 'react';
 import { Animator } from '@arwes/react-animator';
-import { Dots } from '@arwes/react-bgs';
+import { GridLines, Dots, MovingLines } from '@arwes/react-bgs';
 
 export const ArwesBackground = (): ReactElement => {
   const [active, setActive] = useState(true);
 
   useEffect(() => {
-    const iid = setInterval(() => setActive((active) => !active), 3_000);
-    return () => clearInterval(iid);
-  }, []);
+    const tid = setInterval(() => setActive(!active), active ? 5_000 : 1_000);
+    return () => clearInterval(tid);
+  }, [active]);
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: -1,
-        pointerEvents: 'none',
-      }}
-    >
-      <Animator active={active} duration={{ enter: 2, exit: 2 }}>
-        <Dots color="hsla(180, 100%, 75%, 0.4)" />
-      </Animator>
-    </div>
+    <Animator active={active} duration={{ enter: 1, interval: 10 }}>
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: -1,
+          pointerEvents: 'none',
+          backgroundColor: '#000906',
+          backgroundImage: 'radial-gradient(85% 85% at 50% 50%, hsla(185, 100%, 25%, 0.25) 0%, hsla(185, 100%, 25%, 0.12) 50%, hsla(185, 100%, 25%, 0) 100%)'
+        }}
+      >
+        <GridLines lineColor="hsla(180, 100%, 75%, 0.05)" distance={30} />
+        <Dots color="hsla(180, 100%, 75%, 0.05)" distance={30} />
+        <MovingLines lineColor="hsla(180, 100%, 75%, 0.07)" distance={30} sets={20} />
+      </div>
+    </Animator>
   );
 };
 

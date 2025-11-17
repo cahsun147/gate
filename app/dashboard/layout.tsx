@@ -6,6 +6,14 @@ import { usePathname } from 'next/navigation';
 import { Animator } from '@arwes/react';
 import { HiOutlineChartPie, HiOutlineFire, HiOutlineSparkles } from 'react-icons/hi2';
 import styled from '@emotion/styled';
+import GateHeader from '@/components/GateHeader';
+import { Tomorrow } from 'next/font/google';
+
+const tomorrow = Tomorrow({
+  weight: '500',
+  subsets: ['latin'],
+  variable: '--font-tomorrow',
+});
 
 // Daftar navigasi kita
 const navLinks = [
