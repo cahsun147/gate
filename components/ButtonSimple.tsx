@@ -2,11 +2,13 @@
 
 import React, { type HTMLProps, type ReactNode } from 'react';
 import { 
-    Animated, 
-    FrameCorners,
-    useBleeps
+  Animated, 
+  FrameCorners,
+  Illuminator,
+  useBleeps
 } from '@arwes/react';
 import styled from '@emotion/styled';
+import { type BleepNames } from '@/config/bleeps';
 
 interface ButtonSimpleProps extends Omit<HTMLProps<HTMLButtonElement>, 'as'> {
   className?: string;
@@ -25,6 +27,7 @@ const ButtonContent = styled.div`
   padding: 0.75rem 1.5rem;
   flex: 1;
   user-select: none;
+  z-index: 1;
 
   svg {
     font-size: 1.25rem;
@@ -41,78 +44,87 @@ const ButtonContent = styled.div`
   }
 `;
 
-const FrameCornerStyled = styled(FrameCorners)`
-  opacity: 0.3;
-  transition: opacity 0.2s ease-out;
-  filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
+const ButtonSimple = React.memo(
+  React.forwardRef<HTMLButtonElement, ButtonSimpleProps>(
+    ({ className, animated, children, as: Component = 'button', ...otherProps }, ref) => {
+      const bleeps = useBleeps<BleepNames>();
 
-  &:hover {
-    opacity: 0.7;
-  }
-`;
+      const handleMouseEnter = () => {
+        bleeps?.hover?.play();
+      };
 
-const ButtonSimple = React.forwardRef<HTMLButtonElement, ButtonSimpleProps>(
-  ({ className, animated, children, as: Component = 'button', ...otherProps }, ref) => {
-    const bleeps = useBleeps();
+      const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        if (otherProps.onClick) {
+          otherProps.onClick(event as any);
+        }
+        bleeps?.click?.play();
+      };
 
-    const handleMouseEnter = () => {
-      bleeps?.click?.play();
-    };
-
-    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-      if (otherProps.onClick) {
-        otherProps.onClick(event as any);
-      }
-      bleeps?.click?.play();
-    };
-
-    return (
-      <Animated
-        ref={ref}
-        as={Component as any}
-        {...(otherProps as any)}
-        className={className}
-        style={{
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(0, 200, 255, 0.05) 100%)',
-          border: '2px solid hsl(180, 75%, 50%)',
-          color: 'hsl(180, 100%, 70%)',
-          fontFamily: 'var(--font-tomorrow), sans-serif',
-          fontSize: '1rem',
-          fontWeight: 600,
-          cursor: 'pointer',
-          textDecoration: 'none',
-          borderRadius: '4px',
-          transition: 'all 0.3s ease',
-          overflow: 'hidden',
-          letterSpacing: '1px',
-          textTransform: 'uppercase',
-          ...((otherProps as any).style || {})
-        }}
-        onMouseEnter={handleMouseEnter}
-        onClick={handleClick}
-        animated={animated}
-      >
-        <FrameCorners
+      return (
+        <Animated
+          ref={ref}
+          as={Component as any}
+          {...(otherProps as any)}
+          className={className}
           style={{
-            position: 'absolute',
-            inset: 0,
-            // @ts-expect-error css variables
-            '--arwes-frames-bg-color': 'transparent',
-            '--arwes-frames-line-color': 'currentcolor',
-            '--arwes-frames-deco-color': 'currentcolor'
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'hsl(180, 100%, 70%)',
+            fontFamily: 'var(--font-tomorrow), sans-serif',
+            fontSize: '1rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            textDecoration: 'none',
+            transition: 'color 0.2s ease-out',
+            overflow: 'hidden',
+            letterSpacing: '1px',
+            textTransform: 'uppercase',
+            userSelect: 'none',
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
+            ...((otherProps as any).style || {})
           }}
-          animated={false}
-        />
-        <ButtonContent>
-          {children}
-        </ButtonContent>
-      </Animated>
-    );
-  }
+          onMouseEnter={handleMouseEnter}
+          onClick={handleClick}
+          animated={animated}
+        >
+          <FrameCorners
+            className="group"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              opacity: 0.3,
+              transition: 'opacity 0.2s ease-out',
+              filter: 'drop-shadow(0 0 8px rgba(0, 255, 255, 0.3))',
+              // @ts-expect-error css variables
+              '--arwes-frames-bg-color': 'transparent',
+              '--arwes-frames-line-color': 'currentcolor',
+              '--arwes-frames-deco-color': 'currentcolor'
+            }}
+            animated={false}
+          />
+          <Illuminator
+            style={{
+              position: 'absolute',
+              inset: '4px',
+              width: 'calc(100% - 8px)',
+              height: 'calc(100% - 8px)',
+              opacity: 0.2,
+              transition: 'opacity 0.2s ease-out'
+            }}
+            size={60}
+            color="hsl(180, 100%, 70%)"
+          />
+          <ButtonContent>
+            {children}
+          </ButtonContent>
+        </Animated>
+      );
+    }
+  )
 );
 
 ButtonSimple.displayName = 'ButtonSimple';
