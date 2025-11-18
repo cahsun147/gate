@@ -15,56 +15,51 @@ export default (): JSX.Element => {
       <Animated
         as="main"
         className={cx(
-          'flex flex-col justify-center items-center',
+          'flex flex-col justify-start items-center',
           'min-h-[calc(100vh-60px)] md:min-h-[calc(100vh-64px)] w-full',
-          'gap-12 p-6 md:p-12 m-auto'
+          'pt-20 md:pt-32 px-6 md:px-12 pb-6 md:pb-12 m-auto'
         )}
         animated={[['y', theme.space(6), 0, 0]]}
       >
-        {/* HERO SECTION */}
-        <div className="flex flex-col items-center justify-center gap-6 max-w-3xl w-full">
-          
-          {/* TITLE */}
-          <Animator>
-            <Animated 
-              as="h1" 
-              className="text-center"
-              animated={[['y', theme.space(4), 0, 0]]}
+        {/* TITLE SECTION */}
+        <Animator>
+          <Animated 
+            as="h1" 
+            className="text-center mb-4"
+            animated={[['y', theme.space(4), 0, 0]]}
+          >
+            <div 
+              className="text-5xl md:text-6xl lg:text-7xl font-bold text-cyan-400"
+              style={{
+                textShadow: '0 0 20px rgba(0, 255, 255, 0.8), 0 0 40px rgba(0, 200, 255, 0.6)',
+                letterSpacing: '0.1em',
+                fontFamily: 'Tomorrow, sans-serif'
+              }}
             >
-              <div 
-                className="text-6xl md:text-7xl lg:text-8xl font-bold text-cyan-400"
-                style={{
-                  textShadow: '0 0 20px rgba(0, 255, 255, 0.8), 0 0 40px rgba(0, 200, 255, 0.6)',
-                  letterSpacing: '0.1em',
-                  fontFamily: 'Tomorrow, sans-serif'
-                }}
-              >
-                ARWES
-              </div>
-            </Animated>
-          </Animator>
+              ARWES
+            </div>
+          </Animated>
+        </Animator>
 
-          {/* SUBTITLE */}
-          <Animator>
-            <Animated
-              as="p"
-              className={cx(
-                'text-center text-lg md:text-xl',
-                'text-cyan-300 select-none'
-              )}
-              animated={['flicker']}
-            >
-              Futuristic Sci-Fi UI Web Framework
-            </Animated>
-          </Animator>
-
-        </div>
+        {/* SUBTITLE SECTION */}
+        <Animator>
+          <Animated
+            as="p"
+            className={cx(
+              'text-center text-sm md:text-base',
+              'text-cyan-300 select-none mb-8 md:mb-12'
+            )}
+            animated={['flicker']}
+          >
+            Futuristic Sci-Fi UI Web Framework
+          </Animated>
+        </Animator>
 
         {/* BUTTONS SECTION */}
         <Animator>
           <Animated
             as="nav"
-            className="flex flex-row justify-center items-center gap-4 md:gap-6 flex-wrap"
+            className="flex flex-row justify-center items-center gap-2 md:gap-4"
             animated={['flicker']}
           >
             <a href="https://next.arwes.dev/" target="_blank" rel="noopener noreferrer">
