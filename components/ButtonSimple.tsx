@@ -8,7 +8,6 @@ import {
   useBleeps,
   cx
 } from '@arwes/react'
-import styled from '@emotion/styled'
 
 import { type BleepNames, theme } from '@/config'
 
@@ -17,52 +16,6 @@ interface ButtonSimpleProps extends HTMLProps<HTMLButtonElement> {
   animated?: AnimatedProp
   children: ReactNode
 }
-
-const ButtonRoot = styled.div`
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  user-select: none;
-  
-  &:focus {
-    outline: none;
-  }
-`
-
-const ButtonContent = styled.div`
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05rem;
-  color: hsl(180, 100%, 60%);
-  transition: color 0.2s ease-out;
-  background: transparent;
-  border: none;
-
-  svg {
-    width: 1.25em;
-    height: 1.25em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  &:hover {
-    color: hsl(180, 100%, 70%);
-  }
-`
 
 const ButtonSimple = memo((props: ButtonSimpleProps): JSX.Element => {
   const { className, animated, children, ...otherProps } = props
@@ -74,20 +27,16 @@ const ButtonSimple = memo((props: ButtonSimpleProps): JSX.Element => {
       {...otherProps}
       as="button"
       className={cx(
-        'relative group',
-        'inline-flex items-center justify-center',
-        'bg-transparent border-none p-0 m-0',
-        'cursor-pointer select-none',
-        'transition-colors ease-out duration-200',
-        'focus:outline-none',
+        'relative',
+        'group flex',
+        'uppercase font-cta text-size-11',
+        'select-none cursor-pointer transition-[color] ease-out duration-200',
+        'text-secondary-main-2',
+        'md:text-size-10',
+        'xl:text-size-9',
+        'hover:text-secondary-high-2',
         className
       )}
-      style={{
-        background: 'transparent',
-        border: 'none',
-        padding: 0,
-        margin: 0
-      }}
       animated={animated}
       onMouseEnter={() => {
         bleeps.hover?.play()
@@ -98,36 +47,36 @@ const ButtonSimple = memo((props: ButtonSimpleProps): JSX.Element => {
       }}
     >
       <FrameCorners
-        className="absolute inset-0 opacity-40 transition-opacity ease-out duration-200 group-hover:opacity-100 pointer-events-none"
+        className="opacity-30 transition-opacity ease-out duration-200 group-hover:opacity-70"
         style={{
-          filter: 'drop-shadow(0 0 8px rgba(0, 255, 255, 0.5))',
+          filter: `drop-shadow(0 0 ${theme.space(2)} ${theme.colors.secondary.main(3)})`,
           // @ts-expect-error css variables
           '--arwes-frames-bg-color': 'transparent',
-          '--arwes-frames-line-color': 'hsl(180, 100%, 60%)',
-          '--arwes-frames-deco-color': 'hsl(180, 100%, 60%)'
+          '--arwes-frames-line-color': 'currentcolor',
+          '--arwes-frames-deco-color': 'currentcolor'
         }}
         animated={false}
-        cornerLength={8}
+        cornerLength={theme.spacen(2)}
       />
       <Illuminator
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity ease-out duration-200 pointer-events-none"
         style={{
-          inset: '2px',
-          width: 'calc(100% - 4px)',
-          height: 'calc(100% - 4px)'
+          inset: theme.space(0.5),
+          width: `calc(100% - ${theme.space(1)})`,
+          height: `calc(100% - ${theme.space(1)})`
         }}
-        size={60}
-        color="rgba(0, 255, 255, 0.15)"
+        size={theme.spacen(60)}
+        color={theme.colors.secondary.main(3, { alpha: 0.2 })}
       />
-      <ButtonContent
+      <div
         className={cx(
-          'relative z-10',
-          'flex flex-row justify-center items-center gap-2',
-          'px-4 py-2'
+          'relative',
+          'flex-1 flex flex-row justify-center items-center gap-1.5',
+          'px-3 py-0 leading-[1.75rem]',
+          'sm:px-4 sm:gap-2 sm:leading-[2rem]'
         )}
       >
         {children}
-      </ButtonContent>
+      </div>
     </Animated>
   )
 })
