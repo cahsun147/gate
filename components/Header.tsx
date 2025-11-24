@@ -1,134 +1,346 @@
-'use client'
-
 import React, { useCallback, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Animated, Animator, cx, memo, type AnimatedProp } from '@arwes/react'
-import { Menu as MenuIcon, X, Github, Discord } from 'iconoir-react'
+import { useAtom } from 'jotai'
+import {
+  type AnimatedProp,
+  Animated,
+  Animator,
+  styleFrameClipOctagon,
+  cx,
+  FrameOctagon,
+  Illuminator,
+  memo
+} from '@arwes/react'
+import {
+  X,
+  Page,
+  Codepen,
+  Settings,
+  CollageFrame,
+  DashboardSpeed,
+  Github,
+  Discord,
+  Keyframes,
+  KeyframesMinus,
+  SoundHigh,
+  SoundOff,
+  Heart,
+  Menu as MenuIcon
+} from 'iconoir-react'
 
-import { type BleepNames, theme } from '@/config'
-import { ButtonSimple } from './ButtonSimple'
+import { atomAudioEnabled, atomMotionEnabled, settings, theme } from '@/config'
+import { useAppBleeps, useAppBreakpoint } from './tools'
+import { ArwesLogoIcon } from './ArwesLogoIcon'
+import { ArwesLogoType } from './ArwesLogoType'
+import { Menu } from './Menu'
+import { MenuItem } from './MenuItem'
+
+// Add keyframes to document
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style')
+  style.textContent = `
+    @keyframes logoBlink {
+      0% {
+        opacity: 0.6;
+      }
+      1% {
+        opacity: 1;
+      }
+      2%,
+      100% {
+        opacity: 0.6;
+      }
+    }
+  `
+  document.head.appendChild(style)
+}
 
 interface HeaderProps {
   className?: string
   animated?: AnimatedProp
 }
 
+const HEIGHT_CLASS = 'h-10 md:h-12'
+
 const Header = memo((props: HeaderProps): JSX.Element => {
   const { className, animated } = props
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  const toggleMenu = useCallback(() => {
-    setIsMenuOpen(!isMenuOpen)
-  }, [isMenuOpen])
+  const pathname = usePathname()
+  const [isMotionEnabled, setIsMotionEnabled] = useAtom(atomMotionEnabled)
+  const [isAudioEnabled, setIsAudioEnabled] = useAtom(atomAudioEnabled)
+  const isMD = useAppBreakpoint('md')
+  const isLG = useAppBreakpoint('lg')
+  const isXL = useAppBreakpoint('xl')
+  const bleeps = useAppBleeps()
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const openMenu = useCallback(() => {
+    setIsMenuOpen(true)
+    bleeps.click?.play()
+  }, [])
+  const closeMenu = useCallback(() => {
+    setIsMenuOpen(false)
+    bleeps.click?.play()
+  }, [])
+
+  const isIndex = pathname === '/'
 
   return (
     <Animated
       as="header"
-      className={cx(
-        'flex justify-center items-center select-none',
-        'w-full bg-transparent border-b border-cyan-900/30',
-        className
-      )}
+      className={cx('flex justify-center items-center select-none', className)}
       animated={animated}
+      style={{
+        '--logo-blink': `logoBlink 30s infinite 3s linear`
+      } as React.CSSProperties}
     >
-      <div className={cx('flex mx-auto p-3 w-full max-w-7xl', 'md:px-6', 'md:py-4')}>
-        {/* LOGO & TITLE */}
-        <div className="flex-1 flex items-center">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <div 
-              className="text-xl md:text-2xl font-bold text-cyan-400"
-              style={{
-                textShadow: '0 0 10px rgba(0, 255, 255, 0.6)',
-                fontFamily: 'Tomorrow, sans-serif',
-                letterSpacing: '0.05em'
-              }}
-            >
-              ARWES
-            </div>
-          </Link>
+      <div className={cx('flex mx-auto p-2 w-full max-w-screen-3xl', 'md:px-4', 'xl:py-4')}>
+        <div className={cx('relative flex-1 flex px-4')}>
+          {/* BACKGROUND */}
+          {!isIndex && (
+            <Animator merge>
+              <Animated
+                role="presentation"
+                className="absolute inset-0 overflow-hidden"
+                style={{
+                  clipPath: styleFrameClipOctagon({ squareSize: theme.space(2) })
+                }}
+                animated={['flicker']}
+              >
+                <FrameOctagon
+                  style={{
+                    // @ts-expect-error css variables
+                    '--arwes-frames-bg-color': theme.colors.primary.main(9, { alpha: 0.1 }),
+                    '--arwes-frames-line-color': theme.colors.primary.main(9, { alpha: 0.5 })
+                  }}
+                  squareSize={theme.spacen(2)}
+                />
+                {isXL && (
+                  <Illuminator
+                    color={theme.colors.primary.main(7, { alpha: 0.1 })}
+                    size={theme.spacen(100)}
+                  />
+                )}
+              </Animated>
+            </Animator>
+          )}
+
+          {/* CONTENT */}
+          <div className="relative flex-1 flex flex-row justify-between items-center">
+            {/* LEFT PANEL */}
+            <Animator combine manager="stagger" refreshOn={[isIndex, isMD]}>
+              <Animated className="flex flex-row gap-4" animated={[['x', theme.spacen(4), 0, 0]]}>
+                <Link
+                  className={cx('transition-opacity ease-out duration-200')}
+                  style={{
+                    opacity: 0.6,
+                    animation: 'logoBlink 30s infinite 3s linear'
+                  }}
+                  href="/"
+                  onClick={() => bleeps.click?.play()}
+                >
+                  <h1
+                    className={cx('flex flex-row justify-center items-center gap-2', HEIGHT_CLASS)}
+                    title={settings.title}
+                  >
+                    <Animator>
+                      <ArwesLogoIcon
+                        className={cx('w-5 h-5 md:w-6 md:h-6')}
+                        animated={['flicker']}
+                      />
+                    </Animator>
+
+                    <Animator
+                      merge
+                      condition={!isIndex && isMD}
+                      unmountOnExited
+                      unmountOnDisabled={isIndex || !isMD}
+                    >
+                      <ArwesLogoType className="h-3 md:h-4" animated={['flicker']} />
+                    </Animator>
+                  </h1>
+                </Link>
+
+                <Animator
+                  combine
+                  manager="stagger"
+                  condition={!isIndex}
+                  unmountOnExited
+                  unmountOnDisabled={isIndex}
+                >
+                  <Menu className={HEIGHT_CLASS}>
+                    <Animator>
+                      <MenuItem active={pathname.startsWith('/docs')} animated={['flicker']}>
+                        <Link href="/docs" title="Go to Documentation">
+                          <Page /> <span className="hidden md:block">Docs</span>
+                        </Link>
+                      </MenuItem>
+                    </Animator>
+                    <Animator>
+                      <MenuItem active={pathname.startsWith('/demos')} animated={['flicker']}>
+                        <Link href="/demos" title="Go to Demos">
+                          <CollageFrame /> <span className="hidden md:block">Demos</span>
+                        </Link>
+                      </MenuItem>
+                    </Animator>
+                    <Animator>
+                      <MenuItem active={pathname.startsWith('/play')} animated={['flicker']}>
+                        <a href={settings.apps.play.url} title="Go to Playground">
+                          <Codepen /> <span className="hidden md:block">Play</span>
+                        </a>
+                      </MenuItem>
+                    </Animator>
+                    <Animator>
+                      <MenuItem active={pathname.startsWith('/perf')} animated={['flicker']}>
+                        <a href={settings.apps.perf.url} title="Go to Performance">
+                          <DashboardSpeed /> <span className="hidden md:block">Perf</span>
+                        </a>
+                      </MenuItem>
+                    </Animator>
+                  </Menu>
+                </Animator>
+              </Animated>
+            </Animator>
+
+            {/* RIGHT PANEL */}
+            <Animator combine manager="switch" refreshOn={[isLG]}>
+              <Animator
+                combine
+                manager="staggerReverse"
+                condition={!isLG}
+                unmountOnExited
+                unmountOnDisabled={isLG}
+              >
+                <Animated
+                  as="nav"
+                  className="flex flex-row gap-4"
+                  animated={[['x', theme.spacen(-2), 0, 0]]}
+                >
+                  <Menu className={HEIGHT_CLASS}>
+                    <Animator>
+                      <MenuItem animated={['flicker']}>
+                        <button>
+                          <Settings />
+                        </button>
+                      </MenuItem>
+                    </Animator>
+                    <Animator>
+                      <MenuItem animated={['flicker']}>
+                        <button onClick={openMenu}>
+                          <MenuIcon />
+                        </button>
+                      </MenuItem>
+                    </Animator>
+                  </Menu>
+                </Animated>
+              </Animator>
+
+              <Animator
+                combine
+                manager="staggerReverse"
+                condition={isLG}
+                unmountOnExited
+                unmountOnDisabled={!isLG}
+              >
+                <Animated
+                  as="nav"
+                  className="flex flex-row gap-4"
+                  animated={[['x', theme.spacen(-4), 0, 0]]}
+                >
+                  <Menu className={HEIGHT_CLASS}>
+                    <Animator>
+                      <MenuItem animated={['flicker']}>
+                        <a
+                          className="normal-case"
+                          href={`https://github.com/arwes/arwes/releases/tag/v${settings.version}`}
+                          target="version"
+                          title={new Date(settings.deployTime).toString()}
+                        >
+                          v{settings.version}
+                        </a>
+                      </MenuItem>
+                    </Animator>
+                  </Menu>
+                  <Menu className={HEIGHT_CLASS}>
+                    <Animator>
+                      <MenuItem className="group hover:!text-fuchsia-300" animated={['flicker']}>
+                        <a
+                          className="!gap-0 group-hover:text-fuchsia-300"
+                          href="https://github.com/sponsors/romelperez"
+                          target="sponsor"
+                        >
+                          <Heart />
+                          <div
+                            className={cx(
+                              'grid grid-flow-row grid-cols-[0fr]',
+                              'transition-all ease-out duration-200',
+                              'group-hover:grid-cols-[1fr] group-hover:pl-2'
+                            )}
+                          >
+                            <div className="overflow-hidden">Sponsor</div>
+                          </div>
+                        </a>
+                      </MenuItem>
+                    </Animator>
+                    <Animator>
+                      <MenuItem animated={['flicker']}>
+                        <a
+                          href="https://github.com/arwes/arwes"
+                          target="github"
+                          title="Go to Github"
+                        >
+                          <Github />
+                        </a>
+                      </MenuItem>
+                    </Animator>
+                    <Animator>
+                      <MenuItem animated={['flicker']}>
+                        <a href="https://x.com/arwesjs" target="twitter" title="Go to X (Twitter)">
+                          <X />
+                        </a>
+                      </MenuItem>
+                    </Animator>
+                    <Animator>
+                      <MenuItem animated={['flicker']}>
+                        <a href="https://discord.gg/s5sbTkw" target="discord" title="Go to Discord">
+                          <Discord />
+                        </a>
+                      </MenuItem>
+                    </Animator>
+                  </Menu>
+
+                  <Menu className={HEIGHT_CLASS}>
+                    <Animator>
+                      <MenuItem animated={['flicker']}>
+                        <button
+                          title={isMotionEnabled ? 'Disable motion' : 'Enable motion'}
+                          onClick={() => setIsMotionEnabled(!isMotionEnabled)}
+                        >
+                          {isMotionEnabled ? <Keyframes /> : <KeyframesMinus />}
+                        </button>
+                      </MenuItem>
+                    </Animator>
+                    <Animator>
+                      <MenuItem animated={['flicker']}>
+                        <button
+                          title={isAudioEnabled ? 'Disable audio' : 'Enable audio'}
+                          onClick={() => setIsAudioEnabled(!isAudioEnabled)}
+                        >
+                          {isAudioEnabled ? <SoundHigh /> : <SoundOff />}
+                        </button>
+                      </MenuItem>
+                    </Animator>
+                  </Menu>
+                </Animated>
+              </Animator>
+            </Animator>
+          </div>
         </div>
-
-        {/* DESKTOP NAVIGATION */}
-        <nav className="hidden md:flex items-center gap-3">
-          <a href="https://next.arwes.dev/" target="_blank" rel="noopener noreferrer">
-            <ButtonSimple 
-              tabIndex={-1}
-              title="Documentation"
-              animated={[['x', theme.spacen(3), 0, 0]]}
-            >
-              <span className="text-sm">Docs</span>
-            </ButtonSimple>
-          </a>
-
-          <a href="https://github.com/arwes/arwes" target="_blank" rel="noopener noreferrer">
-            <ButtonSimple 
-              tabIndex={-1}
-              title="GitHub"
-              animated={[['x', theme.spacen(2), 0, 0]]}
-            >
-              <Github className="w-4 h-4" />
-            </ButtonSimple>
-          </a>
-
-          <a href="https://discord.gg/arwes" target="_blank" rel="noopener noreferrer">
-            <ButtonSimple 
-              tabIndex={-1}
-              title="Discord"
-              animated={[['x', theme.spacen(3), 0, 0]]}
-            >
-              <Discord className="w-4 h-4" />
-            </ButtonSimple>
-          </a>
-        </nav>
-
-        {/* MOBILE MENU BUTTON */}
-        <button
-          className="md:hidden flex items-center justify-center p-2 text-cyan-400 hover:text-cyan-300 transition-colors"
-          onClick={toggleMenu}
-          aria-label="Toggle menu"
-        >
-          {isMenuOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
-        </button>
       </div>
 
-      {/* MOBILE MENU */}
-      {isMenuOpen && (
-        <div className="absolute top-full left-0 right-0 md:hidden bg-slate-950/95 border-b border-cyan-900/30 backdrop-blur">
-          <nav className="flex flex-col gap-2 p-4">
-            <a href="https://next.arwes.dev/" target="_blank" rel="noopener noreferrer">
-              <ButtonSimple 
-                tabIndex={-1}
-                title="Documentation"
-                className="w-full"
-              >
-                <span className="text-sm">Docs</span>
-              </ButtonSimple>
-            </a>
-
-            <a href="https://github.com/arwes/arwes" target="_blank" rel="noopener noreferrer">
-              <ButtonSimple 
-                tabIndex={-1}
-                title="GitHub"
-                className="w-full"
-              >
-                <Github className="w-4 h-4" />
-                <span className="text-sm">GitHub</span>
-              </ButtonSimple>
-            </a>
-
-            <a href="https://discord.gg/arwes" target="_blank" rel="noopener noreferrer">
-              <ButtonSimple 
-                tabIndex={-1}
-                title="Discord"
-                className="w-full"
-              >
-                <Discord className="w-4 h-4" />
-                <span className="text-sm">Discord</span>
-              </ButtonSimple>
-            </a>
-          </nav>
-        </div>
-      )}
+      {/* MOBILE MENU - Placeholder untuk MobileMenu component */}
+      {/* TODO: Implement MobileMenu component dengan Nav dan MobileLinks */}
     </Animated>
   )
 })
