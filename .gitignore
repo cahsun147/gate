@@ -44,5 +44,4 @@ app/api/test-api/
 #not-upload yet
 app/pumpfun-degen
 wsanal
-.vscode
-.bolt
+#docs/
