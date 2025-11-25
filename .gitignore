@@ -42,6 +42,5 @@ next-env.d.ts
 app/api/test-api/
 
 #not-upload yet
-app/pumpfun-degen
 wsanal
-#docs/
+docs/
