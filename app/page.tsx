@@ -2,10 +2,11 @@
 
 import React from 'react'
 import { Animator, Animated, BleepsOnAnimator, cx } from '@arwes/react'
+import Link from 'next/link'
 import { Page, Codepen, CollageFrame, DashboardSpeed } from 'iconoir-react'
 
-import { type BleepNames, theme } from '@/config'
-import { ButtonSimple } from '@/components/ButtonSimple'
+import { type BleepNames, settings, theme } from '@/config'
+import { ArwesLogoType, ButtonSimple } from '@/components'
 
 export default (): JSX.Element => {
   return (
@@ -14,40 +15,23 @@ export default (): JSX.Element => {
 
       <Animated
         as="main"
-        className={cx(
-          'flex flex-col justify-start items-center',
-          'min-h-[calc(100vh-60px)] md:min-h-[calc(100vh-64px)] w-full',
-          'pt-20 md:pt-32 px-6 md:px-12 pb-6 md:pb-12 m-auto'
-        )}
+        className={cx('flex flex-col justify-center items-center gap-4 m-auto p-6', 'md:gap-8')}
         animated={[['y', theme.space(6), 0, 0]]}
       >
-        {/* TITLE SECTION */}
         <Animator>
-          <Animated 
-            as="h1" 
-            className="text-center mb-4"
-            animated={[['y', theme.space(4), 0, 0]]}
-          >
-            <div 
-              className="text-5xl md:text-6xl lg:text-7xl font-bold text-cyan-400"
-              style={{
-                textShadow: '0 0 20px rgba(0, 255, 255, 0.8), 0 0 40px rgba(0, 200, 255, 0.6)',
-                letterSpacing: '0.1em',
-                fontFamily: 'Tomorrow, sans-serif'
-              }}
-            >
-              ARWES
-            </div>
+          <Animated as="h1" className="pb-2" title={settings.title}>
+            <ArwesLogoType className="w-[200px] md:w-[240px] xl:w-[280px]" />
           </Animated>
         </Animator>
 
-        {/* SUBTITLE SECTION */}
         <Animator>
           <Animated
             as="p"
             className={cx(
-              'text-center text-sm md:text-base',
-              'text-cyan-300 select-none mb-8 md:mb-12'
+              'font-body leading-none text-size-7 select-none',
+              'text-primary-main-3',
+              'md:text-size-6',
+              'xl:text-size-5'
             )}
             animated={['flicker']}
           >
@@ -55,59 +39,57 @@ export default (): JSX.Element => {
           </Animated>
         </Animator>
 
-        {/* BUTTONS SECTION */}
         <Animator>
           <Animated
             as="nav"
             className="flex flex-row justify-center items-center gap-2 md:gap-4"
             animated={['flicker']}
           >
-            <a href="https://next.arwes.dev/" target="_blank" rel="noopener noreferrer">
+            <Link href="/docs">
               <ButtonSimple
                 tabIndex={-1}
                 title="Go to Documentation"
                 animated={[['x', theme.spacen(-6), 0, 0]]}
               >
-                <Page />
+                <Page className="text-size-[1.5em] xhidden x2sm:block" />
                 <span>Docs</span>
               </ButtonSimple>
-            </a>
+            </Link>
 
-            <a href="https://next.arwes.dev/" target="_blank" rel="noopener noreferrer">
+            <Link href="/demos">
               <ButtonSimple
                 tabIndex={-1}
                 title="Go to Demos"
                 animated={[['x', theme.spacen(-3), 0, 0]]}
               >
-                <CollageFrame />
+                <CollageFrame className="text-size-[1.5em] xhidden x2sm:block" />
                 <span>Demos</span>
               </ButtonSimple>
-            </a>
+            </Link>
 
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+            <a href={settings.apps.play.url}>
               <ButtonSimple
                 tabIndex={-1}
                 title="Go to Playground"
                 animated={[['x', theme.spacen(3), 0, 0]]}
               >
-                <Codepen />
+                <Codepen className="text-size-[1.5em] xhidden x2sm:block" />
                 <span>Play</span>
               </ButtonSimple>
             </a>
 
-            <a href="https://docs.arwes.dev" target="_blank" rel="noopener noreferrer">
+            <a href={settings.apps.perf.url}>
               <ButtonSimple
                 tabIndex={-1}
                 title="Go to Performance"
                 animated={[['x', theme.spacen(6), 0, 0]]}
               >
-                <DashboardSpeed />
+                <DashboardSpeed className="text-size-[1.5em] xhidden x2sm:block" />
                 <span>Perf</span>
               </ButtonSimple>
             </a>
           </Animated>
         </Animator>
-
       </Animated>
     </Animator>
   )
