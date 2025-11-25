@@ -43,4 +43,5 @@ app/api/test-api/
 
 #not-upload yet
 wsanal
-docs/
+# docs folder - only for reference/examples
+/docs/

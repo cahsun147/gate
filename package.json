@@ -11,7 +11,7 @@
     "flask-dev-local": "set FLASK_DEBUG=1 && py -m flask --app api/index run -p 5328",
     "next-dev": "next dev",
     "dev": "concurrently \"npm run next-dev\" \"npm run flask-dev\"",
-    "dev-local": "concurrently \"npm run next-dev\" \"npm run flask-dev-local\"",
+    "dev-local": "concurrently \"npm run next-dev\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

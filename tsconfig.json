@@ -23,5 +23,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "node_modules/react-day-picker"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "docs"]
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Animator, Animated, BleepsOnAnimator, cx } from '@arwes/react'
 import Link from 'next/link'
 import { Page, Codepen, CollageFrame, DashboardSpeed } from 'iconoir-react'
@@ -8,7 +8,18 @@ import { Page, Codepen, CollageFrame, DashboardSpeed } from 'iconoir-react'
 import { type BleepNames, settings, theme } from '@/config'
 import { ArwesLogoType, ButtonSimple } from '@/components'
 
-export default (): JSX.Element => {
+export default function HomePage(): JSX.Element {
+  // Fix untuk mencegah error hidrasi
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return <div style={{ minHeight: '100vh' }} />
+  }
+
   return (
     <Animator combine manager="sequenceReverse">
       <BleepsOnAnimator<BleepNames> transitions={{ entering: 'intro' }} continuous />
@@ -45,32 +56,39 @@ export default (): JSX.Element => {
             className="flex flex-row justify-center items-center gap-2 md:gap-4"
             animated={['flicker']}
           >
-            <Link href="/docs">
-              <ButtonSimple
-                tabIndex={-1}
-                title="Go to Documentation"
-                animated={[['x', theme.spacen(-6), 0, 0]]}
-              >
-                <Page className="text-size-[1.5em] xhidden x2sm:block" />
-                <span>Docs</span>
-              </ButtonSimple>
+            {/* Link 1: Docs -> Google */}
+            <Link href="https://google.com" target="_blank">
+              <div className="cursor-pointer">
+                <ButtonSimple
+                  tabIndex={-1}
+                  title="Go to Google"
+                  animated={[['x', theme.spacen(-6), 0, 0]]}
+                >
+                  <Page className="text-size-[1.5em] xhidden x2sm:block" />
+                  <span>Docs</span>
+                </ButtonSimple>
+              </div>
             </Link>
 
-            <Link href="/demos">
-              <ButtonSimple
-                tabIndex={-1}
-                title="Go to Demos"
-                animated={[['x', theme.spacen(-3), 0, 0]]}
-              >
-                <CollageFrame className="text-size-[1.5em] xhidden x2sm:block" />
-                <span>Demos</span>
-              </ButtonSimple>
+            {/* Link 2: Demos -> Google */}
+            <Link href="https://google.com" target="_blank">
+              <div className="cursor-pointer">
+                <ButtonSimple
+                  tabIndex={-1}
+                  title="Go to Google"
+                  animated={[['x', theme.spacen(-3), 0, 0]]}
+                >
+                  <CollageFrame className="text-size-[1.5em] xhidden x2sm:block" />
+                  <span>Demos</span>
+                </ButtonSimple>
+              </div>
             </Link>
 
-            <a href={settings.apps.play.url}>
+            {/* Link 3: Play -> Google */}
+            <a href="https://google.com" target="_blank" rel="noreferrer">
               <ButtonSimple
                 tabIndex={-1}
-                title="Go to Playground"
+                title="Go to Google"
                 animated={[['x', theme.spacen(3), 0, 0]]}
               >
                 <Codepen className="text-size-[1.5em] xhidden x2sm:block" />
@@ -78,10 +96,11 @@ export default (): JSX.Element => {
               </ButtonSimple>
             </a>
 
-            <a href={settings.apps.perf.url}>
+            {/* Link 4: Perf -> Google */}
+            <a href="https://google.com" target="_blank" rel="noreferrer">
               <ButtonSimple
                 tabIndex={-1}
-                title="Go to Performance"
+                title="Go to Google"
                 animated={[['x', theme.spacen(6), 0, 0]]}
               >
                 <DashboardSpeed className="text-size-[1.5em] xhidden x2sm:block" />
