@@ -56,5 +56,4 @@ const MenuItem = memo((props: MenuProps): JSX.Element => {
   )
 })
 
-export type { MenuProps }
 export { MenuItem }

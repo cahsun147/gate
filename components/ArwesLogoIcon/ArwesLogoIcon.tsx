@@ -55,5 +55,4 @@ const ArwesLogoIcon = memo((props: ArwesLogoIconProps): JSX.Element => {
   )
 })
 
-export type { ArwesLogoIconProps }
 export { ArwesLogoIcon }

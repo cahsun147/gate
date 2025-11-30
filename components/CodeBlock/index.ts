@@ -1,2 +1,1 @@
-export type { CodeBlockProps } from './CodeBlock'
-export { CodeBlock } from './CodeBlock'
+export * from './CodeBlock'

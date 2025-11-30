@@ -113,5 +113,4 @@ const Modal = memo((props: ModalProps): JSX.Element => {
   )
 })
 
-export type { ModalProps }
 export { Modal }

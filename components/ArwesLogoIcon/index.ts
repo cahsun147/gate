@@ -1,2 +1,1 @@
-export type { ArwesLogoIconProps } from './ArwesLogoIcon'
-export { ArwesLogoIcon } from './ArwesLogoIcon'
+export * from './ArwesLogoIcon'

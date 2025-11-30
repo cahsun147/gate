@@ -1,1 +1,1 @@
-export { LayoutContent } from './LayoutContent'
+export * from './LayoutContent'

@@ -90,5 +90,4 @@ const Background = memo((props: BackgroundProps): ReactElement => {
   )
 })
 
-export type { BackgroundProps }
 export { Background }

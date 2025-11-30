@@ -84,5 +84,5 @@ const ButtonSimple = memo((props: ButtonSimpleProps): JSX.Element => {
   )
 })
 
-export type { ButtonSimpleProps }
+
 export { ButtonSimple }

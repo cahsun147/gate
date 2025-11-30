@@ -108,5 +108,5 @@ const Card = memo((props: CardProps): JSX.Element => {
   )
 })
 
-export type { CardProps }
+
 export { Card }

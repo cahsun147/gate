@@ -1,1 +1,1 @@
-export { FrameAlert } from './FrameAlert'
+export * from './FrameAlert'
