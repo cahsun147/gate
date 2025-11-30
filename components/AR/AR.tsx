@@ -32,7 +32,7 @@ const AR = {
             <NavPath
               animated={{
                 transitions: {
-                  entering: ({ $, duration }: { $: (selector: string) => Element; duration: number }) =>
+                  entering: ({ $, duration }: any) =>
                     animate(
                       $(':scope > *'),
                       { opacity: [0, 1, 0.5, 1] },
@@ -40,7 +40,7 @@ const AR = {
                     ),
                   exiting: { opacity: [1, 0, 0.5, 0] }
                 }
-              }}
+              } as any}
             />
           </Animator>
         </div>

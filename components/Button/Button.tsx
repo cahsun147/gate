@@ -87,4 +87,5 @@ const Button = memo((props: ButtonProps): JSX.Element => {
   )
 })
 
+export type { ButtonProps }
 export { Button }
