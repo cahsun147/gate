@@ -11,6 +11,7 @@ import {
 } from '@arwes/react'
 
 import { type BleepNames, theme } from '@/config'
+import styles from './Button.module.css'
 
 interface ButtonProps extends HTMLProps<HTMLButtonElement> {
   className?: string
@@ -35,6 +36,7 @@ const Button = memo((props: ButtonProps): JSX.Element => {
         'text-secondary-main-2',
         'xl:text-size-9',
         'hover:text-secondary-high-2',
+        styles.root,
         className
       )}
       animated={animated}
@@ -75,26 +77,11 @@ const Button = memo((props: ButtonProps): JSX.Element => {
           'relative',
           'flex-1 flex flex-row justify-center items-center',
           'gap-2 px-6 leading-[2rem]',
-          'xl:px-8'
+          'xl:px-8',
+          styles.content
         )}
-        style={{
-          '--svg-transition': 'transition-transform ease-out duration-200'
-        } as React.CSSProperties}
       >
-        {React.Children.map(children, (child, index) => {
-          if (React.isValidElement(child) && child.type === 'svg') {
-            return React.cloneElement(child as React.ReactElement<any>, {
-              className: cx(
-                child.props.className,
-                'transition-transform ease-out duration-200',
-                'w-[1.25em] h-[1.25em]',
-                index === 0 && 'group-hover:-translate-x-1',
-                index > 0 && 'group-hover:translate-x-1'
-              )
-            })
-          }
-          return child
-        })}
+        {children}
       </div>
     </Animated>
   )

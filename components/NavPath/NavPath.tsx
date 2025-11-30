@@ -1,7 +1,7 @@
 import { usePathname } from 'next/navigation'
-
-import { Breadcrumbs, type BreadcrumbsProps } from './Breadcrumbs'
 import { memo } from '@arwes/react'
+
+import { Breadcrumbs, type BreadcrumbsProps } from '../Breadcrumbs'
 
 type NavPathProps = Omit<BreadcrumbsProps, 'items'>
 

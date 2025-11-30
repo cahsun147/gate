@@ -1,0 +1,24 @@
+.root {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+}
+
+.frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+}
+
+.frame [data-name='bg'] {
+  fill: rgba(0, 0, 0, 0.8);
+  stroke: rgba(0, 255, 255, 0.3);
+}
+
+.frame [data-name='line'] {
+  fill: none;
+  stroke: rgba(0, 255, 255, 0.8);
+}

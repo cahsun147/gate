@@ -12,7 +12,7 @@ import {
 import { usePathname } from 'next/navigation'
 
 import { type BleepNames, theme } from '@/config'
-import { useAppBreakpoint } from './tools'
+import { useAppBreakpoint } from '../tools/useAppBreakpoint'
 
 type LayoutContentProps = {
   className?: string

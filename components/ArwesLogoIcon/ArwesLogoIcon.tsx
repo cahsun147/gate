@@ -1,5 +1,7 @@
 import { Animated, type AnimatedProp, cx, memo } from '@arwes/react'
 
+import styles from './ArwesLogoIcon.module.css'
+
 interface ArwesLogoIconProps {
   className?: string
   animated?: AnimatedProp
@@ -11,13 +13,13 @@ const ArwesLogoIcon = memo((props: ArwesLogoIconProps): JSX.Element => {
   return (
     <Animated<SVGSVGElement>
       as="svg"
-      className={cx(className)}
+      className={cx(styles.root, className)}
       animated={animated}
       viewBox="0 0 1000 1000"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <g className={cx(hasRotation && 'animate-spin')}>
+      <g className={cx(hasRotation && styles.rotation)}>
         <path
           data-name="center"
           d="M499.904 655.474C580.765 655.474 646.316 588.994 646.316 506.988C646.316 424.981 580.765 358.502 499.904 358.502C419.044 358.502 353.493 424.981 353.493 506.988C353.493 588.994 419.044 655.474 499.904 655.474Z"
@@ -53,4 +55,5 @@ const ArwesLogoIcon = memo((props: ArwesLogoIconProps): JSX.Element => {
   )
 })
 
+export type { ArwesLogoIconProps }
 export { ArwesLogoIcon }

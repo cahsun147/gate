@@ -2,32 +2,7 @@ import React, { type HTMLAttributes, type ReactNode } from 'react'
 import { type AnimatedProp, Animated, cx, memo, useBleeps } from '@arwes/react'
 
 import { type BleepNames } from '@/config'
-
-// Add MenuItem styles to document
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style')
-  style.textContent = `
-    [data-menu-item] a,
-    [data-menu-item] button {
-      flex: 1;
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: center;
-      gap: 0.5rem;
-      padding-left: 0.375rem;
-      padding-right: 0.375rem;
-      height: 100%;
-      color: currentColor;
-      font: inherit;
-    }
-
-    [data-menu-item] svg {
-      font-size: 1.5em;
-    }
-  `
-  document.head.appendChild(style)
-}
+import styles from './MenuItem.module.css'
 
 interface MenuProps extends HTMLAttributes<HTMLDivElement> {
   className?: string
@@ -45,7 +20,6 @@ const MenuItem = memo((props: MenuProps): JSX.Element => {
     <Animated
       {...otherProps}
       as="li"
-      data-menu-item
       className={cx(
         'relative',
         'flex flex-row justify-center items-center gap-2',
@@ -68,13 +42,11 @@ const MenuItem = memo((props: MenuProps): JSX.Element => {
         'after:border-t-current',
         'hover:after:scale-x-[1]',
         //
+        styles.root,
         className
       )}
-      style={{
-        '--menu-item-svg-size': '1.5em'
-      } as React.CSSProperties}
       animated={animated}
-      onClick={(event: any) => {
+      onClick={(event) => {
         otherProps.onClick?.(event)
         bleeps.click?.play()
       }}
@@ -84,4 +56,5 @@ const MenuItem = memo((props: MenuProps): JSX.Element => {
   )
 })
 
+export type { MenuProps }
 export { MenuItem }

@@ -1,0 +1,22 @@
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: transparent;
+}
+
+.root [data-frame] [data-name='bg'] {
+  fill: rgba(0, 255, 255, 0.15);
+  stroke: rgba(0, 255, 255, 0.3);
+  stroke-width: 1;
+}
+
+.root [data-frame] [data-name='line'] {
+  fill: none;
+  stroke: rgba(0, 255, 255, 0.8);
+  stroke-width: 4;
+}

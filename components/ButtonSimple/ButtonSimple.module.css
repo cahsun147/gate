@@ -1,0 +1,27 @@
+.root {
+  position: relative;
+  display: flex;
+  gap: 0.375rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.content {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0 0.75rem;
+}
+
+.content svg {
+  width: 1.25em;
+  height: 1.25em;
+  flex-shrink: 0;
+}

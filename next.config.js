@@ -2,6 +2,7 @@
 const nextConfig = {
   // Tambahan dari Arwes (direkomendasikan)
   reactStrictMode: false,
+  transpilePackages: ['@arwes/react', '@arwes/core', 'iconoir-react'],
 
   // Di bawah ini adalah konfigurasi PENTING Anda yang sudah ada
   // (JANGAN DIHAPUS)

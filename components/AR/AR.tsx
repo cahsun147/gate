@@ -5,13 +5,13 @@ import { ArrowLeft, ArrowRight, FastArrowRight, OpenNewWindow } from 'iconoir-re
 import { animate, stagger } from 'motion'
 
 import { settings, theme } from '@/config'
-import { type HrProps, Hr } from './Hr'
-import { Button } from './Button'
-import { ButtonContent } from './ButtonContent'
-import { type TableProps, type RowProps, type CellProps, Table, Row, Cell } from './Table'
-import { type CodeBlockProps, CodeBlock } from './CodeBlock'
-import { type BreadcrumbsProps, Breadcrumbs } from './Breadcrumbs'
-import { NavPath } from './NavPath'
+import { type HrProps, Hr } from '../Hr'
+import { Button } from '../Button'
+import { ButtonContent } from '../ButtonContent'
+import { type TableProps, type RowProps, type CellProps, Table, Row, Cell } from '../Table'
+import { type CodeBlockProps, CodeBlock } from '../CodeBlock'
+import { type BreadcrumbsProps, Breadcrumbs } from '../Breadcrumbs'
+import { NavPath } from '../NavPath'
 
 const AR = {
   Header: ({ children, ...props }: HTMLAttributes<HTMLDivElement>): JSX.Element => (
@@ -32,7 +32,7 @@ const AR = {
             <NavPath
               animated={{
                 transitions: {
-                  entering: ({ $, duration }) =>
+                  entering: ({ $, duration }: { $: (selector: string) => Element; duration: number }) =>
                     animate(
                       $(':scope > *'),
                       { opacity: [0, 1, 0.5, 1] },
@@ -112,11 +112,11 @@ const AR = {
         as="ul"
         animated={{
           transitions: {
-            entering: ({ $, duration }) =>
+            entering: ({ $, duration }: any) =>
               animate($('li'), { opacity: [0, 1, 0.5, 1] }, { duration, delay: stagger(0.02) }),
             exiting: { opacity: [1, 0, 0.5, 0] }
           }
-        }}
+        } as any}
       >
         {children}
       </Animated>
@@ -130,11 +130,11 @@ const AR = {
         as="ol"
         animated={{
           transitions: {
-            entering: ({ $, duration }) =>
+            entering: ({ $, duration }: any) =>
               animate($('li'), { opacity: [0, 1, 0.5, 1] }, { duration, delay: stagger(0.02) }),
             exiting: { opacity: [1, 0, 0.5, 0] }
           }
-        }}
+        } as any}
       >
         {children}
       </Animated>
@@ -181,7 +181,7 @@ const AR = {
           )}
           animated={{
             transitions: {
-              entering: ({ $, duration }) =>
+              entering: ({ $, duration }: any) =>
                 animate(
                   $('button'),
                   { opacity: [0, 1, 0.5, 1] },
@@ -189,7 +189,7 @@ const AR = {
                 ),
               exiting: { opacity: [1, 0, 0.5, 0] }
             }
-          }}
+          } as any}
         >
           {props.links.map(({ href, target, text, icon }) => (
             <Link key={href} className="w-full" href={href} target={target}>

@@ -1,0 +1,32 @@
+.root {
+  position: relative;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.content {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+.content svg {
+  transition: transform 200ms ease-out;
+  width: 1.25em;
+  height: 1.25em;
+  flex-shrink: 0;
+}
+
+.root:hover .content svg {
+  transform: translateX(0.25rem);
+}

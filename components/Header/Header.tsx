@@ -30,31 +30,13 @@ import {
 } from 'iconoir-react'
 
 import { atomAudioEnabled, atomMotionEnabled, settings, theme } from '@/config'
-import { useAppBleeps, useAppBreakpoint } from './tools'
-import { ArwesLogoIcon } from './ArwesLogoIcon'
-import { ArwesLogoType } from './ArwesLogoType'
-import { Menu } from './Menu'
-import { MenuItem } from './MenuItem'
-
-// Add keyframes to document
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style')
-  style.textContent = `
-    @keyframes logoBlink {
-      0% {
-        opacity: 0.6;
-      }
-      1% {
-        opacity: 1;
-      }
-      2%,
-      100% {
-        opacity: 0.6;
-      }
-    }
-  `
-  document.head.appendChild(style)
-}
+import { useAppBleeps, useAppBreakpoint } from '../tools'
+import { ArwesLogoIcon } from '../ArwesLogoIcon'
+import { ArwesLogoType } from '../ArwesLogoType'
+import { Menu } from '../Menu'
+import { MenuItem } from '../MenuItem'
+import { MobileMenu } from './MobileMenu'
+import styles from './Header.module.css'
 
 interface HeaderProps {
   className?: string
@@ -89,11 +71,8 @@ const Header = memo((props: HeaderProps): JSX.Element => {
   return (
     <Animated
       as="header"
-      className={cx('flex justify-center items-center select-none', className)}
+      className={cx('flex justify-center items-center select-none', styles.root, className)}
       animated={animated}
-      style={{
-        '--logo-blink': `logoBlink 30s infinite 3s linear`
-      } as React.CSSProperties}
     >
       <div className={cx('flex mx-auto p-2 w-full max-w-screen-3xl', 'md:px-4', 'xl:py-4')}>
         <div className={cx('relative flex-1 flex px-4')}>
@@ -131,22 +110,14 @@ const Header = memo((props: HeaderProps): JSX.Element => {
             {/* LEFT PANEL */}
             <Animator combine manager="stagger" refreshOn={[isIndex, isMD]}>
               <Animated className="flex flex-row gap-4" animated={[['x', theme.spacen(4), 0, 0]]}>
-                <Link
-                  className={cx('transition-opacity ease-out duration-200')}
-                  style={{
-                    opacity: 0.6,
-                    animation: 'logoBlink 30s infinite 3s linear'
-                  }}
-                  href="/"
-                  onClick={() => bleeps.click?.play()}
-                >
+                <Link className={styles.logo} href="/" onClick={() => bleeps.click?.play()}>
                   <h1
                     className={cx('flex flex-row justify-center items-center gap-2', HEIGHT_CLASS)}
                     title={settings.title}
                   >
                     <Animator>
                       <ArwesLogoIcon
-                        className={cx('w-5 h-5 md:w-6 md:h-6')}
+                        className={cx('w-5 h-5 md:w-6 md:h-6', styles.logoImage)}
                         animated={['flicker']}
                       />
                     </Animator>
@@ -339,8 +310,8 @@ const Header = memo((props: HeaderProps): JSX.Element => {
         </div>
       </div>
 
-      {/* MOBILE MENU - Placeholder untuk MobileMenu component */}
-      {/* TODO: Implement MobileMenu component dengan Nav dan MobileLinks */}
+      {/* MOBILE MENU */}
+      <MobileMenu isMenuOpen={isMenuOpen} closeMenu={closeMenu} />
     </Animated>
   )
 })

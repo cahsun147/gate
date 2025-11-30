@@ -10,6 +10,7 @@ import {
 } from '@arwes/react'
 
 import { type BleepNames, theme } from '@/config'
+import styles from './ButtonSimple.module.css'
 
 interface ButtonSimpleProps extends HTMLProps<HTMLButtonElement> {
   className?: string
@@ -35,6 +36,7 @@ const ButtonSimple = memo((props: ButtonSimpleProps): JSX.Element => {
         'md:text-size-10',
         'xl:text-size-9',
         'hover:text-secondary-high-2',
+        styles.root,
         className
       )}
       animated={animated}
@@ -72,7 +74,8 @@ const ButtonSimple = memo((props: ButtonSimpleProps): JSX.Element => {
           'relative',
           'flex-1 flex flex-row justify-center items-center gap-1.5',
           'px-3 py-0 leading-[1.75rem]',
-          'sm:px-4 sm:gap-2 sm:leading-[2rem]'
+          'sm:px-4 sm:gap-2 sm:leading-[2rem]',
+          styles.content
         )}
       >
         {children}
@@ -81,4 +84,5 @@ const ButtonSimple = memo((props: ButtonSimpleProps): JSX.Element => {
   )
 })
 
+export type { ButtonSimpleProps }
 export { ButtonSimple }

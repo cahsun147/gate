@@ -18,7 +18,7 @@ import {
 } from 'iconoir-react'
 
 import { settings, theme } from '@/config'
-import { IconTailwind, IconReact, IconSolid, IconSvelte } from './icons'
+import { IconTailwind, IconReact, IconSolid, IconSvelte } from '../icons'
 
 type ListProps = {
   className?: string

@@ -12,24 +12,8 @@ import {
 import { Xmark as IconClose } from 'iconoir-react'
 
 import { type BleepNames } from '@/config'
-import { Hr } from './Hr'
-
-// Add Modal styles to document
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style')
-  style.textContent = `
-    [data-modal-frame] [data-name='bg'] {
-      fill: rgba(var(--arwes-primary-main-12), 0.8);
-      stroke: rgba(var(--arwes-primary-main-9), 0.5);
-    }
-
-    [data-modal-frame] [data-name='line'] {
-      fill: none;
-      stroke: var(--arwes-primary-main-7);
-    }
-  `
-  document.head.appendChild(style)
-}
+import { Hr } from '../Hr'
+import styles from './Modal.module.css'
 
 interface ModalProps {
   className?: string
@@ -53,6 +37,7 @@ const Modal = memo((props: ModalProps): JSX.Element => {
       role="dialog"
       className={cx(
         'z-20 fixed inset-0 flex justify-center items-center p-6',
+        styles.root,
         className
       )}
     >
@@ -68,7 +53,7 @@ const Modal = memo((props: ModalProps): JSX.Element => {
       <Animated className="relative flex-1 flex flex-col m-auto py-6 max-w-md min-h-0 max-h-full">
         <FrameKranox
           elementRef={frameRef}
-          data-modal-frame
+          className={styles.frame}
           styled={false}
           animated={false}
           padding={2}
@@ -128,4 +113,5 @@ const Modal = memo((props: ModalProps): JSX.Element => {
   )
 })
 
+export type { ModalProps }
 export { Modal }

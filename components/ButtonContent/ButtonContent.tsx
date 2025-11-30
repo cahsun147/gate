@@ -2,6 +2,7 @@ import React, { type HTMLProps, type ReactNode } from 'react'
 import { type AnimatedProp, memo, Animated, FrameOctagon, useBleeps, cx } from '@arwes/react'
 
 import { type BleepNames, theme } from '@/config'
+import styles from './ButtonContent.module.css'
 
 interface ButtonContentProps extends HTMLProps<HTMLButtonElement> {
   className?: string
@@ -26,6 +27,7 @@ const ButtonContent = memo((props: ButtonContentProps): JSX.Element => {
         'text-secondary-low-2',
         'xl:text-size-8',
         'hover:text-secondary-high-3',
+        styles.root,
         className
       )}
       animated={animated}
@@ -72,7 +74,8 @@ const ButtonContent = memo((props: ButtonContentProps): JSX.Element => {
         className={cx(
           'relative',
           'flex-1 flex flex-row justify-between items-center',
-          'gap-2 px-4 py-2'
+          'gap-2 px-4 py-2',
+          styles.content
         )}
       >
         {children}

@@ -13,6 +13,7 @@ import {
 } from '@arwes/react'
 
 import { theme } from '@/config'
+import styles from './Card.module.css'
 
 type CardProps = {
   title: string
@@ -29,7 +30,7 @@ const Card = memo((props: CardProps): JSX.Element => {
   useFrameAssembler(frameRef)
 
   return (
-    <Animated as="article" className={cx('relative group flex')}>
+    <Animated as="article" className={cx('relative group flex', styles.root)}>
       <FrameNefrex
         elementRef={frameRef}
         className="opacity-70 transition-all ease-out duration-200 group-hover:opacity-100"
@@ -107,4 +108,5 @@ const Card = memo((props: CardProps): JSX.Element => {
   )
 })
 
+export type { CardProps }
 export { Card }
