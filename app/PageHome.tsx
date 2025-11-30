@@ -45,7 +45,7 @@ const PageHome = (): JSX.Element => {
             className="flex flex-row justify-center items-center gap-2 md:gap-4"
             animated={['flicker']}
           >
-            <Link href="/docs">
+            <Link href="https://next.arwes.dev/">
               <ButtonSimple
                 tabIndex={-1}
                 title="Go to Documentation"
@@ -56,7 +56,7 @@ const PageHome = (): JSX.Element => {
               </ButtonSimple>
             </Link>
 
-            <Link href="/demos">
+            <Link href="https://next.arwes.dev/">
               <ButtonSimple
                 tabIndex={-1}
                 title="Go to Demos"
