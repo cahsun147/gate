@@ -79,15 +79,18 @@ const Background = memo((props: BackgroundProps): ReactElement => {
         </Animated>
       </Animator>
 
-      <Animator duration={{ enter: 1 }}>
-        <Dots color="hsla(180, 50%, 70%, 0.15)" size={2} distance={40} originInverted />
-      </Animator>
+      <div className="absolute inset-0 overflow-hidden">
+        <Animator duration={{ enter: 1 }}>
+          <Dots color="hsla(180, 50%, 70%, 0.15)" size={2} distance={40} originInverted />
+        </Animator>
 
-      <Animator duration={{ enter: 1, interval: 4 }}>
-        <Puffs color="hsla(180, 50%, 70%, 0.25)" quantity={20} />
-      </Animator>
+        <Animator duration={{ enter: 1, interval: 4 }}>
+          <Puffs color="hsla(180, 50%, 70%, 0.25)" quantity={20} />
+        </Animator>
+      </div>
     </Animated>
   )
 })
 
+export type { BackgroundProps }
 export { Background }

@@ -18,8 +18,7 @@ const createTWPalette = (
 export const tailwind: Config = {
   content: [
     './app/**/*.{js,ts,jsx,tsx}',
-    './components/**/*.{js,ts,jsx,tsx}',
-    './node_modules/@arwes/**/*.{js,ts,jsx,tsx}'
+    './components/**/*.{js,ts,jsx,tsx}'
   ],
   plugins: [require('@tailwindcss/typography')],
   theme: {

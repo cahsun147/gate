@@ -5,6 +5,8 @@ import {
   createThemeUnit
 } from '@arwes/react'
 
+import { settings } from './settings'
+
 export const theme = Object.freeze({
   // REMs unit.
   space: createThemeUnit((index) => `${index * 0.25}rem`),
@@ -25,7 +27,7 @@ export const theme = Object.freeze({
   ]),
 
   colors: {
-    background: 'hsl(180, 20%, 4%)',
+    background: settings.background,
     primary: {
       low: createThemeColor([
         'hsl(180, 14.29%, 97.25%)',

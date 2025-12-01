@@ -1,4 +1,4 @@
-export const settings = {
+export const settings = Object.freeze({
   title: 'XGate',
   description: 'Futuristic Sci-Fi UI Web Framework',
   background: 'hsl(180, 20%, 4%)',
@@ -12,4 +12,4 @@ export const settings = {
       url: 'https://www.google.com'
     }
   }
-}
+} as const)
