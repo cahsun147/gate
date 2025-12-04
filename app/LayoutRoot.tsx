@@ -37,12 +37,12 @@ const LayoutRoot = (props: { children: ReactNode }): JSX.Element => {
       <AnimatorGeneralProvider {...animatorGeneralSettings} disabled={!isMotionEnabled}>
         <BleepsProvider
           {...bleepsSettings}
-          common={{ ...bleepsSettings.common, disabled: !isAudioEnabled }}
+          common={{ disabled: !isAudioEnabled }}
         >
           <div
-            className="relative inset-0 overflow-hidden flex flex-col w-full h-full"
-            suppressHydrationWarning
+            className="absolute inset-0 overflow-hidden flex flex-col"
             style={{
+              // @ts-expect-error ARWES variables.
               '--arwes-frames-bg-color': theme.colors.primary.main(9, { alpha: 0.15 }),
               '--arwes-frames-line-color': theme.colors.primary.main(9, { alpha: 0.8 }),
               '--arwes-frames-deco-color': theme.colors.primary.main(7, { alpha: 0.8 }),
@@ -55,27 +55,23 @@ const LayoutRoot = (props: { children: ReactNode }): JSX.Element => {
 
               scrollbarWidth: 'thin',
               scrollbarColor: `${theme.colors.secondary.main(7)} transparent`
-            } as React.CSSProperties}
+            }}
           >
-            {/* Background Layer - Behind everything */}
-            <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+            <Animator combine>
               <Animator combine>
                 <Background />
               </Animator>
-            </div>
 
-            {/* Content Layer - In front of background */}
-            <div className="relative flex flex-col pointer-events-auto w-full h-full" style={{ zIndex: 10 }}>
               <Animator combine manager="sequence">
                 <div className="relative flex-1 flex flex-col min-w-0 min-h-0">
                   <Animator combine>
                     <Header />
                   </Animator>
 
-                  <div className="flex-1 flex min-w-0 min-h-0 overflow-auto">{props.children}</div>
+                  <div className="flex-1 flex min-w-0 min-h-0">{props.children}</div>
                 </div>
               </Animator>
-            </div>
+            </Animator>
           </div>
         </BleepsProvider>
       </AnimatorGeneralProvider>

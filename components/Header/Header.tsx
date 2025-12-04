@@ -30,7 +30,7 @@ import {
 } from 'iconoir-react'
 
 import { atomAudioEnabled, atomMotionEnabled, settings, theme } from '@/config'
-import { useAppBleeps, useAppBreakpoint } from '../tools'
+import { useAppBleeps, useAppBreakpoint } from '@/components/tools'
 import { ArwesLogoIcon } from '../ArwesLogoIcon'
 import { ArwesLogoType } from '../ArwesLogoType'
 import { Menu } from '../Menu'

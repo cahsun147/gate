@@ -1,15 +1,17 @@
+.root {
+}
 
 .logo {
+  @apply transition-opacity ease-out duration-200;
+
   opacity: 0.6;
   animation: logoBlink 30s infinite 3s linear;
-  transition: opacity 200ms ease-out;
 }
 
 .logo:hover {
   opacity: 1;
   animation: none;
 }
-
 
 @keyframes logoBlink {
   0% {

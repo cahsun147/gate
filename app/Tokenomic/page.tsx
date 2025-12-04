@@ -1,3 +1,11 @@
+import type { Metadata } from 'next'
+
+import { settings } from '@/config/settings'
 import { PageTokenomic } from './PageTokenomic'
 
-export default PageTokenomic
+export const metadata: Metadata = {
+  title: `Tokenomic | ${settings.title}`,
+  description: settings.description
+}
+
+export default (): JSX.Element => <PageTokenomic />
