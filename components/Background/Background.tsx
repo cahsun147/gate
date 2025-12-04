@@ -1,6 +1,6 @@
 import React, { type ReactElement } from 'react'
 import { usePathname } from 'next/navigation'
-import { type AnimatedProp, memo, Animator, Animated, Dots, Puffs, cx, easing } from '@arwes/react'
+import { type AnimatedProp, memo, Animator, Animated, Dots, GridLines, MovingLines, cx, easing } from '@arwes/react'
 
 interface BackgroundProps {
   className?: string
@@ -81,11 +81,15 @@ const Background = memo((props: BackgroundProps): ReactElement => {
 
       <div className="absolute inset-0 overflow-hidden">
         <Animator duration={{ enter: 1 }}>
+          <GridLines lineColor="hsla(180, 100%, 75%, 0.05)" distance={30} />
+        </Animator>
+
+        <Animator duration={{ enter: 1 }}>
           <Dots color="hsla(180, 50%, 70%, 0.15)" size={2} distance={40} originInverted />
         </Animator>
 
-        <Animator duration={{ enter: 1, interval: 4 }}>
-          <Puffs color="hsla(180, 50%, 70%, 0.25)" quantity={20} />
+        <Animator duration={{ enter: 1, interval: 10 }}>
+          <MovingLines lineColor="hsla(180, 100%, 75%, 0.07)" distance={30} sets={20} />
         </Animator>
       </div>
     </Animated>
