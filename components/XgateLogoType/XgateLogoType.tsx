@@ -2,12 +2,12 @@ import React, { type ReactElement } from 'react'
 import { type AnimatedProp, memo, Animated, cx } from '@arwes/react'
 import { animate, stagger } from 'motion'
 
-interface ArwesLogoTypeProps {
+interface XgateLogoTypeProps {
   className?: string
   animated?: AnimatedProp
 }
 
-const ArwesLogoType = memo((props: ArwesLogoTypeProps): ReactElement => {
+const XgateLogoType = memo((props: XgateLogoTypeProps): ReactElement => {
   const { className, animated } = props
   return (
     <Animated<SVGSVGElement>
@@ -23,9 +23,9 @@ const ArwesLogoType = memo((props: ArwesLogoTypeProps): ReactElement => {
         {
           transitions: {
             entering: ({ $, duration }) => {
-              const [A, R, W, E, S] = $('g')
+              const [X, G, A, T, E] = $('g')
               return animate(
-                [A, W, S, R, E],
+                [X, G, A, T, E],
                 { opacity: [0, 1, 0.5, 1] },
                 { duration, delay: stagger(0.02) }
               )
@@ -92,4 +92,4 @@ const ArwesLogoType = memo((props: ArwesLogoTypeProps): ReactElement => {
   )
 })
 
-export { ArwesLogoType }
+export { XgateLogoType }

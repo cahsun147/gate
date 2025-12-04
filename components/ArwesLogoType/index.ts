@@ -1,1 +1,0 @@
-export { ArwesLogoType } from './ArwesLogoType'

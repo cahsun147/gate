@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Page, Codepen, CollageFrame, DashboardSpeed } from 'iconoir-react'
 
 import { type BleepNames, settings, theme } from '@/config'
-import { ArwesLogoType, ButtonSimple } from '@/components'
+import { XgateLogoType, ButtonSimple } from '@/components'
 
 const PageHome = (): JSX.Element => {
   return (
@@ -20,7 +20,7 @@ const PageHome = (): JSX.Element => {
       >
         <Animator>
           <Animated as="h1" className="pb-2" title={settings.title}>
-            <ArwesLogoType className="w-[200px] md:w-[240px] xl:w-[280px]" />
+            <XgateLogoType className="w-[200px] md:w-[240px] xl:w-[280px]" />
           </Animated>
         </Animator>
 

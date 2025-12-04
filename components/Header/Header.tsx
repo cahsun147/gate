@@ -32,7 +32,7 @@ import {
 import { atomAudioEnabled, atomMotionEnabled, settings, theme } from '@/config'
 import { useAppBleeps, useAppBreakpoint } from '@/components/tools'
 import { ArwesLogoIcon } from '../ArwesLogoIcon'
-import { ArwesLogoType } from '../ArwesLogoType'
+import { XgateLogoType } from '../XgateLogoType'
 import { Menu } from '../Menu'
 import { MenuItem } from '../MenuItem'
 import { MobileMenu } from './MobileMenu'
@@ -128,7 +128,7 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                       unmountOnExited
                       unmountOnDisabled={isIndex || !isMD}
                     >
-                      <ArwesLogoType className="h-3 md:h-4" animated={['flicker']} />
+                      <XgateLogoType className="h-3 md:h-4" animated={['flicker']} />
                     </Animator>
                   </h1>
                 </Link>

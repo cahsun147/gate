@@ -1,7 +1,7 @@
 'use client'
 
 export * from './ArwesLogoIcon'
-export * from './ArwesLogoType'
+export * from './XgateLogoType'
 export * from './Background'
 export * from './AR'
 export * from './Hr'
