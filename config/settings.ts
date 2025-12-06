@@ -1,5 +1,5 @@
 export const settings = Object.freeze({
-  title: 'XGate',
+  title: 'XGATE',
   description: 'Futuristic Sci-Fi UI Web Framework',
   background: 'hsl(180, 20%, 4%)',
   version: '1.0.0-xgate',
