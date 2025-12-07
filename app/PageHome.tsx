@@ -3,7 +3,7 @@
 import React from 'react'
 import { Animator, Animated, BleepsOnAnimator, cx } from '@arwes/react'
 import Link from 'next/link'
-import { Page, Codepen, Brain, DashboardSpeed } from 'iconoir-react'
+import { Page, Codepen, Brain, Coins } from 'iconoir-react'
 
 import { type BleepNames, settings, theme } from '@/config'
 import { XgateLogoType, ButtonSimple } from '@/components'
@@ -35,7 +35,7 @@ const PageHome = (): JSX.Element => {
             )}
             animated={['flicker']}
           >
-            Futuristic Sci-Fi UI Web Framework
+            Don't Trade Blind — Illuminate the Dark Forest
           </Animated>
         </Animator>
 
@@ -78,16 +78,16 @@ const PageHome = (): JSX.Element => {
               </ButtonSimple>
             </a>
 
-            <a href={settings.apps.perf.url}>
+            <Link href="/tokenomic">
               <ButtonSimple
                 tabIndex={-1}
-                title="Go to Performance"
+                title="Go to Tokenomic"
                 animated={[['x', theme.spacen(6), 0, 0]]}
               >
-                <DashboardSpeed className="text-size-[1.5em] xhidden x2sm:block" />
-                <span>Perf</span>
+                <Coins className="text-size-[1.5em] xhidden x2sm:block" />
+                <span>Tokenomic</span>
               </ButtonSimple>
-            </a>
+            </Link>
           </Animated>
         </Animator>
       </Animated>
