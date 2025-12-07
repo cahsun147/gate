@@ -267,14 +267,14 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                     </Animator>
                     <Animator>
                       <MenuItem animated={['flicker']}>
-                        <a href="https://x.com/arwesjs" target="twitter" title="Go to X (Twitter)">
+                        <a href="https://x.com/xgatefun" target="twitter" title="Go to X (Twitter)">
                           <X />
                         </a>
                       </MenuItem>
                     </Animator>
                     <Animator>
                       <MenuItem animated={['flicker']}>
-                        <a href="https://discord.gg/s5sbTkw" target="discord" title="Go to Discord">
+                        <a href="https://discord.gg/" target="discord" title="Go to Discord">
                           <Discord />
                         </a>
                       </MenuItem>
