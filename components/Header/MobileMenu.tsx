@@ -35,7 +35,7 @@ const MobileMenu = (props: MobileMenuProps): JSX.Element => {
                 as="a"
                 className="flex justify-center font-cta leading-none text-size-10 text-primary-main-9"
                 animated={['flicker']}
-                href={`https://github.com/arwes/arwes/releases/tag/v${settings.version}`}
+                href={`https://github.com`}
                 target="version"
               >
                 v{settings.version}

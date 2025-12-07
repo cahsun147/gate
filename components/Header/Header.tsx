@@ -19,7 +19,7 @@ import {
   Settings,
   CollageFrame,
   DashboardSpeed,
-  Github,
+  Telegram,
   Discord,
   Keyframes,
   KeyframesMinus,
@@ -238,7 +238,7 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                       <MenuItem className="group hover:!text-fuchsia-300" animated={['flicker']}>
                         <a
                           className="!gap-0 group-hover:text-fuchsia-300"
-                          href="https://github.com/sponsors/romelperez"
+                          href="https://x.com/styra0x"
                           target="sponsor"
                         >
                           <Heart />
@@ -257,11 +257,11 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                     <Animator>
                       <MenuItem animated={['flicker']}>
                         <a
-                          href="https://github.com/arwes/arwes"
-                          target="github"
-                          title="Go to Github"
+                          href="https://t.me/XMOD_Deployment"
+                          target="telegram"
+                          title="Go to Telegram"
                         >
-                          <Github />
+                          <Telegram />
                         </a>
                       </MenuItem>
                     </Animator>

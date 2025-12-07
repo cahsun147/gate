@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 import { Animator, Animated, cx, memo, styleFrameClipOctagon } from '@arwes/react'
-import { Heart, Github, X, Discord } from 'iconoir-react'
+import { Heart, Telegram, X, Discord } from 'iconoir-react'
 import Link from 'next/link'
 
 import { theme } from '@/config'
@@ -48,16 +48,16 @@ const MobileLinks = memo((props: MobileLinksProps): JSX.Element => {
   const { className } = props
   return (
     <div className={cx('flex flex-row justify-between items-center gap-2', className)}>
-      <MobileLink href="https://github.com/sponsors/romelperez" target="sponsor">
+      <MobileLink href="https://x.com/styra0x" target="sponsor">
         <Heart />
       </MobileLink>
-      <MobileLink href="https://github.com/arwes/arwes" target="github">
-        <Github />
+      <MobileLink href="https://t.me/XMOD_Deployment" target="telegram">
+        <Telegram />
       </MobileLink>
-      <MobileLink href="https://x.com/arwesjs" target="x">
+      <MobileLink href="https://x.com/xgatefun" target="x">
         <X />
       </MobileLink>
-      <MobileLink href="https://discord.gg/s5sbTkw" target="discord">
+      <MobileLink href="https://discord.gg" target="discord">
         <Discord />
       </MobileLink>
     </div>
