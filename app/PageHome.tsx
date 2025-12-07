@@ -3,7 +3,7 @@
 import React from 'react'
 import { Animator, Animated, BleepsOnAnimator, cx } from '@arwes/react'
 import Link from 'next/link'
-import { Page, Codepen, CollageFrame, DashboardSpeed } from 'iconoir-react'
+import { Page, Codepen, Brain, DashboardSpeed } from 'iconoir-react'
 
 import { type BleepNames, settings, theme } from '@/config'
 import { XgateLogoType, ButtonSimple } from '@/components'
@@ -45,7 +45,7 @@ const PageHome = (): JSX.Element => {
             className="flex flex-row justify-center items-center gap-2 md:gap-4"
             animated={['flicker']}
           >
-            <Link href="https://next.arwes.dev/">
+            <Link href="/docs">
               <ButtonSimple
                 tabIndex={-1}
                 title="Go to Documentation"
@@ -56,14 +56,14 @@ const PageHome = (): JSX.Element => {
               </ButtonSimple>
             </Link>
 
-            <Link href="https://next.arwes.dev/">
+            <Link href="/chat">
               <ButtonSimple
                 tabIndex={-1}
-                title="Go to Demos"
+                title="Go to Blokchain AI Chat"
                 animated={[['x', theme.spacen(-3), 0, 0]]}
               >
-                <CollageFrame className="text-size-[1.5em] hidden sm:block" />
-                <span>Demos</span>
+                <Brain className="text-size-[1.5em] hidden sm:block" />
+                <span>AI Chat</span>
               </ButtonSimple>
             </Link>
 
