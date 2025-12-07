@@ -128,7 +128,7 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                       unmountOnExited
                       unmountOnDisabled={isIndex || !isMD}
                     >
-                      <XgateLogoType className="h-[10px] md:h-[10px] w-[20px] md:w-[20px] xl:w-[20px]" animated={['flicker']} />
+                      <XgateLogoType className="h-[50px] md:h-[50px] w-[50px] md:w-[50px] xl:w-[50px]" animated={['flicker']} />
                     </Animator>
                   </h1>
                 </Link>
