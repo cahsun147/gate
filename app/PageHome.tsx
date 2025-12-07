@@ -20,7 +20,7 @@ const PageHome = (): JSX.Element => {
       >
         <Animator>
           <Animated as="h1" className="pb-2" title={settings.title}>
-            <XgateLogoType className="w-[200px] md:w-[240px] xl:w-[420px]" />
+            <XgateLogoType className="w-[200px] md:w-[240px] xl:w-[480px]" />
           </Animated>
         </Animator>
 
