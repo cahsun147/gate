@@ -21,8 +21,8 @@ const XgateLogoType = memo((props: XgateLogoTypeProps): ReactElement => {
       <Image
         src="/images/logotype.svg"
         alt="Xgate Logo"
-        width={380}
-        height={200}
+        width={280}
+        height={100}
         priority
         style={{
           width: '100%',
