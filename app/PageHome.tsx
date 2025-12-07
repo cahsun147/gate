@@ -51,7 +51,7 @@ const PageHome = (): JSX.Element => {
                 title="Go to Documentation"
                 animated={[['x', theme.spacen(-6), 0, 0]]}
               >
-                <Page className="text-size-[1.5em] hidden sm:block" />
+                <Page className="text-size-[1.5em] xhidden x2sm:block" />
                 <span>Docs</span>
               </ButtonSimple>
             </Link>
@@ -62,7 +62,7 @@ const PageHome = (): JSX.Element => {
                 title="Go to Blokchain AI Chat"
                 animated={[['x', theme.spacen(-3), 0, 0]]}
               >
-                <Brain className="text-size-[1.5em] hidden sm:block" />
+                <Brain className="text-size-[1.5em] xhidden x2sm:block" />
                 <span>AI Chat</span>
               </ButtonSimple>
             </Link>
@@ -73,7 +73,7 @@ const PageHome = (): JSX.Element => {
                 title="Go to Playground"
                 animated={[['x', theme.spacen(3), 0, 0]]}
               >
-                <Codepen className="text-size-[1.5em] hidden sm:block" />
+                <Codepen className="text-size-[1.5em] xhidden x2sm:block" />
                 <span>Play</span>
               </ButtonSimple>
             </a>
@@ -84,7 +84,7 @@ const PageHome = (): JSX.Element => {
                 title="Go to Performance"
                 animated={[['x', theme.spacen(6), 0, 0]]}
               >
-                <DashboardSpeed className="text-size-[1.5em] hidden sm:block" />
+                <DashboardSpeed className="text-size-[1.5em] xhidden x2sm:block" />
                 <span>Perf</span>
               </ButtonSimple>
             </a>
