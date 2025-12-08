@@ -49,6 +49,16 @@ const PageDocs = (): JSX.Element => {
                 className="flex flex-row items-center gap-4"
                 animated={['flicker', ['y', theme.space(-6), 0]]}
               >
+                <Link href="/docs/dcs">
+                  <Button tabIndex={-1}>
+                    DCS <IconDocs />
+                  </Button>
+                </Link>
+                <Link href="/docs/dcs/chains">
+                  <Button tabIndex={-1}>
+                    Chains <IconDocs />
+                  </Button>
+                </Link>
                 <Link href="/">
                   <Button tabIndex={-1}>
                     Home <IconDocs />
