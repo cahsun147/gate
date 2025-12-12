@@ -7,6 +7,7 @@ require (
 	github.com/bogdanfinn/tls-client v1.11.2
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/gorilla/websocket v1.5.3
 )
 
 require (

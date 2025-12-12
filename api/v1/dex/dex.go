@@ -4,24 +4,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strings"
+	"sync"
 	"time"
 
 	"gateway/cache"
 	"gateway/types"
 
-	// --- PERBAIKAN: Pastikan 3 baris ini ada semua ---
 	fhttp "github.com/bogdanfinn/fhttp"
-	tls_client "github.com/bogdanfinn/tls-client" // <--- INI YANG HILANG
+	tls_client "github.com/bogdanfinn/tls-client"
 	"github.com/bogdanfinn/tls-client/profiles"
-
-	// ------------------------------------------------
-
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
-// (Biarkan variable allowedChains yang panjang itu tetap di sini)
 var allowedChains = map[string][]string{
 	"solana":       {"pumpswap", "raydium", "meteora", "orca", "launchlab", "pumpfun", "dexlab", "fluxbeam", "meteoradbc", "moonit", "coinchef", "vertigo", "tokenmill", "superx"},
 	"ethereum":     {"uniswap", "curve", "balancer", "pancakeswap", "solidlycom", "sushiswap", "fraxswap", "shibaswap", "ethervista", "defiswap", "verse", "9inch", "lif3", "stepn", "orion", "safemoonswap", "radioshack", "wagmi", "diamondswap", "empiredex", "swapr", "blueprint", "okxdex", "memebox", "kyberswap", "pyeswap", "templedao", "vulcandex"},
@@ -75,7 +75,141 @@ var allowedTrending = map[string]bool{
 	"h24": true,
 }
 
-// GetDex menangani permintaan untuk endpoint /api/v1/dex/:network/:address
+func extractPairAddresses(dataStr string) []string {
+	solPattern := regexp.MustCompile(`([A-Za-z0-9]{40}pump)`)
+	ethPattern := regexp.MustCompile(`(0x[0-9a-fA-F]{40})`)
+
+	solPairs := solPattern.FindAllString(dataStr, -1)
+	ethPairs := ethPattern.FindAllString(dataStr, -1)
+
+	seen := make(map[string]bool)
+	var result []string
+	for _, pair := range append(solPairs, ethPairs...) {
+		if !seen[pair] {
+			seen[pair] = true
+			result = append(result, pair)
+		}
+	}
+	return result
+}
+
+func fetchPairsViaWS(wsURL string) ([]string, error) {
+	dialer := websocket.Dialer{
+		NetDial: func(network, addr string) (net.Conn, error) {
+			return net.DialTimeout(network, addr, 30*time.Second)
+		},
+	}
+
+	header := http.Header{}
+	header.Set("Origin", "https://dexscreener.com")
+	header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+
+	ws, _, err := dialer.Dial(wsURL, header)
+	if err != nil {
+		return nil, fmt.Errorf("gagal connect ke WebSocket: %w", err)
+	}
+	defer ws.Close()
+
+	ws.SetReadDeadline(time.Now().Add(30 * time.Second))
+
+	_, message, err := ws.ReadMessage()
+	if err != nil {
+		return nil, fmt.Errorf("gagal membaca message dari WebSocket: %w", err)
+	}
+
+	dataStr := string(message)
+	if !strings.Contains(dataStr, "pairs") {
+		return nil, fmt.Errorf("response tidak mengandung 'pairs'")
+	}
+
+	return extractPairAddresses(dataStr), nil
+}
+
+func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]interface{}, error) {
+	jar := tls_client.NewCookieJar()
+	options := []tls_client.HttpClientOption{
+		tls_client.WithTimeoutSeconds(30),
+		tls_client.WithClientProfile(profiles.Chrome_124),
+		tls_client.WithRandomTLSExtensionOrder(),
+		tls_client.WithCookieJar(jar),
+	}
+
+	client, err := tls_client.NewHttpClient(tls_client.NewNoopLogger(), options...)
+	if err != nil {
+		return nil, fmt.Errorf("gagal membuat TLS client: %w", err)
+	}
+
+	var wg sync.WaitGroup
+	resultsChan := make(chan map[string]interface{}, len(addresses))
+	errChan := make(chan error, len(addresses))
+
+	for _, addr := range addresses {
+		wg.Add(1)
+		go func(address string) {
+			defer wg.Done()
+
+			usedChain := chainID
+			if usedChain == "" {
+				if strings.HasSuffix(address, "pump") && len(address) == 44 {
+					usedChain = "solana"
+				} else if strings.HasPrefix(address, "0x") && len(address) == 42 {
+					usedChain = "ethereum"
+				} else {
+					return
+				}
+			}
+
+			apiURL := fmt.Sprintf("https://api.dexscreener.com/token-pairs/v1/%s/%s", usedChain, address)
+
+			req, err := fhttp.NewRequest(http.MethodGet, apiURL, nil)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			req.Header = fhttp.Header{
+				"User-Agent":      {"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"},
+				"Accept":          {"application/json"},
+				"Accept-Language": {"en-US,en;q=0.9"},
+				"Origin":          {"https://dexscreener.com"},
+				"Referer":         {"https://dexscreener.com/"},
+			}
+
+			resp, err := client.Do(req)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			defer resp.Body.Close()
+
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			var data map[string]interface{}
+			if err := json.Unmarshal(body, &data); err != nil {
+				errChan <- err
+				return
+			}
+
+			resultsChan <- data
+		}(addr)
+	}
+
+	wg.Wait()
+	close(resultsChan)
+	close(errChan)
+
+	var results []map[string]interface{}
+	for result := range resultsChan {
+		results = append(results, result)
+	}
+
+	return results, nil
+}
+
 func GetDex(c *gin.Context) {
 	network := c.Param("network")
 	address := c.Param("address")
@@ -83,7 +217,21 @@ func GetDex(c *gin.Context) {
 	dexID := c.Query("dexId")
 	trendingScore := c.DefaultQuery("trendingscore", "h6")
 
-	// Validasi chainId jika disediakan
+	if !allowedTrending[trendingScore] {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error: "trendingscore tidak valid",
+		})
+		return
+	}
+
+	if network != "" && address != "" {
+		handleDetailRequest(c, network, address, chainID, dexID)
+	} else {
+		handleTrendingRequest(c, chainID, dexID, trendingScore)
+	}
+}
+
+func handleDetailRequest(c *gin.Context, network, address, chainID, dexID string) {
 	if chainID != "" {
 		if _, ok := allowedChains[chainID]; !ok {
 			c.JSON(http.StatusBadRequest, types.ErrorResponse{
@@ -92,7 +240,6 @@ func GetDex(c *gin.Context) {
 			return
 		}
 
-		// Validasi dexId jika chainId dan dexId disediakan
 		if dexID != "" {
 			validDex := false
 			for _, dex := range allowedChains[chainID] {
@@ -110,15 +257,6 @@ func GetDex(c *gin.Context) {
 		}
 	}
 
-	// Validasi trendingscore
-	if !allowedTrending[trendingScore] {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
-			Error: "trendingscore tidak valid",
-		})
-		return
-	}
-
-	// Cek cache terlebih dahulu
 	cacheKey := fmt.Sprintf("dex:%s:%s:%s:%s", network, address, chainID, dexID)
 	if cachedData, err := cache.GetCache(cacheKey); err == nil && cachedData != nil {
 		fmt.Printf("Cache HIT untuk key: %s\n", cacheKey)
@@ -126,31 +264,12 @@ func GetDex(c *gin.Context) {
 		return
 	}
 
-	// Konstruksi URL untuk DexScreener API
-	baseURL := "https://api.dexscreener.com/token-pairs/v1"
-	if network != "" && address != "" {
-		baseURL = fmt.Sprintf("%s/%s/%s", baseURL, network, address)
-	}
+	baseURL := fmt.Sprintf("https://api.dexscreener.com/token-pairs/v1/%s/%s", network, address)
 
-	params := url.Values{}
-	if chainID != "" {
-		params.Add("chainId", chainID)
-	}
-	if dexID != "" {
-		params.Add("dexId", dexID)
-	}
-
-	// Buat request ke DexScreener
-	fullURL := baseURL
-	if len(params) > 0 {
-		fullURL = baseURL + "?" + params.Encode()
-	}
-
-	// --- SETUP CLIENT ANTI-BOT (TLS CLIENT) ---
 	jar := tls_client.NewCookieJar()
 	options := []tls_client.HttpClientOption{
 		tls_client.WithTimeoutSeconds(30),
-		tls_client.WithClientProfile(profiles.Chrome_124), // Pura-pura jadi Chrome v124
+		tls_client.WithClientProfile(profiles.Chrome_124),
 		tls_client.WithRandomTLSExtensionOrder(),
 		tls_client.WithCookieJar(jar),
 	}
@@ -163,8 +282,7 @@ func GetDex(c *gin.Context) {
 		return
 	}
 
-	// 🔥 PERUBAHAN UTAMA: Gunakan fhttp.NewRequest (bukan http.NewRequest)
-	req, err := fhttp.NewRequest(http.MethodGet, fullURL, nil)
+	req, err := fhttp.NewRequest(http.MethodGet, baseURL, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
 			Error: "Terjadi kesalahan saat membuat request.",
@@ -172,19 +290,12 @@ func GetDex(c *gin.Context) {
 		return
 	}
 
-	// 🔥 Gunakan fhttp.Header
 	req.Header = fhttp.Header{
-		"User-Agent":         {"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"},
-		"Accept":             {"application/json, text/plain, */*"},
-		"Accept-Language":    {"en-US,en;q=0.9"},
-		"Origin":             {"https://dexscreener.com"},
-		"Referer":            {"https://dexscreener.com/"},
-		"Sec-Ch-Ua":          {"\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\""},
-		"Sec-Ch-Ua-Mobile":   {"?0"},
-		"Sec-Ch-Ua-Platform": {"\"Windows\""},
-		"Sec-Fetch-Dest":     {"empty"},
-		"Sec-Fetch-Mode":     {"cors"},
-		"Sec-Fetch-Site":     {"same-origin"},
+		"User-Agent":      {"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"},
+		"Accept":          {"application/json"},
+		"Accept-Language": {"en-US,en;q=0.9"},
+		"Origin":          {"https://dexscreener.com"},
+		"Referer":         {"https://dexscreener.com/"},
 	}
 
 	response, err := client.Do(req)
@@ -214,14 +325,98 @@ func GetDex(c *gin.Context) {
 		return
 	}
 
-	// Return response
 	newData := types.StandardResponse{
 		MadeBy:  "Xdeployments",
 		Message: "ok",
 		Data:    apiData,
 	}
 
-	// Simpan ke cache dengan TTL 60 detik (soft fail jika Redis tidak tersedia)
+	if err := cache.SetCache(cacheKey, newData, 60*time.Second); err != nil {
+		fmt.Printf("Warning: Gagal menyimpan cache untuk key %s: %v\n", cacheKey, err)
+	}
+
+	c.JSON(http.StatusOK, newData)
+}
+
+func handleTrendingRequest(c *gin.Context, chainID, dexID, trendingScore string) {
+	if chainID != "" {
+		if _, ok := allowedChains[chainID]; !ok {
+			c.JSON(http.StatusBadRequest, types.ErrorResponse{
+				Error: "chainId tidak valid",
+			})
+			return
+		}
+
+		if dexID != "" {
+			validDex := false
+			for _, dex := range allowedChains[chainID] {
+				if dex == dexID {
+					validDex = true
+					break
+				}
+			}
+			if !validDex {
+				c.JSON(http.StatusBadRequest, types.ErrorResponse{
+					Error: fmt.Sprintf("dexId tidak valid untuk %s", chainID),
+				})
+				return
+			}
+		}
+	}
+
+	cacheKey := fmt.Sprintf("dex:trending:%s:%s:%s", chainID, dexID, trendingScore)
+	if cachedData, err := cache.GetCache(cacheKey); err == nil && cachedData != nil {
+		fmt.Printf("Cache HIT untuk key: %s\n", cacheKey)
+		c.JSON(http.StatusOK, cachedData)
+		return
+	}
+
+	wsURL := "wss://io.dexscreener.com/dex/screener/v5/pairs/h24/1"
+	query := url.Values{}
+	query.Set("rankBy[key]", fmt.Sprintf("trendingScore%s", strings.ToUpper(trendingScore)))
+	query.Set("rankBy[order]", "desc")
+
+	if chainID != "" {
+		query.Set("filters[chainIds][0]", chainID)
+	}
+	if dexID != "" {
+		query.Set("filters[dexIds][0]", dexID)
+	}
+
+	wsURL = wsURL + "?" + query.Encode()
+
+	fmt.Printf("WebSocket URL: %s\n", wsURL)
+
+	pairs, err := fetchPairsViaWS(wsURL)
+	if err != nil {
+		fmt.Printf("Error fetching pairs via WS: %v\n", err)
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error: "Terjadi kesalahan saat mengambil data trending.",
+		})
+		return
+	}
+
+	fmt.Printf("Number of pairs found: %d\n", len(pairs))
+
+	infos, err := fetchPairInfoParallel(pairs, chainID)
+	if err != nil {
+		fmt.Printf("Error fetching pair info: %v\n", err)
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error: "Terjadi kesalahan saat mengambil detail pair.",
+		})
+		return
+	}
+
+	fmt.Printf("Number of pair infos retrieved: %d\n", len(infos))
+
+	newData := types.StandardResponse{
+		MadeBy:  "Xdeployments",
+		Message: "ok",
+		Data: map[string]interface{}{
+			"pairs": infos,
+		},
+	}
+
 	if err := cache.SetCache(cacheKey, newData, 60*time.Second); err != nil {
 		fmt.Printf("Warning: Gagal menyimpan cache untuk key %s: %v\n", cacheKey, err)
 	}
