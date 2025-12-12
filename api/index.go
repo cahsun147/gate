@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"net/http"
@@ -58,7 +58,3 @@ func handleAPIStatus(c *gin.Context) {
 	})
 }
 
-func main() {
-	defer cache.CloseRedis()
-	router.Run(":8080")
-}
