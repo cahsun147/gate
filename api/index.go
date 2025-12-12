@@ -35,6 +35,7 @@ func init() {
 			v1Group.GET("/tokens/traders/:network/:contract_address", tokens.GetTraders)
 
 			// DEX routes
+			v1Group.GET("/dex", dex.GetDex)
 			v1Group.GET("/dex/:network/:address", dex.GetDex)
 
 			// Wallet routes
@@ -57,4 +58,3 @@ func handleAPIStatus(c *gin.Context) {
 		"status": "alive",
 	})
 }
-

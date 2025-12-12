@@ -28,6 +28,10 @@
       "dest": "api/index.go"
     },
     {
+      "src": "/api/v1/dex(.*)",
+      "dest": "api/index.go"
+    },
+    {
       "src": "/api/v1/tokens/holder/(.*)",
       "dest": "api/index.go"
     },
