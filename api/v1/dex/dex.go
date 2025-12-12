@@ -1,6 +1,7 @@
 package dex
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -98,11 +99,20 @@ func fetchPairsViaWS(wsURL string) ([]string, error) {
 		NetDial: func(network, addr string) (net.Conn, error) {
 			return net.DialTimeout(network, addr, 30*time.Second)
 		},
+		EnableCompression: true,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
 	}
 
 	header := http.Header{}
+	header.Set("Host", "io.dexscreener.com")
 	header.Set("Origin", "https://dexscreener.com")
 	header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+	header.Set("Accept-Encoding", "gzip, deflate, br")
+	header.Set("Accept-Language", "en-US,en;q=0.9")
+	header.Set("Cache-Control", "no-cache")
+	header.Set("Pragma", "no-cache")
 
 	ws, _, err := dialer.Dial(wsURL, header)
 	if err != nil {
