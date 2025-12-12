@@ -11,9 +11,17 @@ import (
 	"gateway/cache"
 	"gateway/types"
 
+	// --- PERBAIKAN: Pastikan 3 baris ini ada semua ---
+	fhttp "github.com/bogdanfinn/fhttp"
+	tls_client "github.com/bogdanfinn/tls-client" // <--- INI YANG HILANG
+	"github.com/bogdanfinn/tls-client/profiles"
+
+	// ------------------------------------------------
+
 	"github.com/gin-gonic/gin"
 )
 
+// (Biarkan variable allowedChains yang panjang itu tetap di sini)
 var allowedChains = map[string][]string{
 	"solana":       {"pumpswap", "raydium", "meteora", "orca", "launchlab", "pumpfun", "dexlab", "fluxbeam", "meteoradbc", "moonit", "coinchef", "vertigo", "tokenmill", "superx"},
 	"ethereum":     {"uniswap", "curve", "balancer", "pancakeswap", "solidlycom", "sushiswap", "fraxswap", "shibaswap", "ethervista", "defiswap", "verse", "9inch", "lif3", "stepn", "orion", "safemoonswap", "radioshack", "wagmi", "diamondswap", "empiredex", "swapr", "blueprint", "okxdex", "memebox", "kyberswap", "pyeswap", "templedao", "vulcandex"},
@@ -138,11 +146,25 @@ func GetDex(c *gin.Context) {
 		fullURL = baseURL + "?" + params.Encode()
 	}
 
-	client := &http.Client{
-		Timeout: 30 * time.Second,
+	// --- SETUP CLIENT ANTI-BOT (TLS CLIENT) ---
+	jar := tls_client.NewCookieJar()
+	options := []tls_client.HttpClientOption{
+		tls_client.WithTimeoutSeconds(30),
+		tls_client.WithClientProfile(profiles.Chrome_124), // Pura-pura jadi Chrome v124
+		tls_client.WithRandomTLSExtensionOrder(),
+		tls_client.WithCookieJar(jar),
 	}
 
-	req, err := http.NewRequest("GET", fullURL, nil)
+	client, err := tls_client.NewHttpClient(tls_client.NewNoopLogger(), options...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error: "Terjadi kesalahan saat inisialisasi client HTTP.",
+		})
+		return
+	}
+
+	// 🔥 PERUBAHAN UTAMA: Gunakan fhttp.NewRequest (bukan http.NewRequest)
+	req, err := fhttp.NewRequest(http.MethodGet, fullURL, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
 			Error: "Terjadi kesalahan saat membuat request.",
@@ -150,12 +172,20 @@ func GetDex(c *gin.Context) {
 		return
 	}
 
-	// Set headers
-	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
-	req.Header.Set("Origin", "https://dexscreener.com")
-	req.Header.Set("Referer", "https://dexscreener.com/")
+	// 🔥 Gunakan fhttp.Header
+	req.Header = fhttp.Header{
+		"User-Agent":         {"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"},
+		"Accept":             {"application/json, text/plain, */*"},
+		"Accept-Language":    {"en-US,en;q=0.9"},
+		"Origin":             {"https://dexscreener.com"},
+		"Referer":            {"https://dexscreener.com/"},
+		"Sec-Ch-Ua":          {"\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\""},
+		"Sec-Ch-Ua-Mobile":   {"?0"},
+		"Sec-Ch-Ua-Platform": {"\"Windows\""},
+		"Sec-Fetch-Dest":     {"empty"},
+		"Sec-Fetch-Mode":     {"cors"},
+		"Sec-Fetch-Site":     {"same-origin"},
+	}
 
 	response, err := client.Do(req)
 	if err != nil {
