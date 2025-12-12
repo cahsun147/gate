@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -96,9 +95,7 @@ func extractPairAddresses(dataStr string) []string {
 
 func fetchPairsViaWS(wsURL string) ([]string, error) {
 	dialer := websocket.Dialer{
-		NetDial: func(network, addr string) (net.Conn, error) {
-			return net.DialTimeout(network, addr, 30*time.Second)
-		},
+		HandshakeTimeout:  15 * time.Second,
 		EnableCompression: true,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -108,19 +105,30 @@ func fetchPairsViaWS(wsURL string) ([]string, error) {
 	header := http.Header{}
 	header.Set("Host", "io.dexscreener.com")
 	header.Set("Origin", "https://dexscreener.com")
-	header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-	header.Set("Accept-Encoding", "gzip, deflate, br")
+	header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
 	header.Set("Accept-Language", "en-US,en;q=0.9")
+	header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
 	header.Set("Cache-Control", "no-cache")
 	header.Set("Pragma", "no-cache")
 
-	ws, _, err := dialer.Dial(wsURL, header)
+	var ws *websocket.Conn
+	var err error
+	maxRetries := 5
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		ws, _, err = dialer.Dial(wsURL, header)
+		if err == nil {
+			break
+		}
+		fmt.Printf("Retry %d/%d: gagal connect ke WebSocket: %v\n", attempt, maxRetries, err)
+	}
+
 	if err != nil {
-		return nil, fmt.Errorf("gagal connect ke WebSocket: %w", err)
+		return nil, fmt.Errorf("gagal connect ke WebSocket setelah %d percobaan: %w", maxRetries, err)
 	}
 	defer ws.Close()
 
-	ws.SetReadDeadline(time.Now().Add(30 * time.Second))
+	ws.SetReadDeadline(time.Now().Add(10 * time.Second))
 
 	_, message, err := ws.ReadMessage()
 	if err != nil {
