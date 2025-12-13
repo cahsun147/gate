@@ -122,7 +122,7 @@ func GetDex(c *gin.Context) {
 
 	// Fetch Detailed Info Parallel
 	infos, err := fetchPairInfoParallel(pairs, chainID)
-	
+
 	// Prepare Response
 	newData := types.StandardResponse{
 		MadeBy:  "Xdeployments",
@@ -134,7 +134,7 @@ func GetDex(c *gin.Context) {
 
 	// Save to Cache
 	cache.SetCache(cacheKey, newData, 60*time.Second)
-	
+
 	c.JSON(http.StatusOK, newData)
 }
 
@@ -148,33 +148,33 @@ func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
 	header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
 	header.Set("Accept-Language", "en-US,en;q=0.9")
 	header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
-	// Header Wajib untuk WebSocket Extension
-	header.Set("Sec-WebSocket-Extensions", "permessage-deflate; client_max_window_bits")
-	
-	// PENTING: Jangan kirim Cache-Control atau Pragma (menyebabkan blokir Cloudflare)
+
+	// 🔥 PERBAIKAN PENTING:
+	// Hapus header "Sec-WebSocket-Extensions" manual karena 'EnableCompression: true' akan menambahkannya otomatis.
+	// Hapus header Cache-Control & Pragma (agar clean).
 
 	// 2. Setup Dialer
 	dialer := websocket.Dialer{
-		HandshakeTimeout: 30 * time.Second,
-		EnableCompression: true,
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		HandshakeTimeout:  30 * time.Second,
+		EnableCompression: true, // Ini otomatis set header Sec-WebSocket-Extensions
+		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
 	}
 
 	// 3. Build URL (API v6, Path Static h24/1)
 	wsURL := "wss://io.dexscreener.com/dex/screener/v6/pairs/h24/1"
-	
+
 	q := url.Values{}
 	// Dynamic Query Params
 	q.Set("rankBy[key]", fmt.Sprintf("trendingScore%s", strings.ToUpper(trendingScore)))
 	q.Set("rankBy[order]", "desc")
-	
-	if chainID != "" { 
-		q.Set("filters[chainIds][0]", chainID) 
+
+	if chainID != "" {
+		q.Set("filters[chainIds][0]", chainID)
 	}
-	if dexID != "" { 
-		q.Set("filters[dexIds][0]", dexID) 
+	if dexID != "" {
+		q.Set("filters[dexIds][0]", dexID)
 	}
-	
+
 	fullURL := wsURL + "?" + q.Encode()
 
 	// 4. Retry Logic (Mencoba 5 kali)
@@ -187,7 +187,7 @@ func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
 		if err == nil {
 			break // Berhasil, keluar loop
 		}
-		
+
 		fmt.Printf("Retry %d/%d: gagal connect ke WebSocket: %v\n", i+1, maxConnRetries, err)
 		time.Sleep(1 * time.Second) // Jeda 1 detik sebelum retry
 	}
@@ -198,7 +198,7 @@ func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
 	defer conn.Close()
 
 	// 5. Read Loop (Mencari pesan yang berisi "pairs")
-	maxReadRetries := 5 
+	maxReadRetries := 5
 	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
 
 	for i := 0; i < maxReadRetries; i++ {
@@ -208,7 +208,7 @@ func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
 		}
 
 		dataStr := string(message)
-		
+
 		// Cek apakah pesan ini berisi data pairs
 		if strings.Contains(dataStr, "pairs") {
 			return extractPairAddresses(dataStr), nil
@@ -258,7 +258,7 @@ func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]int
 		wg.Add(1)
 		go func(address string) {
 			defer wg.Done()
-			
+
 			// Auto-detect chain logic
 			usedChain := chainID
 			if usedChain == "" {
@@ -283,7 +283,7 @@ func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]int
 			if err == nil && resp.StatusCode == 200 {
 				defer resp.Body.Close()
 				body, _ := io.ReadAll(resp.Body)
-				
+
 				var items []interface{}
 				// API V1 return array of pairs
 				if json.Unmarshal(body, &items) == nil && len(items) > 0 {
@@ -311,10 +311,10 @@ func handleDetailRequest(c *gin.Context, network, address string) {
 	if len(infos) > 0 {
 		data = infos // Return as list to match previous structure or infos[0] based on preference
 	}
-	
+
 	c.JSON(http.StatusOK, types.StandardResponse{
-		MadeBy: "Xdeployments", 
-		Message: "ok", 
-		Data: data,
+		MadeBy:  "Xdeployments",
+		Message: "ok",
+		Data:    data,
 	})
 }
