@@ -1,9 +1,7 @@
 package dex
 
 import (
-	"crypto/rand"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -77,15 +75,6 @@ var allowedTrending = map[string]bool{
 	"h24": true,
 }
 
-func generateSecWebSocketKey() string {
-	randomBytes := make([]byte, 16)
-	_, err := rand.Read(randomBytes)
-	if err != nil {
-		return ""
-	}
-	return base64.StdEncoding.EncodeToString(randomBytes)
-}
-
 func extractPairAddresses(dataStr string) []string {
 	solPattern := regexp.MustCompile(`([A-Za-z0-9]{40}pump)`)
 	ethPattern := regexp.MustCompile(`(0x[0-9a-fA-F]{40})`)
@@ -113,7 +102,6 @@ func fetchPairsViaWS(wsURL string) ([]string, error) {
 		},
 	}
 
-	secWebSocketKey := generateSecWebSocketKey()
 	header := http.Header{}
 	header.Set("Host", "io.dexscreener.com")
 	header.Set("Origin", "https://dexscreener.com")
@@ -123,10 +111,6 @@ func fetchPairsViaWS(wsURL string) ([]string, error) {
 	header.Set("Cache-Control", "no-cache")
 	header.Set("Pragma", "no-cache")
 	header.Set("Sec-WebSocket-Extensions", "permessage-deflate; client_max_window_bits")
-	header.Set("Sec-WebSocket-Key", secWebSocketKey)
-	header.Set("Sec-WebSocket-Version", "13")
-	header.Set("Connection", "Upgrade")
-	header.Set("Upgrade", "websocket")
 
 	var ws *websocket.Conn
 	var err error
