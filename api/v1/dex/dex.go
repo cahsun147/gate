@@ -389,7 +389,7 @@ func handleTrendingRequest(c *gin.Context, chainID, dexID, trendingScore string)
 		return
 	}
 
-	wsURL := "wss://io.dexscreener.com/dex/screener/v5/pairs/h24/1"
+	wsURL := "wss://io.dexscreener.com/dex/screener/v6/pairs/h24/1"
 	query := url.Values{}
 	query.Set("rankBy[key]", fmt.Sprintf("trendingScore%s", strings.ToUpper(trendingScore)))
 	query.Set("rankBy[order]", "desc")
