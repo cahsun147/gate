@@ -1,9 +1,7 @@
 package dex
 
 import (
-	"crypto/rand"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -113,17 +111,9 @@ func fetchPairsViaWS(wsURL string) ([]string, error) {
 	header.Set("Cache-Control", "no-cache")
 	header.Set("Pragma", "no-cache")
 
-	// Generate random Sec-WebSocket-Key
-	keyBytes := make([]byte, 16)
-	_, err := rand.Read(keyBytes)
-	if err != nil {
-		return nil, fmt.Errorf("gagal generate Sec-WebSocket-Key: %w", err)
-	}
-	secKey := base64.StdEncoding.EncodeToString(keyBytes)
-	header.Set("Sec-WebSocket-Key", secKey)
-
 	var ws *websocket.Conn
 	var resp *http.Response
+	var err error
 	maxRetries := 5
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
@@ -413,7 +403,7 @@ func handleTrendingRequest(c *gin.Context, chainID, dexID, trendingScore string)
 		return
 	}
 
-	wsURL := "wss://io.dexscreener.com/dex/screener/pairs/h24/1"
+	wsURL := "wss://io.dexscreener.com/dex/screener/v5/pairs/h24/1"
 	query := url.Values{}
 	query.Set("rankBy[key]", fmt.Sprintf("trendingScore%s", strings.ToUpper(trendingScore)))
 	query.Set("rankBy[order]", "desc")
