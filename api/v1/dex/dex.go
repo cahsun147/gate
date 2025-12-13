@@ -110,7 +110,6 @@ func fetchPairsViaWS(wsURL string) ([]string, error) {
 	header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
 	header.Set("Cache-Control", "no-cache")
 	header.Set("Pragma", "no-cache")
-	header.Set("Sec-WebSocket-Extensions", "permessage-deflate; client_max_window_bits")
 
 	var ws *websocket.Conn
 	var err error
