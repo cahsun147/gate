@@ -112,9 +112,6 @@ func fetchPairsViaWS(wsURL string) ([]string, error) {
 	header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
 	header.Set("Cache-Control", "no-cache")
 	header.Set("Pragma", "no-cache")
-	header.Set("Connection", "Upgrade")
-	header.Set("Upgrade", "websocket")
-	header.Set("Sec-WebSocket-Version", "13")
 
 	// Generate random Sec-WebSocket-Key
 	keyBytes := make([]byte, 16)
