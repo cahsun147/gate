@@ -1,7 +1,9 @@
 package dex
 
 import (
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -105,22 +107,38 @@ func fetchPairsViaWS(wsURL string) ([]string, error) {
 	header := http.Header{}
 	header.Set("Host", "io.dexscreener.com")
 	header.Set("Origin", "https://dexscreener.com")
-	header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
+	header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
 	header.Set("Accept-Language", "en-US,en;q=0.9")
 	header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
 	header.Set("Cache-Control", "no-cache")
 	header.Set("Pragma", "no-cache")
+	header.Set("Connection", "Upgrade")
+	header.Set("Upgrade", "websocket")
+	header.Set("Sec-WebSocket-Version", "13")
+
+	// Generate random Sec-WebSocket-Key
+	keyBytes := make([]byte, 16)
+	_, err := rand.Read(keyBytes)
+	if err != nil {
+		return nil, fmt.Errorf("gagal generate Sec-WebSocket-Key: %w", err)
+	}
+	secKey := base64.StdEncoding.EncodeToString(keyBytes)
+	header.Set("Sec-WebSocket-Key", secKey)
 
 	var ws *websocket.Conn
-	var err error
+	var resp *http.Response
 	maxRetries := 5
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		ws, _, err = dialer.Dial(wsURL, header)
+		ws, resp, err = dialer.Dial(wsURL, header)
 		if err == nil {
 			break
 		}
 		fmt.Printf("Retry %d/%d: gagal connect ke WebSocket: %v\n", attempt, maxRetries, err)
+		if resp != nil {
+			fmt.Printf("Response status: %s\n", resp.Status)
+		}
+		time.Sleep(time.Duration(attempt) * time.Second) // Exponential backoff
 	}
 
 	if err != nil {
@@ -128,19 +146,27 @@ func fetchPairsViaWS(wsURL string) ([]string, error) {
 	}
 	defer ws.Close()
 
-	ws.SetReadDeadline(time.Now().Add(10 * time.Second))
+	timeout := time.After(30 * time.Second) // Tambahkan timeout untuk menghindari infinite loop
 
-	_, message, err := ws.ReadMessage()
-	if err != nil {
-		return nil, fmt.Errorf("gagal membaca message dari WebSocket: %w", err)
+	for {
+		select {
+		case <-timeout:
+			return nil, fmt.Errorf("timeout: tidak menemukan data 'pairs' dalam waktu yang ditentukan")
+		default:
+			_, message, err := ws.ReadMessage()
+			if err != nil {
+				return nil, fmt.Errorf("gagal membaca message dari WebSocket: %w", err)
+			}
+			dataStr := string(message)
+			if dataStr == "ping" {
+				ws.WriteMessage(websocket.TextMessage, []byte("pong"))
+				continue
+			}
+			if strings.Contains(dataStr, "pairs") {
+				return extractPairAddresses(dataStr), nil
+			}
+		}
 	}
-
-	dataStr := string(message)
-	if !strings.Contains(dataStr, "pairs") {
-		return nil, fmt.Errorf("response tidak mengandung 'pairs'")
-	}
-
-	return extractPairAddresses(dataStr), nil
 }
 
 func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]interface{}, error) {
@@ -225,6 +251,7 @@ func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]int
 		results = append(results, result)
 	}
 
+	// Ignore errors in errChan for simplicity, or handle them
 	return results, nil
 }
 
@@ -389,7 +416,7 @@ func handleTrendingRequest(c *gin.Context, chainID, dexID, trendingScore string)
 		return
 	}
 
-	wsURL := "wss://io.dexscreener.com/dex/screener/v6/pairs/h24/1"
+	wsURL := "wss://io.dexscreener.com/dex/screener/pairs/h24/1"
 	query := url.Values{}
 	query.Set("rankBy[key]", fmt.Sprintf("trendingScore%s", strings.ToUpper(trendingScore)))
 	query.Set("rankBy[order]", "desc")
