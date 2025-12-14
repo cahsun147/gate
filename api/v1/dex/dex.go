@@ -1,9 +1,9 @@
 package dex
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -14,14 +14,13 @@ import (
 	"gateway/cache"
 	"gateway/types"
 
-	// Import CloudScraper
+	// Library CloudScraper
 	"github.com/RomainMichau/cloudscraper_go/cloudscraper"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
-// Allowed Chains (Sama seperti sebelumnya)
 var allowedChains = map[string][]string{
 	"solana":       {"pumpswap", "raydium", "meteora", "orca", "launchlab", "pumpfun", "dexlab", "fluxbeam", "meteoradbc", "moonit", "coinchef", "vertigo", "tokenmill", "superx"},
 	"ethereum":     {"uniswap", "curve", "balancer", "pancakeswap", "solidlycom", "sushiswap", "fraxswap", "shibaswap", "ethervista", "defiswap", "verse", "9inch", "lif3", "stepn", "orion", "safemoonswap", "radioshack", "wagmi", "diamondswap", "empiredex", "swapr", "blueprint", "okxdex", "memebox", "kyberswap", "pyeswap", "templedao", "vulcandex"},
@@ -122,6 +121,11 @@ func GetDex(c *gin.Context) {
 
 	// Fetch Detailed Info Parallel (MENGGUNAKAN CLOUDSCRAPER)
 	infos, err := fetchPairInfoParallel(pairs, chainID)
+	// Jika gagal semua, err != nil. Tapi kalau ada sebagian data, err == nil.
+	// Kita bisa log errornya.
+	if err != nil && len(infos) == 0 {
+		fmt.Printf("Error fetching details: %v\n", err)
+	}
 	
 	// Prepare Response
 	newData := types.StandardResponse{
@@ -139,8 +143,6 @@ func GetDex(c *gin.Context) {
 }
 
 // Helper: Fetch Pairs via WS
-// Catatan: Cloudscraper adalah library HTTP. Untuk WebSocket, kita tetap menggunakan 
-// gorilla/websocket dengan konfigurasi header yang sudah terbukti lolos (meniru Python).
 func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
 	// 1. Setup Headers (Strict Match dengan Python dex.py)
 	header := http.Header{}
@@ -149,12 +151,11 @@ func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
 	header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
 	header.Set("Accept-Language", "en-US,en;q=0.9")
 	header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
-	// Jangan kirim header lain yang tidak perlu
-
+	
+	// Dialer
 	dialer := websocket.Dialer{
 		HandshakeTimeout: 30 * time.Second,
-		EnableCompression: true, // Otomatis set Sec-WebSocket-Extensions
-		// Gunakan InsecureSkipVerify untuk menghindari masalah sertifikat saat handshake
+		EnableCompression: true, 
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
@@ -228,7 +229,6 @@ func extractPairAddresses(dataStr string) []string {
 // Helper: Fetch Pair Info menggunakan CloudScraper
 func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]interface{}, error) {
 	// Inisialisasi CloudScraper
-	// Parameter: allowInsecure (false), debug (false)
 	client, err := cloudscraper.Init(false, false)
 	if err != nil {
 		return nil, fmt.Errorf("gagal inisialisasi cloudscraper: %v", err)
@@ -260,20 +260,20 @@ func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]int
 
 			apiURL := fmt.Sprintf("https://api.dexscreener.com/token-pairs/v1/%s/%s", usedChain, address)
 			
-			// Gunakan CloudScraper untuk Request
-			// CloudScraper menangani headers dan tantangan JS sederhana otomatis
-			// Kita bisa passing headers custom map[string]string jika perlu, tapi biasanya default sudah oke
 			headers := make(map[string]string)
 			headers["Origin"] = "https://dexscreener.com"
 			headers["Referer"] = "https://dexscreener.com/"
 
-			resp, err := client.Get(apiURL, headers)
-			if err == nil && resp.StatusCode == 200 {
-				defer resp.Body.Close()
-				body, _ := io.ReadAll(resp.Body)
-				
+			// --- PERBAIKAN DI SINI ---
+			// 1. Tambahkan argumen body (string kosong)
+			// 2. Gunakan resp.Status (bukan StatusCode)
+			// 3. resp.Body adalah string (bukan io.ReadCloser)
+			resp, err := client.Get(apiURL, headers, "") 
+			
+			if err == nil && resp.Status == 200 {
 				var items []interface{}
-				if json.Unmarshal(body, &items) == nil && len(items) > 0 {
+				// Langsung convert string body ke []byte untuk Unmarshal
+				if json.Unmarshal([]byte(resp.Body), &items) == nil && len(items) > 0 {
 					if itemMap, ok := items[0].(map[string]interface{}); ok {
 						resultsChan <- itemMap
 					}
