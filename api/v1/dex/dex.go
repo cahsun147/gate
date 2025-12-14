@@ -129,7 +129,6 @@ func GetDex(c *gin.Context) {
 	// Fetch via WS (Dengan Cookie Injection)
 	pairs, err := fetchPairsViaWS(chainID, dexID, trendingScore)
 	if err != nil {
-		// Log error untuk debugging di Vercel logs
 		fmt.Printf("Error fetching pairs via WS: %v\n", err)
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
 			Error: "Gagal mengambil data trending (Mungkin diblokir Cloudflare).",
@@ -137,15 +136,16 @@ func GetDex(c *gin.Context) {
 		return
 	}
 
-	// Limit pairs untuk detail fetch
+	// --- FIX: SAFE SLICING (Mencegah Panic) ---
 	limit := 15
 	if len(pairs) > limit {
 		pairs = pairs[:limit]
 	}
+	// Jika len(pairs) <= limit, biarkan apa adanya.
+	// ------------------------------------------
 
 	// Fetch Detail
 	infos, err := fetchPairInfoParallel(pairs, chainID)
-	// Ignore partial errors if we got some data
 	if err != nil && len(infos) == 0 {
 		fmt.Printf("Error fetching details: %v\n", err)
 	}
@@ -183,8 +183,6 @@ func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
 			// Cari header 'Set-Cookie' (bisa lowercase atau uppercase tergantung library)
 			for key, value := range resp.Headers {
 				if strings.ToLower(key) == "set-cookie" {
-					// Format cookie: "name=value; Path=/..."
-					// Kita butuh bagian "name=value"
 					parts := strings.Split(value, ";")
 					if len(parts) > 0 {
 						validCookies = append(validCookies, parts[0])
@@ -206,7 +204,7 @@ func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
 	if len(validCookies) > 0 {
 		cookieStr := strings.Join(validCookies, "; ")
 		header.Set("Cookie", cookieStr)
-		fmt.Printf("🍪 Cookie Injection Berhasil: %s\n", cookieStr[:15]+"...") // Log pendek
+		// fmt.Printf("🍪 Cookie Injection Berhasil: %s\n", cookieStr[:15]+"...")
 	}
 
 	dialer := websocket.Dialer{
