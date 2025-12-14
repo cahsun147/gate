@@ -146,9 +146,8 @@ func GetHolder(c *gin.Context) {
 		"Sec-Fetch-Site":  "same-origin",
 	}
 
-	// Batas percobaan dengan exponential backoff
+	// Batas percobaan tanpa delay (instant retry untuk kecepatan maksimal)
 	maxRetries := 20
-	baseDelay := 100 * time.Millisecond
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		// Buat URL dengan query parameters
@@ -168,14 +167,8 @@ func GetHolder(c *gin.Context) {
 		// Lakukan request dengan cloudscraper
 		response, err := client.Get(fullURL, headers, "")
 		if err != nil {
-			fmt.Printf("Kesalahan terjadi pada attempt %d/%d: %v\n", attempt+1, maxRetries, err)
+			fmt.Printf("Retry %d/%d: Kesalahan terjadi: %v\n", attempt+1, maxRetries, err)
 			if attempt < maxRetries-1 {
-				// Exponential backoff: 100ms, 200ms, 400ms, 800ms, dst
-				delay := baseDelay * time.Duration(1<<uint(attempt))
-				if delay > 5*time.Second {
-					delay = 5 * time.Second
-				}
-				time.Sleep(delay)
 				continue
 			}
 			c.JSON(500, types.ErrorResponse{
@@ -229,18 +222,11 @@ func GetHolder(c *gin.Context) {
 				fmt.Printf("Warning: Gagal menyimpan cache untuk key %s: %v\n", cacheKey, err)
 			}
 
-			fmt.Printf("Berhasil mendapatkan data pada attempt %d/%d\n", attempt+1, maxRetries)
 			c.JSON(200, newData)
 			return
 		} else if statusCode == 403 {
-			fmt.Printf("Status 403 pada attempt %d/%d, retry dengan backoff...\n", attempt+1, maxRetries)
+			fmt.Printf("Retry %d/%d: Status 403, retry...\n", attempt+1, maxRetries)
 			if attempt < maxRetries-1 {
-				// Exponential backoff: 100ms, 200ms, 400ms, 800ms, dst
-				delay := baseDelay * time.Duration(1<<uint(attempt))
-				if delay > 5*time.Second {
-					delay = 5 * time.Second
-				}
-				time.Sleep(delay)
 				continue
 			} else {
 				fmt.Printf("Gagal setelah %d percobaan karena status 403\n", maxRetries)
@@ -251,14 +237,8 @@ func GetHolder(c *gin.Context) {
 				return
 			}
 		} else {
-			fmt.Printf("Status kode API: %d pada attempt %d/%d\n", statusCode, attempt+1, maxRetries)
+			fmt.Printf("Retry %d/%d: Status kode API: %d\n", attempt+1, maxRetries, statusCode)
 			if attempt < maxRetries-1 {
-				// Exponential backoff untuk status code lain juga
-				delay := baseDelay * time.Duration(1<<uint(attempt))
-				if delay > 5*time.Second {
-					delay = 5 * time.Second
-				}
-				time.Sleep(delay)
 				continue
 			}
 			c.JSON(500, types.ErrorResponse{
