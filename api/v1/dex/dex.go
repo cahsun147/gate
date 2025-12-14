@@ -74,7 +74,6 @@ var allowedTrending = map[string]bool{
 	"h24": true,
 }
 
-// GetDex menangani permintaan untuk endpoint /api/v1/dex
 func GetDex(c *gin.Context) {
 	network := c.Param("network")
 	address := c.Param("address")
@@ -127,9 +126,10 @@ func GetDex(c *gin.Context) {
 		return
 	}
 
-	// 🔥 FETCH VIA WS (Dengan Cookie Injection) 🔥
+	// Fetch via WS (Dengan Cookie Injection)
 	pairs, err := fetchPairsViaWS(chainID, dexID, trendingScore)
 	if err != nil {
+		// Log error untuk debugging di Vercel logs
 		fmt.Printf("Error fetching pairs via WS: %v\n", err)
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
 			Error: "Gagal mengambil data trending (Mungkin diblokir Cloudflare).",
@@ -145,11 +145,11 @@ func GetDex(c *gin.Context) {
 
 	// Fetch Detail
 	infos, err := fetchPairInfoParallel(pairs, chainID)
+	// Ignore partial errors if we got some data
 	if err != nil && len(infos) == 0 {
 		fmt.Printf("Error fetching details: %v\n", err)
 	}
-
-	// Response
+	
 	newData := types.StandardResponse{
 		MadeBy:  "Xdeployments",
 		Message: "ok",
@@ -158,69 +158,73 @@ func GetDex(c *gin.Context) {
 		},
 	}
 
-	// Save to Cache
 	cache.SetCache(cacheKey, newData, 60*time.Second)
-
 	c.JSON(http.StatusOK, newData)
 }
 
-// Helper: Fetch Pairs via WS (DENGAN BYPASS CLOUDFLARE COOKIE)
+// Helper: Fetch Pairs via WS (DENGAN LOGIKA COOKIE EXTRACTION)
 func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
-	// 1. LANGKAH BARU: Ambil Cookie dari CloudScraper dulu!
-	// Kita pancing request ke halaman utama untuk dapat cookie valid
+	// --- STEP 1: Pancing Cloudflare untuk dapat Cookie ---
+	// Kita request halaman depan DexScreener menggunakan CloudScraper.
+	// Jika berhasil, Cloudflare akan memberikan cookie yang valid.
 	scraper, err := cloudscraper.Init(false, false)
-	var cookies string = ""
+	var validCookies []string
 
 	if err == nil {
-		// Request HEAD/GET ke dexscreener untuk memicu set-cookie
-		resp, err := scraper.Get("https://dexscreener.com", make(map[string]string), "")
-		if err == nil {
-			// Ambil semua cookie dari header Set-Cookie (jika library mengeksposnya)
-			// cloudscraper_go via cycletls kadang menyimpan cookie di internal jar,
-			// tapi kita coba manual construct jika ada di header.
-			// (Implementasi sederhana: jika resp punya cookies, kita pakai)
-			// Namun, cycletls biasanya auto-handle di HTTP, tapi TIDAK di WebSocket.
-			// Kita coba lanjut tanpa cookie eksplisit dulu jika library susah,
-			// TAPI: kita tambah header Origin/Referer yang sangat strict.
+		// Headers minimal untuk pancingan HTTP
+		initHeaders := map[string]string{
+			"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
 		}
-		_ = resp // ignore for now if extraction is hard
+		
+		// Request ke halaman utama
+		resp, err := scraper.Get("https://dexscreener.com", initHeaders, "")
+		
+		if err == nil && resp.Headers != nil {
+			// Cari header 'Set-Cookie' (bisa lowercase atau uppercase tergantung library)
+			for key, value := range resp.Headers {
+				if strings.ToLower(key) == "set-cookie" {
+					// Format cookie: "name=value; Path=/..."
+					// Kita butuh bagian "name=value"
+					parts := strings.Split(value, ";")
+					if len(parts) > 0 {
+						validCookies = append(validCookies, parts[0])
+					}
+				}
+			}
+		}
 	}
 
-	// 2. Setup Headers (Strict Match dengan dex_coba.go)
+	// --- STEP 2: Setup Header WebSocket ---
 	header := http.Header{}
 	header.Set("Host", "io.dexscreener.com")
 	header.Set("Origin", "https://dexscreener.com")
 	header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
 	header.Set("Accept-Language", "en-US,en;q=0.9")
 	header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
-
-	// Jika kita berhasil dapat cookie string dari scraper, set disini:
-	if cookies != "" {
-		header.Set("Cookie", cookies)
+	
+	// INJECTION: Jika kita berhasil dapat cookie, tempelkan!
+	if len(validCookies) > 0 {
+		cookieStr := strings.Join(validCookies, "; ")
+		header.Set("Cookie", cookieStr)
+		fmt.Printf("🍪 Cookie Injection Berhasil: %s\n", cookieStr[:15]+"...") // Log pendek
 	}
 
 	dialer := websocket.Dialer{
-		HandshakeTimeout:  30 * time.Second,
-		EnableCompression: true,
-		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
+		HandshakeTimeout: 30 * time.Second,
+		EnableCompression: true, 
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
-	// 3. Build URL (API v6, Path Static h24/1)
 	wsURL := "wss://io.dexscreener.com/dex/screener/v6/pairs/h24/1"
-
 	q := url.Values{}
 	q.Set("rankBy[key]", fmt.Sprintf("trendingScore%s", strings.ToUpper(trendingScore)))
 	q.Set("rankBy[order]", "desc")
-	if chainID != "" {
-		q.Set("filters[chainIds][0]", chainID)
-	}
-	if dexID != "" {
-		q.Set("filters[dexIds][0]", dexID)
-	}
-
+	if chainID != "" { q.Set("filters[chainIds][0]", chainID) }
+	if dexID != "" { q.Set("filters[dexIds][0]", dexID) }
+	
 	fullURL := wsURL + "?" + q.Encode()
 
-	// 4. Retry Logic (5x)
+	// --- STEP 3: Connect & Retry ---
 	var conn *websocket.Conn
 	maxConnRetries := 5
 
@@ -238,8 +242,8 @@ func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
 	}
 	defer conn.Close()
 
-	// 5. Read Loop
-	maxReadRetries := 5
+	// --- STEP 4: Read Message ---
+	maxReadRetries := 5 
 	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
 
 	for i := 0; i < maxReadRetries; i++ {
@@ -275,7 +279,6 @@ func extractPairAddresses(dataStr string) []string {
 	return result
 }
 
-// Helper: Fetch Pair Info menggunakan CloudScraper
 func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]interface{}, error) {
 	client, err := cloudscraper.Init(false, false)
 	if err != nil {
@@ -284,15 +287,15 @@ func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]int
 
 	var wg sync.WaitGroup
 	resultsChan := make(chan map[string]interface{}, len(addresses))
-	semaphore := make(chan struct{}, 5)
+	semaphore := make(chan struct{}, 5) 
 
 	for _, addr := range addresses {
 		wg.Add(1)
 		go func(address string) {
 			defer wg.Done()
-			semaphore <- struct{}{}
-			defer func() { <-semaphore }()
-
+			semaphore <- struct{}{} 
+			defer func() { <-semaphore }() 
+			
 			usedChain := chainID
 			if usedChain == "" {
 				if strings.HasSuffix(address, "pump") {
@@ -305,17 +308,15 @@ func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]int
 			}
 
 			apiURL := fmt.Sprintf("https://api.dexscreener.com/token-pairs/v1/%s/%s", usedChain, address)
-
+			
 			headers := make(map[string]string)
 			headers["Origin"] = "https://dexscreener.com"
 			headers["Referer"] = "https://dexscreener.com/"
 
-			// Request HTTP via CloudScraper (Fixed Arguments)
-			resp, err := client.Get(apiURL, headers, "")
-
+			resp, err := client.Get(apiURL, headers, "") 
+			
 			if err == nil && resp.Status == 200 {
 				var items []interface{}
-				// Use string body directly
 				if json.Unmarshal([]byte(resp.Body), &items) == nil && len(items) > 0 {
 					if itemMap, ok := items[0].(map[string]interface{}); ok {
 						resultsChan <- itemMap
@@ -341,10 +342,10 @@ func handleDetailRequest(c *gin.Context, network, address string) {
 	if len(infos) > 0 {
 		data = infos
 	}
-
+	
 	c.JSON(http.StatusOK, types.StandardResponse{
-		MadeBy:  "Xdeployments",
-		Message: "ok",
-		Data:    data,
+		MadeBy: "Xdeployments", 
+		Message: "ok", 
+		Data: data,
 	})
 }
