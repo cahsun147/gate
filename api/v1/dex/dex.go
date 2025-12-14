@@ -96,6 +96,32 @@ func GetDex(c *gin.Context) {
 		return
 	}
 
+	// --- VALIDASI INPUT MENGGUNAKAN allowedChains ---
+	if chainID != "" {
+		if dexList, ok := allowedChains[chainID]; !ok {
+			c.JSON(http.StatusBadRequest, types.ErrorResponse{
+				Error: "chainId tidak valid",
+			})
+			return
+		} else if dexID != "" {
+			// Validasi dexId jika ada
+			validDex := false
+			for _, d := range dexList {
+				if d == dexID {
+					validDex = true
+					break
+				}
+			}
+			if !validDex {
+				c.JSON(http.StatusBadRequest, types.ErrorResponse{
+					Error: fmt.Sprintf("dexId tidak valid untuk %s", chainID),
+				})
+				return
+			}
+		}
+	}
+	// -----------------------------------------------
+
 	// Cek Cache Screener
 	cacheKey := fmt.Sprintf("dex:screener:%s:%s:%s", chainID, dexID, trendingScore)
 	if cachedData, err := cache.GetCache(cacheKey); err == nil && cachedData != nil {
@@ -121,8 +147,6 @@ func GetDex(c *gin.Context) {
 
 	// Fetch Detailed Info Parallel (MENGGUNAKAN CLOUDSCRAPER)
 	infos, err := fetchPairInfoParallel(pairs, chainID)
-	// Jika gagal semua, err != nil. Tapi kalau ada sebagian data, err == nil.
-	// Kita bisa log errornya.
 	if err != nil && len(infos) == 0 {
 		fmt.Printf("Error fetching details: %v\n", err)
 	}
@@ -264,10 +288,7 @@ func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]int
 			headers["Origin"] = "https://dexscreener.com"
 			headers["Referer"] = "https://dexscreener.com/"
 
-			// --- PERBAIKAN DI SINI ---
-			// 1. Tambahkan argumen body (string kosong)
-			// 2. Gunakan resp.Status (bukan StatusCode)
-			// 3. resp.Body adalah string (bukan io.ReadCloser)
+			// Request HTTP via CloudScraper
 			resp, err := client.Get(apiURL, headers, "") 
 			
 			if err == nil && resp.Status == 200 {
