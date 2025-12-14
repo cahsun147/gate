@@ -149,7 +149,7 @@ func GetDex(c *gin.Context) {
 	if err != nil && len(infos) == 0 {
 		fmt.Printf("Error fetching details: %v\n", err)
 	}
-	
+
 	newData := types.StandardResponse{
 		MadeBy:  "Xdeployments",
 		Message: "ok",
@@ -175,10 +175,10 @@ func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
 		initHeaders := map[string]string{
 			"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
 		}
-		
+
 		// Request ke halaman utama
 		resp, err := scraper.Get("https://dexscreener.com", initHeaders, "")
-		
+
 		if err == nil && resp.Headers != nil {
 			// Cari header 'Set-Cookie' (bisa lowercase atau uppercase tergantung library)
 			for key, value := range resp.Headers {
@@ -199,7 +199,7 @@ func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
 	header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
 	header.Set("Accept-Language", "en-US,en;q=0.9")
 	header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
-	
+
 	// INJECTION: Jika kita berhasil dapat cookie, tempelkan!
 	if len(validCookies) > 0 {
 		cookieStr := strings.Join(validCookies, "; ")
@@ -208,18 +208,22 @@ func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
 	}
 
 	dialer := websocket.Dialer{
-		HandshakeTimeout: 30 * time.Second,
-		EnableCompression: true, 
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		HandshakeTimeout:  30 * time.Second,
+		EnableCompression: true,
+		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
 	}
 
 	wsURL := "wss://io.dexscreener.com/dex/screener/v6/pairs/h24/1"
 	q := url.Values{}
 	q.Set("rankBy[key]", fmt.Sprintf("trendingScore%s", strings.ToUpper(trendingScore)))
 	q.Set("rankBy[order]", "desc")
-	if chainID != "" { q.Set("filters[chainIds][0]", chainID) }
-	if dexID != "" { q.Set("filters[dexIds][0]", dexID) }
-	
+	if chainID != "" {
+		q.Set("filters[chainIds][0]", chainID)
+	}
+	if dexID != "" {
+		q.Set("filters[dexIds][0]", dexID)
+	}
+
 	fullURL := wsURL + "?" + q.Encode()
 
 	// --- STEP 3: Connect & Retry ---
@@ -241,7 +245,7 @@ func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
 	defer conn.Close()
 
 	// --- STEP 4: Read Message ---
-	maxReadRetries := 5 
+	maxReadRetries := 5
 	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
 
 	for i := 0; i < maxReadRetries; i++ {
@@ -285,15 +289,15 @@ func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]int
 
 	var wg sync.WaitGroup
 	resultsChan := make(chan map[string]interface{}, len(addresses))
-	semaphore := make(chan struct{}, 5) 
+	semaphore := make(chan struct{}, 5)
 
 	for _, addr := range addresses {
 		wg.Add(1)
 		go func(address string) {
 			defer wg.Done()
-			semaphore <- struct{}{} 
-			defer func() { <-semaphore }() 
-			
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
 			usedChain := chainID
 			if usedChain == "" {
 				if strings.HasSuffix(address, "pump") {
@@ -306,13 +310,13 @@ func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]int
 			}
 
 			apiURL := fmt.Sprintf("https://api.dexscreener.com/token-pairs/v1/%s/%s", usedChain, address)
-			
+
 			headers := make(map[string]string)
 			headers["Origin"] = "https://dexscreener.com"
 			headers["Referer"] = "https://dexscreener.com/"
 
-			resp, err := client.Get(apiURL, headers, "") 
-			
+			resp, err := client.Get(apiURL, headers, "")
+
 			if err == nil && resp.Status == 200 {
 				var items []interface{}
 				if json.Unmarshal([]byte(resp.Body), &items) == nil && len(items) > 0 {
@@ -340,10 +344,10 @@ func handleDetailRequest(c *gin.Context, network, address string) {
 	if len(infos) > 0 {
 		data = infos
 	}
-	
+
 	c.JSON(http.StatusOK, types.StandardResponse{
-		MadeBy: "Xdeployments", 
-		Message: "ok", 
-		Data: data,
+		MadeBy:  "Xdeployments",
+		Message: "ok",
+		Data:    data,
 	})
 }
