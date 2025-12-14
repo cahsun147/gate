@@ -146,9 +146,9 @@ func GetHolder(c *gin.Context) {
 		"Sec-Fetch-Site":  "same-origin",
 	}
 
-	// Batas percobaan dan jeda
-	maxRetries := 10
-	retryDelay := time.Duration(0) * time.Second
+	// Batas percobaan dengan exponential backoff
+	maxRetries := 20
+	baseDelay := 100 * time.Millisecond
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		// Buat URL dengan query parameters
@@ -168,7 +168,16 @@ func GetHolder(c *gin.Context) {
 		// Lakukan request dengan cloudscraper
 		response, err := client.Get(fullURL, headers, "")
 		if err != nil {
-			fmt.Printf("Kesalahan terjadi: %v\n", err)
+			fmt.Printf("Kesalahan terjadi pada attempt %d/%d: %v\n", attempt+1, maxRetries, err)
+			if attempt < maxRetries-1 {
+				// Exponential backoff: 100ms, 200ms, 400ms, 800ms, dst
+				delay := baseDelay * time.Duration(1<<uint(attempt))
+				if delay > 5*time.Second {
+					delay = 5 * time.Second
+				}
+				time.Sleep(delay)
+				continue
+			}
 			c.JSON(500, types.ErrorResponse{
 				Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
 			})
@@ -220,14 +229,21 @@ func GetHolder(c *gin.Context) {
 				fmt.Printf("Warning: Gagal menyimpan cache untuk key %s: %v\n", cacheKey, err)
 			}
 
+			fmt.Printf("Berhasil mendapatkan data pada attempt %d/%d\n", attempt+1, maxRetries)
 			c.JSON(200, newData)
 			return
 		} else if statusCode == 403 {
+			fmt.Printf("Status 403 pada attempt %d/%d, retry dengan backoff...\n", attempt+1, maxRetries)
 			if attempt < maxRetries-1 {
-				time.Sleep(retryDelay)
+				// Exponential backoff: 100ms, 200ms, 400ms, 800ms, dst
+				delay := baseDelay * time.Duration(1<<uint(attempt))
+				if delay > 5*time.Second {
+					delay = 5 * time.Second
+				}
+				time.Sleep(delay)
 				continue
 			} else {
-				fmt.Println("Gagal setelah 10 percobaan karena status 403")
+				fmt.Printf("Gagal setelah %d percobaan karena status 403\n", maxRetries)
 				c.JSON(503, types.ErrorResponse{
 					Error:   "Server overload, coba lagi nanti",
 					Message: "success ;)",
@@ -235,7 +251,16 @@ func GetHolder(c *gin.Context) {
 				return
 			}
 		} else {
-			fmt.Printf("Status kode API: %d\n", statusCode)
+			fmt.Printf("Status kode API: %d pada attempt %d/%d\n", statusCode, attempt+1, maxRetries)
+			if attempt < maxRetries-1 {
+				// Exponential backoff untuk status code lain juga
+				delay := baseDelay * time.Duration(1<<uint(attempt))
+				if delay > 5*time.Second {
+					delay = 5 * time.Second
+				}
+				time.Sleep(delay)
+				continue
+			}
 			c.JSON(500, types.ErrorResponse{
 				Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
 			})
@@ -244,7 +269,7 @@ func GetHolder(c *gin.Context) {
 	}
 
 	// Fallback jika semua percobaan gagal
-	fmt.Println("Gagal setelah semua percobaan")
+	fmt.Printf("Gagal setelah %d percobaan\n", maxRetries)
 	c.JSON(503, types.ErrorResponse{
 		Error:   "Server overload, coba lagi nanti",
 		Message: "Fail get data OnChain",
