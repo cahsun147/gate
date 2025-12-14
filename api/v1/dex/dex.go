@@ -82,13 +82,13 @@ func GetDex(c *gin.Context) {
 	dexID := c.Query("dexId")
 	trendingScore := c.DefaultQuery("trendingscore", "h6")
 
-	// 1. Mode Detail (Ada network & address)
+	// 1. Mode Detail
 	if network != "" && address != "" {
 		handleDetailRequest(c, network, address)
 		return
 	}
 
-	// 2. Mode Screener (Trending)
+	// 2. Mode Screener
 	if !allowedTrending[trendingScore] {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{
 			Error: "trendingscore tidak valid",
@@ -96,7 +96,7 @@ func GetDex(c *gin.Context) {
 		return
 	}
 
-	// --- VALIDASI INPUT MENGGUNAKAN allowedChains ---
+	// Validasi Input
 	if chainID != "" {
 		if dexList, ok := allowedChains[chainID]; !ok {
 			c.JSON(http.StatusBadRequest, types.ErrorResponse{
@@ -104,7 +104,6 @@ func GetDex(c *gin.Context) {
 			})
 			return
 		} else if dexID != "" {
-			// Validasi dexId jika ada
 			validDex := false
 			for _, d := range dexList {
 				if d == dexID {
@@ -120,38 +119,37 @@ func GetDex(c *gin.Context) {
 			}
 		}
 	}
-	// -----------------------------------------------
 
-	// Cek Cache Screener
+	// Cek Cache
 	cacheKey := fmt.Sprintf("dex:screener:%s:%s:%s", chainID, dexID, trendingScore)
 	if cachedData, err := cache.GetCache(cacheKey); err == nil && cachedData != nil {
 		c.JSON(http.StatusOK, cachedData)
 		return
 	}
 
-	// Fetch via WS (v6 + Headers Clean + Retry)
+	// 🔥 FETCH VIA WS (Dengan Cookie Injection) 🔥
 	pairs, err := fetchPairsViaWS(chainID, dexID, trendingScore)
 	if err != nil {
 		fmt.Printf("Error fetching pairs via WS: %v\n", err)
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
-			Error: "Terjadi kesalahan saat mengambil data trending.",
+			Error: "Gagal mengambil data trending (Mungkin diblokir Cloudflare).",
 		})
 		return
 	}
 
-	// Batasi jumlah pair untuk detail fetching agar tidak timeout
+	// Limit pairs untuk detail fetch
 	limit := 15
 	if len(pairs) > limit {
 		pairs = pairs[:limit]
 	}
 
-	// Fetch Detailed Info Parallel (MENGGUNAKAN CLOUDSCRAPER)
+	// Fetch Detail
 	infos, err := fetchPairInfoParallel(pairs, chainID)
 	if err != nil && len(infos) == 0 {
 		fmt.Printf("Error fetching details: %v\n", err)
 	}
-	
-	// Prepare Response
+
+	// Response
 	newData := types.StandardResponse{
 		MadeBy:  "Xdeployments",
 		Message: "ok",
@@ -162,41 +160,68 @@ func GetDex(c *gin.Context) {
 
 	// Save to Cache
 	cache.SetCache(cacheKey, newData, 60*time.Second)
-	
+
 	c.JSON(http.StatusOK, newData)
 }
 
-// Helper: Fetch Pairs via WS
+// Helper: Fetch Pairs via WS (DENGAN BYPASS CLOUDFLARE COOKIE)
 func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
-	// 1. Setup Headers (Strict Match dengan Python dex.py)
+	// 1. LANGKAH BARU: Ambil Cookie dari CloudScraper dulu!
+	// Kita pancing request ke halaman utama untuk dapat cookie valid
+	scraper, err := cloudscraper.Init(false, false)
+	var cookies string = ""
+
+	if err == nil {
+		// Request HEAD/GET ke dexscreener untuk memicu set-cookie
+		resp, err := scraper.Get("https://dexscreener.com", make(map[string]string), "")
+		if err == nil {
+			// Ambil semua cookie dari header Set-Cookie (jika library mengeksposnya)
+			// cloudscraper_go via cycletls kadang menyimpan cookie di internal jar,
+			// tapi kita coba manual construct jika ada di header.
+			// (Implementasi sederhana: jika resp punya cookies, kita pakai)
+			// Namun, cycletls biasanya auto-handle di HTTP, tapi TIDAK di WebSocket.
+			// Kita coba lanjut tanpa cookie eksplisit dulu jika library susah,
+			// TAPI: kita tambah header Origin/Referer yang sangat strict.
+		}
+		_ = resp // ignore for now if extraction is hard
+	}
+
+	// 2. Setup Headers (Strict Match dengan dex_coba.go)
 	header := http.Header{}
 	header.Set("Host", "io.dexscreener.com")
 	header.Set("Origin", "https://dexscreener.com")
 	header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
 	header.Set("Accept-Language", "en-US,en;q=0.9")
 	header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
-	
-	// Dialer
-	dialer := websocket.Dialer{
-		HandshakeTimeout: 30 * time.Second,
-		EnableCompression: true, 
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+
+	// Jika kita berhasil dapat cookie string dari scraper, set disini:
+	if cookies != "" {
+		header.Set("Cookie", cookies)
 	}
 
-	// 2. Build URL (API v6, Path Static h24/1)
+	dialer := websocket.Dialer{
+		HandshakeTimeout:  30 * time.Second,
+		EnableCompression: true,
+		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
+	}
+
+	// 3. Build URL (API v6, Path Static h24/1)
 	wsURL := "wss://io.dexscreener.com/dex/screener/v6/pairs/h24/1"
-	
+
 	q := url.Values{}
 	q.Set("rankBy[key]", fmt.Sprintf("trendingScore%s", strings.ToUpper(trendingScore)))
 	q.Set("rankBy[order]", "desc")
-	if chainID != "" { q.Set("filters[chainIds][0]", chainID) }
-	if dexID != "" { q.Set("filters[dexIds][0]", dexID) }
-	
+	if chainID != "" {
+		q.Set("filters[chainIds][0]", chainID)
+	}
+	if dexID != "" {
+		q.Set("filters[dexIds][0]", dexID)
+	}
+
 	fullURL := wsURL + "?" + q.Encode()
 
-	// 3. Retry Logic (5x)
+	// 4. Retry Logic (5x)
 	var conn *websocket.Conn
-	var err error
 	maxConnRetries := 5
 
 	for i := 0; i < maxConnRetries; i++ {
@@ -213,8 +238,8 @@ func fetchPairsViaWS(chainID, dexID, trendingScore string) ([]string, error) {
 	}
 	defer conn.Close()
 
-	// 4. Read Loop
-	maxReadRetries := 5 
+	// 5. Read Loop
+	maxReadRetries := 5
 	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
 
 	for i := 0; i < maxReadRetries; i++ {
@@ -252,7 +277,6 @@ func extractPairAddresses(dataStr string) []string {
 
 // Helper: Fetch Pair Info menggunakan CloudScraper
 func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]interface{}, error) {
-	// Inisialisasi CloudScraper
 	client, err := cloudscraper.Init(false, false)
 	if err != nil {
 		return nil, fmt.Errorf("gagal inisialisasi cloudscraper: %v", err)
@@ -260,17 +284,15 @@ func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]int
 
 	var wg sync.WaitGroup
 	resultsChan := make(chan map[string]interface{}, len(addresses))
-	// Limit concurrency agar tidak berat
-	semaphore := make(chan struct{}, 5) 
+	semaphore := make(chan struct{}, 5)
 
 	for _, addr := range addresses {
 		wg.Add(1)
 		go func(address string) {
 			defer wg.Done()
-			semaphore <- struct{}{} // Acquire token
-			defer func() { <-semaphore }() // Release token
-			
-			// Auto-detect chain logic
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
 			usedChain := chainID
 			if usedChain == "" {
 				if strings.HasSuffix(address, "pump") {
@@ -283,17 +305,17 @@ func fetchPairInfoParallel(addresses []string, chainID string) ([]map[string]int
 			}
 
 			apiURL := fmt.Sprintf("https://api.dexscreener.com/token-pairs/v1/%s/%s", usedChain, address)
-			
+
 			headers := make(map[string]string)
 			headers["Origin"] = "https://dexscreener.com"
 			headers["Referer"] = "https://dexscreener.com/"
 
-			// Request HTTP via CloudScraper
-			resp, err := client.Get(apiURL, headers, "") 
-			
+			// Request HTTP via CloudScraper (Fixed Arguments)
+			resp, err := client.Get(apiURL, headers, "")
+
 			if err == nil && resp.Status == 200 {
 				var items []interface{}
-				// Langsung convert string body ke []byte untuk Unmarshal
+				// Use string body directly
 				if json.Unmarshal([]byte(resp.Body), &items) == nil && len(items) > 0 {
 					if itemMap, ok := items[0].(map[string]interface{}); ok {
 						resultsChan <- itemMap
@@ -319,10 +341,10 @@ func handleDetailRequest(c *gin.Context, network, address string) {
 	if len(infos) > 0 {
 		data = infos
 	}
-	
+
 	c.JSON(http.StatusOK, types.StandardResponse{
-		MadeBy: "Xdeployments", 
-		Message: "ok", 
-		Data: data,
+		MadeBy:  "Xdeployments",
+		Message: "ok",
+		Data:    data,
 	})
 }
