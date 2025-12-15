@@ -42,8 +42,11 @@ next-env.d.ts
 app/api/test-api/
 
 #not-upload yet
-test\aichat.py
-test\aichat.go
+*.py
+*.txt
+*.json
+test/aichat.go
 
 # docs folder - only for reference/examples
 /docs/
+

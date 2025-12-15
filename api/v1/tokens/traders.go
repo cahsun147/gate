@@ -3,15 +3,13 @@ package tokens
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 
 	"gateway/cache"
 	"gateway/types"
 
+	"github.com/RomainMichau/cloudscraper_go/cloudscraper"
 	"github.com/gin-gonic/gin"
 )
 
@@ -46,21 +44,21 @@ func GetTraders(c *gin.Context) {
 
 	// Validasi parameter
 	if !allowedNetworks[network] {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+		c.JSON(400, types.ErrorResponse{
 			Error: "Jaringan tidak valid",
 		})
 		return
 	}
 
 	if !allowedOrderByTraders[orderBy] {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+		c.JSON(400, types.ErrorResponse{
 			Error: "Urutan tidak valid",
 		})
 		return
 	}
 
 	if !allowedDirections[direction] {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+		c.JSON(400, types.ErrorResponse{
 			Error: "Arah tidak valid, hanya 'desc' yang didukung",
 		})
 		return
@@ -69,71 +67,104 @@ func GetTraders(c *gin.Context) {
 	// Validasi dan konversi limit
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+		c.JSON(400, types.ErrorResponse{
 			Error: "Batas harus berupa bilangan bulat",
 		})
 		return
 	}
 
 	if limit < 1 || limit > 100 {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+		c.JSON(400, types.ErrorResponse{
 			Error: "Batas harus antara 1 dan 100",
 		})
 		return
 	}
 
-	// Konstruksi URL dan params
+	// Konstruksi URL
 	baseURL := fmt.Sprintf("https://gmgn.ai/vas/api/v1/token_traders/%s/%s", network, contractAddress)
-	params := url.Values{}
-	params.Add("limit", strconv.Itoa(limit))
-	params.Add("cost", "20")
-	params.Add("orderby", orderBy)
-	params.Add("direction", direction)
-	params.Add("app_lang", "en-US")
-	params.Add("os", "web")
+
+	// Konstruksi query parameters
+	queryParams := map[string]string{
+		"limit":     strconv.Itoa(limit),
+		"cost":      "20",
+		"orderby":   orderBy,
+		"direction": direction,
+		"app_lang":  "en-US",
+		"os":        "web",
+	}
 
 	// Hanya sertakan 'tag' jika disediakan dan valid
 	if tag != "" && allowedTag[tag] {
-		params.Add("tag", tag)
+		queryParams["tag"] = tag
 	}
 
 	// Cek cache terlebih dahulu
 	cacheKey := fmt.Sprintf("traders:%s:%s:%s:%s:%s", network, contractAddress, limitStr, orderBy, tag)
 	if cachedData, err := cache.GetCache(cacheKey); err == nil && cachedData != nil {
 		fmt.Printf("Cache HIT untuk key: %s\n", cacheKey)
-		c.JSON(http.StatusOK, cachedData)
+		c.JSON(200, cachedData)
 		return
 	}
 
-	// Batas percobaan dan jeda
-	maxRetries := 10
-	retryDelay := time.Duration(0) * time.Second
+	// Inisialisasi cloudscraper client
+	client, err := cloudscraper.Init(false, false)
+	if err != nil {
+		fmt.Printf("Kesalahan terjadi: %v\n", err)
+		c.JSON(500, types.ErrorResponse{
+			Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
+		})
+		return
+	}
+
+	// Header untuk meniru browser
+	headers := map[string]string{
+		"User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+		"Accept":          "application/json, text/plain, */*",
+		"Accept-Language": "en-US,en;q=0.9",
+		"Referer":         "https://gmgn.ai/",
+		"Sec-Fetch-Dest":  "empty",
+		"Sec-Fetch-Mode":  "cors",
+		"Sec-Fetch-Site":  "same-origin",
+	}
+
+	// Batas percobaan tanpa delay (instant retry untuk kecepatan maksimal)
+	maxRetries := 30
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		response, err := makeRequest(baseURL, params)
+		// Buat URL dengan query parameters
+		fullURL := baseURL
+		if len(queryParams) > 0 {
+			fullURL += "?"
+			first := true
+			for k, v := range queryParams {
+				if !first {
+					fullURL += "&"
+				}
+				fullURL += k + "=" + v
+				first = false
+			}
+		}
+
+		// Lakukan request dengan cloudscraper
+		response, err := client.Get(fullURL, headers, "")
 		if err != nil {
-			fmt.Printf("Kesalahan terjadi: %v\n", err)
-			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			fmt.Printf("Retry %d/%d: Kesalahan terjadi: %v\n", attempt+1, maxRetries, err)
+			if attempt < maxRetries-1 {
+				continue
+			}
+			c.JSON(500, types.ErrorResponse{
 				Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
 			})
 			return
 		}
 
-		if response.StatusCode == http.StatusOK {
-			// Parse response
-			body, err := io.ReadAll(response.Body)
-			response.Body.Close()
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, types.ErrorResponse{
-					Error: "Terjadi kesalahan saat membaca respons.",
-				})
-				return
-			}
-
+		statusCode := response.Status
+		if statusCode == 200 {
+			// Parse response body
 			var apiData map[string]interface{}
-			if err := json.Unmarshal(body, &apiData); err != nil {
+			if err := json.Unmarshal([]byte(response.Body), &apiData); err != nil {
 				fmt.Println("Kesalahan penguraian JSON")
-				c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+				c.JSON(500, types.ErrorResponse{
 					Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
 				})
 				return
@@ -172,25 +203,26 @@ func GetTraders(c *gin.Context) {
 				fmt.Printf("Warning: Gagal menyimpan cache untuk key %s: %v\n", cacheKey, err)
 			}
 
-			c.JSON(http.StatusOK, newData)
+			c.JSON(200, newData)
 			return
-		} else if response.StatusCode == http.StatusForbidden {
-			response.Body.Close()
+		} else if statusCode == 403 {
+			fmt.Printf("Retry %d/%d: Status 403, retry...\n", attempt+1, maxRetries)
 			if attempt < maxRetries-1 {
-				time.Sleep(retryDelay)
 				continue
 			} else {
-				fmt.Println("Gagal setelah 10 percobaan karena status 403")
-				c.JSON(http.StatusServiceUnavailable, types.ErrorResponse{
+				fmt.Printf("Gagal setelah %d percobaan karena status 403\n", maxRetries)
+				c.JSON(503, types.ErrorResponse{
 					Error:   "Server overload, coba lagi nanti",
 					Message: "success ;)",
 				})
 				return
 			}
 		} else {
-			response.Body.Close()
-			fmt.Printf("Status kode API: %d\n", response.StatusCode)
-			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			fmt.Printf("Retry %d/%d: Status kode API: %d\n", attempt+1, maxRetries, statusCode)
+			if attempt < maxRetries-1 {
+				continue
+			}
+			c.JSON(500, types.ErrorResponse{
 				Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
 			})
 			return
@@ -198,8 +230,8 @@ func GetTraders(c *gin.Context) {
 	}
 
 	// Fallback jika semua percobaan gagal
-	fmt.Println("Gagal setelah semua percobaan")
-	c.JSON(http.StatusServiceUnavailable, types.ErrorResponse{
+	fmt.Printf("Gagal setelah %d percobaan\n", maxRetries)
+	c.JSON(503, types.ErrorResponse{
 		Error:   "Server overload, coba lagi nanti",
 		Message: "Fail get data OnChain",
 	})
