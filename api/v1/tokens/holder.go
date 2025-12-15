@@ -14,21 +14,25 @@ import (
 )
 
 var allowedOrderBy = map[string]bool{
-	"last_active_timestamp": true,
-	"amount_percentage":     true,
-	"sell_volume_cur":       true,
-	"buy_volume_cur":        true,
-	"profit":                true,
+	"last_active_timestamp": true, // LAST ACTIVE
+	"amount_percentage":     true, // REMEANING
+	"sell_volume_cur":       true, // SOLD
+	"buy_volume_cur":        true, // BOUGHT
+	"profit":                true, // PNL
+	"unrealized_profit":     true, // UNREADLIZED
 }
 
 var allowedTag = map[string]bool{
-	"smart_degen":  true,
-	"renowned":     true,
-	"dev":          true,
-	"fresh_wallet": true,
-	"rat_trader":   true,
-	"transfer_in":  true,
-	"dex_bot":      true,
+	"smart_degen":    true, // SMART
+	"renowned":       true, // KOL
+	"dev":            true, // DEV
+	"fresh_wallet":   true, // FRESH WALLET
+	"rat_trader":     true, // INSIDER
+	"transfer_in":    true, // PHISING
+	"dex_bot":        true, // BOT DEGEN
+	"bundler":        true, // BUNDLER
+	"bluechip_owner": true, // BC OWNER
+	"sniper":         true, // SNIPER
 }
 
 var allowedDirections = map[string]bool{
