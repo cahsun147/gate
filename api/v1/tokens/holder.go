@@ -147,7 +147,7 @@ func GetHolder(c *gin.Context) {
 	}
 
 	// Batas percobaan tanpa delay (instant retry untuk kecepatan maksimal)
-	maxRetries := 20
+	maxRetries := 30
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		// Buat URL dengan query parameters
