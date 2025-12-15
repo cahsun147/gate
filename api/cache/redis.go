@@ -15,24 +15,37 @@ var RedisClient *redis.Client
 // InitRedis menginisialisasi Redis client
 func InitRedis() {
 	redisURL := os.Getenv("REDIS_URL")
+
+	var opt *redis.Options
+	var err error
+
+	// Jika Environment Variable kosong, fallback ke localhost
 	if redisURL == "" {
-		redisURL = "localhost:6379"
+		fmt.Println("Warning: REDIS_URL not found, using localhost")
+		opt = &redis.Options{
+			Addr: "localhost:6379",
+		}
+	} else {
+		// PERBAIKAN UTAMA: Gunakan ParseURL untuk memproses string 'rediss://...'
+		opt, err = redis.ParseURL(redisURL)
+		if err != nil {
+			fmt.Printf("Error parsing REDIS_URL: %v\n", err)
+			return
+		}
 	}
 
-	RedisClient = redis.NewClient(&redis.Options{
-		Addr: redisURL,
-	})
+	RedisClient = redis.NewClient(opt)
 
 	// Test connection dengan timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := RedisClient.Ping(ctx).Result()
+	pong, err := RedisClient.Ping(ctx).Result()
 	if err != nil {
 		fmt.Printf("Warning: Redis tidak tersedia (%v). Cache akan dilewati.\n", err)
 		RedisClient = nil
 	} else {
-		fmt.Println("Redis connected successfully")
+		fmt.Printf("Redis connected successfully: %s\n", pong)
 	}
 }
 
