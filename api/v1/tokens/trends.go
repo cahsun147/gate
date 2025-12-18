@@ -52,8 +52,10 @@ func GetTrends(c *gin.Context) {
 		"holder_count",
 		"top10_holder_percent",
 		"top100_holder_percent",
-		"bluechip_owner_percent",
+		"bundler_percent",
 		"insider_percent",
+		"bundler_percent",
+		"entrapment_percent",
 	}
 
 	// Inisialisasi cloudscraper client
@@ -70,6 +72,7 @@ func GetTrends(c *gin.Context) {
 	headers := map[string]string{
 		"User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
 		"Accept":          "application/json, text/plain, */*",
+		"Accept-Encoding": "gzip, deflate, br, zstd",
 		"Accept-Language": "en-US,en;q=0.9",
 		"Referer":         "https://gmgn.ai/",
 		"Sec-Fetch-Dest":  "empty",
