@@ -3,14 +3,12 @@ package tokens
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"time"
 
 	"gateway/cache"
 	"gateway/types"
 
+	"github.com/RomainMichau/cloudscraper_go/cloudscraper"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,7 +28,7 @@ func GetTrends(c *gin.Context) {
 
 	// Validasi parameter
 	if !allowedNetworks[network] {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+		c.JSON(400, types.ErrorResponse{
 			Error:   "Jaringan tidak valid",
 			Message: "success",
 		})
@@ -41,51 +39,75 @@ func GetTrends(c *gin.Context) {
 	cacheKey := fmt.Sprintf("trends:%s:%s", network, contractAddress)
 	if cachedData, err := cache.GetCache(cacheKey); err == nil && cachedData != nil {
 		fmt.Printf("Cache HIT untuk key: %s\n", cacheKey)
-		c.JSON(http.StatusOK, cachedData)
+		c.JSON(200, cachedData)
 		return
 	}
 
-	// Konstruksi URL dan params
+	// Konstruksi URL
 	baseURL := fmt.Sprintf("https://gmgn.ai/api/v1/token_trends/%s/%s", network, contractAddress)
-	params := url.Values{}
-	params.Add("trends_type", "avg_holding_balance")
-	params.Add("trends_type", "holder_count")
-	params.Add("trends_type", "top10_holder_percent")
-	params.Add("trends_type", "top100_holder_percent")
-	params.Add("trends_type", "bluechip_owner_percent")
-	params.Add("trends_type", "insider_percent")
-	params.Add("app_lang", "en-US")
-	params.Add("os", "web")
 
-	// Batas percobaan dan jeda
-	maxRetries := 10
-	retryDelay := time.Duration(0) * time.Second
+	// Array trends_type parameter
+	trendsTypes := []string{
+		"avg_holding_balance",
+		"holder_count",
+		"top10_holder_percent",
+		"top100_holder_percent",
+		"bluechip_owner_percent",
+		"insider_percent",
+	}
+
+	// Inisialisasi cloudscraper client
+	client, err := cloudscraper.Init(false, false)
+	if err != nil {
+		fmt.Printf("Kesalahan terjadi: %v\n", err)
+		c.JSON(500, types.ErrorResponse{
+			Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
+		})
+		return
+	}
+
+	// Header untuk meniru browser
+	headers := map[string]string{
+		"User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+		"Accept":          "application/json, text/plain, */*",
+		"Accept-Language": "en-US,en;q=0.9",
+		"Referer":         "https://gmgn.ai/",
+		"Sec-Fetch-Dest":  "empty",
+		"Sec-Fetch-Mode":  "cors",
+		"Sec-Fetch-Site":  "same-origin",
+	}
+
+	// Batas percobaan tanpa delay (instant retry untuk kecepatan maksimal)
+	maxRetries := 20
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		response, err := makeRequest(baseURL, params)
+		// Buat URL dengan query parameters (array parameter)
+		fullURL := baseURL + "?"
+		for _, trendType := range trendsTypes {
+			fullURL += "trends_type=" + trendType + "&"
+		}
+		fullURL += "app_lang=en-US&os=web"
+
+		// Lakukan request dengan cloudscraper
+		response, err := client.Get(fullURL, headers, "")
 		if err != nil {
-			fmt.Printf("Kesalahan terjadi: %v\n", err)
-			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			fmt.Printf("Retry %d/%d: Kesalahan terjadi: %v\n", attempt+1, maxRetries, err)
+			if attempt < maxRetries-1 {
+				continue
+			}
+			c.JSON(500, types.ErrorResponse{
 				Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
 			})
 			return
 		}
 
-		if response.StatusCode == http.StatusOK {
-			// Parse response
-			body, err := io.ReadAll(response.Body)
-			response.Body.Close()
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, types.ErrorResponse{
-					Error: "Terjadi kesalahan saat membaca respons.",
-				})
-				return
-			}
-
+		statusCode := response.Status
+		if statusCode == 200 {
+			// Parse response body
 			var apiData map[string]interface{}
-			if err := json.Unmarshal(body, &apiData); err != nil {
+			if err := json.Unmarshal([]byte(response.Body), &apiData); err != nil {
 				fmt.Println("Kesalahan penguraian JSON")
-				c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+				c.JSON(500, types.ErrorResponse{
 					Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
 				})
 				return
@@ -112,25 +134,26 @@ func GetTrends(c *gin.Context) {
 				fmt.Printf("Warning: Gagal menyimpan cache untuk key %s: %v\n", cacheKey, err)
 			}
 
-			c.JSON(http.StatusOK, newData)
+			c.JSON(200, newData)
 			return
-		} else if response.StatusCode == http.StatusForbidden {
-			response.Body.Close()
+		} else if statusCode == 403 {
+			fmt.Printf("Retry %d/%d: Status 403, retry...\n", attempt+1, maxRetries)
 			if attempt < maxRetries-1 {
-				time.Sleep(retryDelay)
 				continue
 			} else {
-				fmt.Println("Gagal setelah 10 percobaan karena status 403")
-				c.JSON(http.StatusServiceUnavailable, types.ErrorResponse{
+				fmt.Printf("Gagal setelah %d percobaan karena status 403\n", maxRetries)
+				c.JSON(503, types.ErrorResponse{
 					Error:   "Server overload, coba lagi nanti",
 					Message: "success ;)",
 				})
 				return
 			}
 		} else {
-			response.Body.Close()
-			fmt.Printf("Status kode API: %d\n", response.StatusCode)
-			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			fmt.Printf("Retry %d/%d: Status kode API: %d\n", attempt+1, maxRetries, statusCode)
+			if attempt < maxRetries-1 {
+				continue
+			}
+			c.JSON(500, types.ErrorResponse{
 				Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
 			})
 			return
@@ -138,35 +161,9 @@ func GetTrends(c *gin.Context) {
 	}
 
 	// Fallback jika semua percobaan gagal
-	fmt.Println("Gagal setelah semua percobaan")
-	c.JSON(http.StatusServiceUnavailable, types.ErrorResponse{
+	fmt.Printf("Gagal setelah %d percobaan\n", maxRetries)
+	c.JSON(503, types.ErrorResponse{
 		Error:   "Server overload, coba lagi nanti",
 		Message: "Fail get data OnChain",
 	})
-}
-
-// makeRequest membuat HTTP request dengan headers yang sesuai
-func makeRequest(baseURL string, params url.Values) (*http.Response, error) {
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
-
-	// Konstruksi URL dengan query parameters
-	fullURL := baseURL + "?" + params.Encode()
-
-	req, err := http.NewRequest("GET", fullURL, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// Set headers untuk meniru browser
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
-	req.Header.Set("Accept", "application/json, text/plain, */*")
-	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
-	req.Header.Set("Referer", "https://gmgn.ai/")
-	req.Header.Set("Sec-Fetch-Dest", "empty")
-	req.Header.Set("Sec-Fetch-Mode", "cors")
-	req.Header.Set("Sec-Fetch-Site", "same-origin")
-
-	return client.Do(req)
 }
