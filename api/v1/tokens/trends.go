@@ -87,7 +87,7 @@ func GetTrends(c *gin.Context) {
 	}
 
 	// Batas retry (instant retry untuk kecepatan maksimal)
-	maxRetries := 20
+	maxRetries := 30
 
 	var apiData map[string]interface{}
 	for attempt := 0; attempt < maxRetries; attempt++ {

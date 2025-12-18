@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"gateway/cache"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/RomainMichau/cloudscraper_go/cloudscraper"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 var allowedOrderByTraders = map[string]bool{
@@ -90,14 +92,26 @@ func GetTraders(c *gin.Context) {
 	// Konstruksi URL
 	baseURL := fmt.Sprintf("https://gmgn.ai/vas/api/v1/token_traders/%s/%s", network, contractAddress)
 
+	// Generate params dengan nilai dinamis untuk bypass Cloudflare
+	deviceID := uuid.New().String()
+	fpDid := strings.ReplaceAll(uuid.New().String(), "-", "")[:32]
+	appVer := "20251219-8915-e793f7a"
+
 	// Konstruksi query parameters
 	queryParams := map[string]string{
 		"limit":     strconv.Itoa(limit),
 		"cost":      "20",
 		"orderby":   orderBy,
 		"direction": direction,
+		"device_id": deviceID,
+		"fp_did":    fpDid,
+		"from_app":  "gmgn",
+		"app_ver":   appVer,
+		"tz_name":   "Asia/Jakarta",
+		"tz_offset": "25200",
 		"app_lang":  "en-US",
 		"os":        "web",
+		"worker":    "0",
 	}
 
 	// Hanya sertakan 'tag' jika disediakan dan valid
