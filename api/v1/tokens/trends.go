@@ -1,10 +1,14 @@
 package tokens
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/RomainMichau/cloudscraper_go/cloudscraper"
 	"github.com/gin-gonic/gin"
@@ -43,7 +47,23 @@ func GetTrends(c *gin.Context) {
 	// Generate params dengan nilai dinamis untuk bypass Cloudflare
 	deviceID := uuid.New().String()
 	fpDid := strings.ReplaceAll(uuid.New().String(), "-", "")[:32]
-	appVer := "20251219-8915-e793f7a"
+	
+	// Fetch appVer otomatis dari file JS
+	appVer := fetchAppVersion() // Fungsi baru di bawah
+	if appVer == "" {
+		// Fallback ke generate random jika gagal fetch
+		now := time.Now()
+		datePart := now.Format("20060102")
+		randBytes := make([]byte, 6)
+		_, err := rand.Read(randBytes)
+		if err == nil {
+			numPart := fmt.Sprintf("%04d", (int(randBytes[0])<<8|int(randBytes[1]))%10000)
+			hexPart := hex.EncodeToString(randBytes[2:])[:7]
+			appVer = fmt.Sprintf("%s-%s-%s", datePart, numPart, hexPart)
+		} else {
+			appVer = "20251218-8915-e793f7a" // Default statis
+		}
+	}
 
 	params := map[string][]string{
 		"trends_type": {
@@ -168,4 +188,40 @@ func GetTrends(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, newData)
+}
+
+// Fungsi baru untuk fetch appVer dari file JS
+func fetchAppVersion() string {
+jsURL := "https://gmgn.ai/_next/static/chunks/pages/_app-b231a1dddd1e8bb0.js" // Ganti jika hash berubah
+resp, err := http.Get(jsURL)
+if err != nil {
+	fmt.Printf("Gagal fetch JS file: %v\n", err)
+	return ""
+}
+defer resp.Body.Close()
+
+if resp.StatusCode != 200 {
+	fmt.Printf("Status kode fetch JS: %d\n", resp.StatusCode)
+	return ""
+}
+
+body, err := ioutil.ReadAll(resp.Body)
+if err != nil {
+	fmt.Printf("Gagal baca body JS: %v\n", err)
+	return ""
+}
+
+jsContent := string(body)
+// Cari g.version="value"
+startIndex := strings.Index(jsContent, `g.version="`)
+if startIndex == -1 {
+	fmt.Println("Tidak menemukan g.version di JS file")
+	return ""
+}
+startIndex += len(`g.version="`)
+endIndex := strings.Index(jsContent[startIndex:], `"`)
+if endIndex == -1 {
+	return ""
+}
+return jsContent[startIndex : startIndex+endIndex]
 }
