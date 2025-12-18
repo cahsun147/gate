@@ -43,7 +43,14 @@ func GetTraders(c *gin.Context) {
 	tag := c.Query("tag")
 
 	// Validasi parameter
-	if !allowedNetworks[network] {
+	validNetwork := false
+	for _, n := range allowedNetworks {
+		if n == network {
+			validNetwork = true
+			break
+		}
+	}
+	if !validNetwork {
 		c.JSON(400, types.ErrorResponse{
 			Error: "Jaringan tidak valid",
 		})

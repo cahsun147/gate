@@ -3,76 +3,82 @@ package tokens
 import (
 	"encoding/json"
 	"fmt"
-	"time"
-
-	"gateway/cache"
-	"gateway/types"
+	"net/http"
+	"strings"
 
 	"github.com/RomainMichau/cloudscraper_go/cloudscraper"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
-var allowedNetworks = map[string]bool{
-	"sol":   true,
-	"eth":   true,
-	"base":  true,
-	"bsc":   true,
-	"tron":  true,
-	"blast": true,
+var allowedNetworks = []string{
+	"sol",
+	"eth",
+	"base",
+	"bsc",
+	"tron",
+	"blast",
 }
 
-// GetTrends menangani permintaan untuk endpoint /api/v1/tokens/trends/:network/:contract_address
 func GetTrends(c *gin.Context) {
 	network := c.Param("network")
 	contractAddress := c.Param("contract_address")
 
-	// Validasi parameter
-	if !allowedNetworks[network] {
-		c.JSON(400, types.ErrorResponse{
-			Error:   "Jaringan tidak valid",
-			Message: "success",
-		})
-		return
+	// Validasi network
+	found := false
+	for _, n := range allowedNetworks {
+		if n == network {
+			found = true
+			break
+		}
 	}
-
-	// Cek cache terlebih dahulu
-	cacheKey := fmt.Sprintf("trends:%s:%s", network, contractAddress)
-	if cachedData, err := cache.GetCache(cacheKey); err == nil && cachedData != nil {
-		fmt.Printf("Cache HIT untuk key: %s\n", cacheKey)
-		c.JSON(200, cachedData)
+	if !found {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Jaringan tidak valid", "message": "success"})
 		return
 	}
 
 	// Konstruksi URL
-	baseURL := fmt.Sprintf("https://gmgn.ai/api/v1/token_trends/%s/%s", network, contractAddress)
+	url := fmt.Sprintf("https://gmgn.ai/api/v1/token_trends/%s/%s", network, contractAddress)
 
-	// Array trends_type parameter
-	trendsTypes := []string{
-		"avg_holding_balance",
-		"holder_count",
-		"top10_holder_percent",
-		"top100_holder_percent",
-		"bundler_percent",
-		"insider_percent",
-		"bundler_percent",
-		"entrapment_percent",
+	// Generate params dengan nilai dinamis untuk bypass Cloudflare
+	deviceID := uuid.New().String()
+	fpDid := strings.ReplaceAll(uuid.New().String(), "-", "")[:32]
+	appVer := "20251219-8915-e793f7a"
+
+	params := map[string][]string{
+		"trends_type": {
+			"avg_holding_balance",
+			"holder_count",
+			"top10_holder_percent",
+			"top100_holder_percent",
+			"bundler_percent",
+			"insider_percent",
+			"bot_degen_percent",
+			"entrapment_percent",
+		},
+		"device_id": {deviceID},
+		"fp_did":    {fpDid},
+		"from_app":  {"gmgn"},
+		"app_ver":   {appVer},
+		"tz_name":   {"Asia/Jakarta"},
+		"tz_offset": {"25200"},
+		"app_lang":  {"en-US"},
+		"os":        {"web"},
+		"worker":    {"0"},
 	}
 
-	// Inisialisasi cloudscraper client
-	client, err := cloudscraper.Init(false, false)
+	// Buat scraper
+	scraper, err := cloudscraper.Init(false, false)
 	if err != nil {
-		fmt.Printf("Kesalahan terjadi: %v\n", err)
-		c.JSON(500, types.ErrorResponse{
-			Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
-		})
+		fmt.Printf("Gagal membuat scraper: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti."})
 		return
 	}
 
-	// Header untuk meniru browser
+	// Headers untuk meniru browser
 	headers := map[string]string{
 		"User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
 		"Accept":          "application/json, text/plain, */*",
-		"Accept-Encoding": "gzip, deflate, br, zstd",
 		"Accept-Language": "en-US,en;q=0.9",
 		"Referer":         "https://gmgn.ai/",
 		"Sec-Fetch-Dest":  "empty",
@@ -80,75 +86,48 @@ func GetTrends(c *gin.Context) {
 		"Sec-Fetch-Site":  "same-origin",
 	}
 
-	// Batas percobaan tanpa delay (instant retry untuk kecepatan maksimal)
-	maxRetries := 30
+	// Batas retry (instant retry untuk kecepatan maksimal)
+	maxRetries := 20
 
+	var apiData map[string]interface{}
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		// Buat URL dengan query parameters (array parameter)
-		fullURL := baseURL + "?"
-		for _, trendType := range trendsTypes {
-			fullURL += "trends_type=" + trendType + "&"
+		fullURL := url + "?"
+		for key, values := range params {
+			for _, value := range values {
+				fullURL += key + "=" + value + "&"
+			}
 		}
-		fullURL += "app_lang=en-US&os=web"
+		// Hapus trailing &
+		fullURL = fullURL[:len(fullURL)-1]
 
 		// Lakukan request dengan cloudscraper
-		response, err := client.Get(fullURL, headers, "")
+		response, err := scraper.Get(fullURL, headers, "")
 		if err != nil {
 			fmt.Printf("Retry %d/%d: Kesalahan terjadi: %v\n", attempt+1, maxRetries, err)
 			if attempt < maxRetries-1 {
 				continue
 			}
-			c.JSON(500, types.ErrorResponse{
-				Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
-			})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti."})
 			return
 		}
 
 		statusCode := response.Status
 		if statusCode == 200 {
 			// Parse response body
-			var apiData map[string]interface{}
 			if err := json.Unmarshal([]byte(response.Body), &apiData); err != nil {
 				fmt.Println("Kesalahan penguraian JSON")
-				c.JSON(500, types.ErrorResponse{
-					Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
-				})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti."})
 				return
 			}
-
-			// Extract trends dari response
-			trends := []interface{}{}
-			if dataMap, ok := apiData["data"].(map[string]interface{}); ok {
-				if trendsData, ok := dataMap["trends"]; ok {
-					trends = trendsData.([]interface{})
-				}
-			}
-
-			newData := types.StandardResponse{
-				MadeBy:  "Xdeployments",
-				Message: "ok",
-				Data: types.TrendsData{
-					ChartTrends: trends,
-				},
-			}
-
-			// Simpan ke cache dengan TTL 60 detik (soft fail jika Redis tidak tersedia)
-			if err := cache.SetCache(cacheKey, newData, 60*time.Second); err != nil {
-				fmt.Printf("Warning: Gagal menyimpan cache untuk key %s: %v\n", cacheKey, err)
-			}
-
-			c.JSON(200, newData)
-			return
+			break
 		} else if statusCode == 403 {
 			fmt.Printf("Retry %d/%d: Status 403, retry...\n", attempt+1, maxRetries)
 			if attempt < maxRetries-1 {
 				continue
 			} else {
 				fmt.Printf("Gagal setelah %d percobaan karena status 403\n", maxRetries)
-				c.JSON(503, types.ErrorResponse{
-					Error:   "Server overload, coba lagi nanti",
-					Message: "success ;)",
-				})
+				c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Server overload, coba lagi nanti", "message": "success ;)"})
 				return
 			}
 		} else {
@@ -156,17 +135,37 @@ func GetTrends(c *gin.Context) {
 			if attempt < maxRetries-1 {
 				continue
 			}
-			c.JSON(500, types.ErrorResponse{
-				Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
-			})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti."})
 			return
 		}
 	}
 
-	// Fallback jika semua percobaan gagal
-	fmt.Printf("Gagal setelah %d percobaan\n", maxRetries)
-	c.JSON(503, types.ErrorResponse{
-		Error:   "Server overload, coba lagi nanti",
-		Message: "Fail get data OnChain",
-	})
+	if apiData == nil {
+		fmt.Println("Gagal setelah semua percobaan")
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Server overload, coba lagi nanti", "message": "Fail get data OnChain"})
+		return
+	}
+
+	// Ambil trends sebagai map (fix struktur)
+	data, ok := apiData["data"].(map[string]interface{})
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Struktur data tidak valid"})
+		return
+	}
+	trends, ok := data["trends"].(map[string]interface{})
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Struktur trends tidak valid"})
+		return
+	}
+
+	// Buat respons baru
+	newData := map[string]interface{}{
+		"made by": "Xdeployments",
+		"message": "ok",
+		"data": map[string]interface{}{
+			"chartTrends": trends, // Atau list(trends.Values()) jika butuh slice
+		},
+	}
+
+	c.JSON(http.StatusOK, newData)
 }
