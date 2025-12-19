@@ -3,133 +3,123 @@ package wallet
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
-	"strconv"
+	"strings"
 	"time"
 
 	"gateway/cache"
 	"gateway/types"
 
+	"github.com/RomainMichau/cloudscraper_go/cloudscraper"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // GetFlow menangani permintaan untuk endpoint /api/v1/wallet/flow/:network/:address
 func GetFlow(c *gin.Context) {
 	network := c.Param("network")
 	walletAddress := c.Param("address")
-	limitStr := c.Query("limit")
-	orderBy := c.Query("orderby")
-	direction := c.Query("direction")
+	period := c.Query("period")
 
 	// Validasi parameter
 	if !allowedNetworks[network] {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+		c.JSON(400, types.ErrorResponse{
 			Error:   "Jaringan tidak valid",
 			Message: "success",
 		})
 		return
 	}
 
-	// Validasi dan konversi limit
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
-			Error:   "Batas harus berupa bilangan bulat",
+	if !allowedPeriods[period] {
+		c.JSON(400, types.ErrorResponse{
+			Error:   "Period tidak valid",
 			Message: "success",
 		})
-		return
-	}
-
-	if limit < 1 || limit > 50 {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
-			Error:   "Batas harus antara 1 dan 50",
-			Message: "success",
-		})
-		return
-	}
-
-	if !allowedOrderByHoldings[orderBy] {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
-			Error:   "Urutan tidak valid",
-			Message: "success",
-		})
-		return
-	}
-
-	if !allowedDirections[direction] {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
-			Error:   "Arah tidak valid",
-			Message: "success",
-		})
-		return
-	}
-
-	// Cek cache terlebih dahulu
-	cacheKey := fmt.Sprintf("wallet:flow:%s:%s:%s:%s:%s", network, walletAddress, limitStr, orderBy, direction)
-	if cachedData, err := cache.GetCache(cacheKey); err == nil && cachedData != nil {
-		fmt.Printf("Cache HIT untuk key: %s\n", cacheKey)
-		c.JSON(http.StatusOK, cachedData)
 		return
 	}
 
 	// Konstruksi URL
-	baseURL := fmt.Sprintf("https://gmgn.ai/api/v1/wallet_holdings/%s/%s", network, walletAddress)
-	params := url.Values{}
-	params.Add("app_lang", "en-US")
-	params.Add("os", "web")
-	params.Add("limit", strconv.Itoa(limit))
-	params.Add("orderby", orderBy)
-	params.Add("direction", direction)
-	params.Add("showsmall", "true")
-	params.Add("sellout", "true")
-	params.Add("tx30d", "true")
+	baseURL := fmt.Sprintf("https://gmgn.ai/api/v1/wallet_stat/%s/%s/%s", network, walletAddress, period)
 
-	// Batas percobaan dan jeda
-	maxRetries := 10
-	retryDelay := time.Duration(0) * time.Second
+	// Generate params dengan nilai dinamis untuk bypass Cloudflare
+	deviceID := uuid.New().String()
+	fpDid := strings.ReplaceAll(uuid.New().String(), "-", "")[:32]
+	appVer := "20251219-8915-e793f7a"
+
+	// Cek cache terlebih dahulu
+	cacheKey := fmt.Sprintf("wallet:flow:%s:%s:%s", network, walletAddress, period)
+	if cachedData, err := cache.GetCache(cacheKey); err == nil && cachedData != nil {
+		fmt.Printf("Cache HIT untuk key: %s\n", cacheKey)
+		c.JSON(200, cachedData)
+		return
+	}
+
+	// Inisialisasi cloudscraper client
+	client, err := cloudscraper.Init(false, false)
+	if err != nil {
+		fmt.Printf("Kesalahan terjadi: %v\n", err)
+		c.JSON(500, types.ErrorResponse{
+			Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
+		})
+		return
+	}
+
+	// Header untuk meniru browser
+	headers := map[string]string{
+		"User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+		"Accept":          "application/json, text/plain, */*",
+		"Accept-Language": "en-US,en;q=0.9",
+		"Referer":         "https://gmgn.ai/",
+		"Sec-Fetch-Dest":  "empty",
+		"Sec-Fetch-Mode":  "cors",
+		"Sec-Fetch-Site":  "same-origin",
+	}
+
+	// Batas percobaan tanpa delay (instant retry untuk kecepatan maksimal)
+	maxRetries := 20
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		response, err := makeRequest(baseURL, params)
+		// Buat URL dengan query parameters
+		fullURL := baseURL + "?"
+		fullURL += "period=" + period + "&"
+		fullURL += "device_id=" + deviceID + "&"
+		fullURL += "fp_did=" + fpDid + "&"
+		fullURL += "from_app=gmgn&"
+		fullURL += "app_ver=" + appVer + "&"
+		fullURL += "tz_name=Asia/Jakarta&"
+		fullURL += "tz_offset=25200&"
+		fullURL += "app_lang=en-US&"
+		fullURL += "os=web&"
+		fullURL += "worker=0"
+
+		// Lakukan request dengan cloudscraper
+		response, err := client.Get(fullURL, headers, "")
 		if err != nil {
-			fmt.Printf("Kesalahan terjadi: %v\n", err)
-			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			fmt.Printf("Retry %d/%d: Kesalahan terjadi: %v\n", attempt+1, maxRetries, err)
+			if attempt < maxRetries-1 {
+				continue
+			}
+			c.JSON(500, types.ErrorResponse{
 				Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
 			})
 			return
 		}
 
-		if response.StatusCode == http.StatusOK {
-			// Parse response
-			body, err := io.ReadAll(response.Body)
-			response.Body.Close()
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, types.ErrorResponse{
-					Error: "Terjadi kesalahan saat membaca respons.",
-				})
-				return
-			}
-
+		statusCode := response.Status
+		if statusCode == 200 {
+			// Parse response body
 			var apiData map[string]interface{}
-			if err := json.Unmarshal(body, &apiData); err != nil {
+			if err := json.Unmarshal([]byte(response.Body), &apiData); err != nil {
 				fmt.Println("Kesalahan penguraian JSON")
-				c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+				c.JSON(500, types.ErrorResponse{
 					Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
 				})
 				return
 			}
 
-			// Extract flows dan next dari response
-			flows := []interface{}{}
-			nextPage := interface{}(nil)
+			// Extract statistics data dari response
+			statisticsData := map[string]interface{}{}
 			if dataMap, ok := apiData["data"].(map[string]interface{}); ok {
-				if holdingsData, ok := dataMap["holdings"]; ok {
-					flows = holdingsData.([]interface{})
-				}
-				if next, ok := dataMap["next"]; ok {
-					nextPage = next
-				}
+				statisticsData = dataMap
 			}
 
 			newData := types.StandardResponse{
@@ -137,8 +127,7 @@ func GetFlow(c *gin.Context) {
 				Message: "ok",
 				Data: map[string]interface{}{
 					"datawallet": map[string]interface{}{
-						"flowlist": flows,
-						"next":     nextPage,
+						"statistics": statisticsData,
 					},
 				},
 			}
@@ -148,25 +137,26 @@ func GetFlow(c *gin.Context) {
 				fmt.Printf("Warning: Gagal menyimpan cache untuk key %s: %v\n", cacheKey, err)
 			}
 
-			c.JSON(http.StatusOK, newData)
+			c.JSON(200, newData)
 			return
-		} else if response.StatusCode == http.StatusForbidden {
-			response.Body.Close()
+		} else if statusCode == 403 {
+			fmt.Printf("Retry %d/%d: Status 403, retry...\n", attempt+1, maxRetries)
 			if attempt < maxRetries-1 {
-				time.Sleep(retryDelay)
 				continue
 			} else {
-				fmt.Println("Gagal setelah 10 percobaan karena status 403")
-				c.JSON(http.StatusServiceUnavailable, types.ErrorResponse{
+				fmt.Printf("Gagal setelah %d percobaan karena status 403\n", maxRetries)
+				c.JSON(503, types.ErrorResponse{
 					Error:   "Server overload, coba lagi nanti",
 					Message: "success ;)",
 				})
 				return
 			}
 		} else {
-			response.Body.Close()
-			fmt.Printf("Status kode API: %d\n", response.StatusCode)
-			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			fmt.Printf("Retry %d/%d: Status kode API: %d\n", attempt+1, maxRetries, statusCode)
+			if attempt < maxRetries-1 {
+				continue
+			}
+			c.JSON(500, types.ErrorResponse{
 				Error: "Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.",
 			})
 			return
@@ -174,8 +164,8 @@ func GetFlow(c *gin.Context) {
 	}
 
 	// Fallback jika semua percobaan gagal
-	fmt.Println("Gagal setelah semua percobaan")
-	c.JSON(http.StatusServiceUnavailable, types.ErrorResponse{
+	fmt.Printf("Gagal setelah %d percobaan\n", maxRetries)
+	c.JSON(503, types.ErrorResponse{
 		Error:   "Server overload, coba lagi nanti",
 		Message: "Fail get data OnChain",
 	})
