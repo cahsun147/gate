@@ -3,8 +3,8 @@ package wallet
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"net/http"
+	"strings"
 	"time"
 
 	"gateway/cache"
@@ -14,13 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
-
-var allowedPeriods = map[string]bool{
-	"1d":  true,
-	"7d":  true,
-	"30d": true,
-	"all": true,
-}
 
 // GetStatistics menangani permintaan untuk endpoint /api/v1/wallet/statistics/:network/:address
 func GetStatistics(c *gin.Context) {
