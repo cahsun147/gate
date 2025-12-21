@@ -12,19 +12,7 @@
   ],
   "routes": [
     {
-      "src": "/test",
-      "dest": "api/index.go"
-    },
-    {
-      "src": "/test/dex",
-      "dest": "api/index.go"
-    },
-    {
       "src": "/api",
-      "dest": "api/index.go"
-    },
-    {
-      "src": "/api/v1/ai/(.*)", 
       "dest": "api/index.go"
     },
     {
@@ -33,6 +21,10 @@
     },
     {
       "src": "/api/v1/dex(.*)",
+      "dest": "api/index.go"
+    },
+    {
+      "src": "/api/v1/ai/(.*)", 
       "dest": "api/index.go"
     },
     {
