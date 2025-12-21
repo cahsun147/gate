@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"gateway/cache"
+	"gateway/v1/ai"
 	"gateway/v1/dex"
 	"gateway/v1/tokens"
 	"gateway/v1/wallet"
@@ -29,6 +30,10 @@ func init() {
 		// Setup /api/v1 group
 		v1Group := apiGroup.Group("/v1")
 		{
+			// AI Route
+			v1Group.POST("/ai/chat", ai.HandleChat)
+
+
 			// Tokens routes
 			v1Group.GET("/tokens/trends/:network/:contract_address", tokens.GetTrends)
 			v1Group.GET("/tokens/holder/:network/:contract_address", tokens.GetHolder)
@@ -43,6 +48,9 @@ func init() {
 			v1Group.GET("/wallet/holdings/:network/:address", wallet.GetHoldings)
 			v1Group.GET("/wallet/flow/:network/:address", wallet.GetFlow)
 			v1Group.GET("/wallet/statistics/:network/:address", wallet.GetStatistics)
+
+			// AI routes
+			ai.RegisterRoutes(v1Group)
 		}
 	}
 }

@@ -24,6 +24,10 @@
       "dest": "api/index.go"
     },
     {
+      "src": "/api/v1/ai/(.*)", 
+      "dest": "api/index.go"
+    },
+    {
       "src": "/api/dex",
       "dest": "api/index.go"
     },
