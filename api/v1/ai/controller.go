@@ -30,6 +30,25 @@ You will receive market insights in the form of an image. In this order you must
 
 Format everything as a Telegram message using Markdown.`
 
+// Struct Payload dinamis untuk menangani "Content" yang bisa String atau Array
+type ThirdwebDynamicPayload struct {
+	Messages []DynamicMessage `json:"messages"`
+	Stream   bool             `json:"stream"`
+	Context  TwContext        `json:"context"`
+}
+
+type DynamicMessage struct {
+	Role    string      `json:"role"`
+	Content interface{} `json:"content"` // Bisa String atau []TwContent
+}
+
+// Struct khusus untuk item dalam array content (jika multimodal)
+type TwContentItem struct {
+	Type     string `json:"type"`                // "text" atau "image"
+	Text     string `json:"text,omitempty"`      // Jika type=text
+	ImageURL string `json:"image_url,omitempty"` // Jika type=image (String, bukan Object)
+}
+
 func HandleChat(c *gin.Context) {
 	var req ChatRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -44,29 +63,37 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	var twMessages []TwMessage
+	// --- 1. LOGIC SMART PAYLOAD ---
+	var finalMessages []DynamicMessage
+
 	finalText := SystemPrompt + "\n\nUser Query: " + req.Message
 
-	// Struktur konten pesan
-	userContent := []TwContent{
-		{Text: finalText, Type: "text"},
-	}
-
-	if req.Image != "" {
-		userContent = append(userContent, TwContent{
-			// PERBAIKAN 1: Ganti "image_url" menjadi "image" agar diterima Thirdweb
-			Type:     "image",
-			ImageURL: &TwImageURL{URL: req.Image},
+	if req.Image == "" {
+		// KASUS 1: TEXT ONLY -> Kirim Content sebagai STRING (Fix Error 400 ZodError)
+		finalMessages = append(finalMessages, DynamicMessage{
+			Role:    "user",
+			Content: finalText,
+		})
+	} else {
+		// KASUS 2: GAMBAR + TEXT -> Kirim Content sebagai ARRAY
+		contentArray := []TwContentItem{
+			{
+				Type: "text",
+				Text: finalText,
+			},
+			{
+				Type:     "image",   // Fix: Gunakan "image", bukan "image_url"
+				ImageURL: req.Image, // Fix: Langsung string base64, bukan object
+			},
+		}
+		finalMessages = append(finalMessages, DynamicMessage{
+			Role:    "user",
+			Content: contentArray,
 		})
 	}
 
-	twMessages = append(twMessages, TwMessage{
-		Role:    "user",
-		Content: userContent,
-	})
-
-	payload := ThirdwebPayload{
-		Messages: twMessages,
+	payload := ThirdwebDynamicPayload{
+		Messages: finalMessages,
 		Stream:   true,
 		Context: TwContext{
 			ChainIDs:                []string{},
@@ -81,6 +108,7 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
+	// --- 2. REQUEST KE THIRDWEB ---
 	targetURL := "https://api.thirdweb.com/ai/chat"
 	reqPost, err := http.NewRequest("POST", targetURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
@@ -101,7 +129,6 @@ func HandleChat(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "AI Service Unreachable"})
 		return
 	}
-	// Jangan close body, kita baca stream
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -111,18 +138,14 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// PERBAIKAN 2: Hapus c.Stream(), gunakan manual write agar tidak Panic di Vercel
+	// --- 3. MANUAL STREAMING (VERCEL SAFE - NO FLUSH) ---
+	// Kita set header manual
 	c.Writer.Header().Set("Content-Type", "text/event-stream")
 	c.Writer.Header().Set("Cache-Control", "no-cache")
 	c.Writer.Header().Set("Connection", "keep-alive")
-	c.Writer.Header().Set("Transfer-Encoding", "chunked")
+	// Di Vercel Serverless, Transfer-Encoding: chunked dihandle otomatis oleh platform
 
-	// Cek apakah server mendukung Flush (Vercel Serverless mungkin tidak, tapi kita handle amannya)
-	flusher, hasFlush := c.Writer.(http.Flusher)
-	if hasFlush {
-		flusher.Flush()
-	}
-
+	// Scanner untuk membaca respons baris per baris
 	scanner := bufio.NewScanner(resp.Body)
 	buf := make([]byte, 0, 64*1024)
 	scanner.Buffer(buf, 1024*1024)
@@ -143,14 +166,13 @@ func HandleChat(c *gin.Context) {
 				continue
 			}
 
-			// Tulis langsung ke output writer
+			// Tulis langsung ke ResponseWriter
+			// PENTING: Kita TIDAK memanggil Flush() karena Vercel tidak mendukungnya.
+			// Data akan dikirim oleh Vercel secepat mungkin (streaming atau buffered).
 			fmt.Fprintf(c.Writer, "event: %s\n", currentEvent)
 			fmt.Fprintf(c.Writer, "data: %s\n\n", dataStr)
-
-			// Lakukan flush jika didukung agar efek mengetik muncul
-			if hasFlush {
-				flusher.Flush()
-			}
 		}
 	}
+
+	// Tidak perlu return value, stream selesai.
 }
