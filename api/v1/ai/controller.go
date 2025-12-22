@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// System Prompt
 const SystemPrompt = `You are XMODBlockchain AI, an expert options trader. You trade according to the following guidelines:
 - Can only trade these credit spreads: iron condor, butterfly, bear call/put vertical, bull call/put vertical.
 - Legs must be at least 30 days out and strikes should be at least 1 standard deviation away from the current price.
@@ -30,7 +31,7 @@ You will receive market insights in the form of an image. In this order you must
 
 Format everything as a Telegram message using Markdown.`
 
-// Struct Payload dinamis untuk menangani "Content" yang bisa String atau Array
+// Payload Dinamis
 type ThirdwebDynamicPayload struct {
 	Messages []DynamicMessage `json:"messages"`
 	Stream   bool             `json:"stream"`
@@ -39,14 +40,14 @@ type ThirdwebDynamicPayload struct {
 
 type DynamicMessage struct {
 	Role    string      `json:"role"`
-	Content interface{} `json:"content"` // Bisa String atau []TwContent
+	Content interface{} `json:"content"` // Bisa String atau []TwContentItem
 }
 
-// Struct khusus untuk item dalam array content (jika multimodal)
+// FIX: Menggunakan tag "b64" sesuai script Python aichatimg.py
 type TwContentItem struct {
-	Type     string `json:"type"`                // "text" atau "image"
-	Text     string `json:"text,omitempty"`      // Jika type=text
-	ImageURL string `json:"image_url,omitempty"` // Jika type=image (String, bukan Object)
+	Type string `json:"type"`           // "text" atau "image"
+	Text string `json:"text,omitempty"` // Untuk text
+	B64  string `json:"b64,omitempty"`  // FIX: Ganti image_url jadi b64
 }
 
 func HandleChat(c *gin.Context) {
@@ -63,27 +64,27 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// --- 1. LOGIC SMART PAYLOAD ---
+	// --- 1. SUSUN PESAN ---
 	var finalMessages []DynamicMessage
 
 	finalText := SystemPrompt + "\n\nUser Query: " + req.Message
 
 	if req.Image == "" {
-		// KASUS 1: TEXT ONLY -> Kirim Content sebagai STRING (Fix Error 400 ZodError)
+		// KASUS TEXT ONLY: Kirim content sebagai String sederhana
 		finalMessages = append(finalMessages, DynamicMessage{
 			Role:    "user",
 			Content: finalText,
 		})
 	} else {
-		// KASUS 2: GAMBAR + TEXT -> Kirim Content sebagai ARRAY
+		// KASUS IMAGE: Kirim content sebagai Array Object
 		contentArray := []TwContentItem{
 			{
 				Type: "text",
 				Text: finalText,
 			},
 			{
-				Type:     "image",   // Fix: Gunakan "image", bukan "image_url"
-				ImageURL: req.Image, // Fix: Langsung string base64, bukan object
+				Type: "image",   // Tipe harus "image"
+				B64:  req.Image, // Field harus "b64" berisi data URI lengkap
 			},
 		}
 		finalMessages = append(finalMessages, DynamicMessage{
@@ -102,13 +103,9 @@ func HandleChat(c *gin.Context) {
 		},
 	}
 
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to create payload"})
-		return
-	}
+	payloadBytes, _ := json.Marshal(payload)
 
-	// --- 2. REQUEST KE THIRDWEB ---
+	// --- 2. REQUEST ---
 	targetURL := "https://api.thirdweb.com/ai/chat"
 	reqPost, err := http.NewRequest("POST", targetURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
@@ -133,21 +130,20 @@ func HandleChat(c *gin.Context) {
 
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(resp.Body)
-		fmt.Printf("AI Error: %d Body: %s\n", resp.StatusCode, string(respBody))
+		// Log error body untuk debugging jika masih gagal
+		fmt.Printf("AI Error %d: %s\n", resp.StatusCode, string(respBody))
 		c.JSON(http.StatusServiceUnavailable, types.ErrorResponse{Error: "AI Service Busy"})
 		return
 	}
 
-	// --- 3. MANUAL STREAMING (VERCEL SAFE - NO FLUSH) ---
-	// Kita set header manual
+	// --- 3. STREAMING (Manual Write Loop) ---
 	c.Writer.Header().Set("Content-Type", "text/event-stream")
 	c.Writer.Header().Set("Cache-Control", "no-cache")
 	c.Writer.Header().Set("Connection", "keep-alive")
-	// Di Vercel Serverless, Transfer-Encoding: chunked dihandle otomatis oleh platform
 
-	// Scanner untuk membaca respons baris per baris
 	scanner := bufio.NewScanner(resp.Body)
-	buf := make([]byte, 0, 64*1024)
+	// Buffer besar untuk menangani chunk base64/json panjang
+	buf := make([]byte, 0, 128*1024)
 	scanner.Buffer(buf, 1024*1024)
 
 	var currentEvent string
@@ -166,13 +162,14 @@ func HandleChat(c *gin.Context) {
 				continue
 			}
 
-			// Tulis langsung ke ResponseWriter
-			// PENTING: Kita TIDAK memanggil Flush() karena Vercel tidak mendukungnya.
-			// Data akan dikirim oleh Vercel secepat mungkin (streaming atau buffered).
+			// Forward ke Client
 			fmt.Fprintf(c.Writer, "event: %s\n", currentEvent)
 			fmt.Fprintf(c.Writer, "data: %s\n\n", dataStr)
+
+			// Flush opsional (Vercel handle otomatis, tapi aman ditambahkan check)
+			if f, ok := c.Writer.(http.Flusher); ok {
+				f.Flush()
+			}
 		}
 	}
-
-	// Tidak perlu return value, stream selesai.
 }
