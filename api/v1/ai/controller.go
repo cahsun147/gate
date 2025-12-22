@@ -14,7 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// System Prompt disuntikkan sebagai pesan pertama
+// System Prompt: Instruksi rahasia untuk AI
 const SystemPrompt = `You are XMODBlockchain AI, an expert options trader. You trade according to the following guidelines:
 - Can only trade these credit spreads: iron condor, butterfly, bear call/put vertical, bull call/put vertical.
 - Legs must be at least 30 days out and strikes should be at least 1 standard deviation away from the current price.
@@ -33,13 +33,12 @@ Format everything as a Telegram message using Markdown.`
 
 func HandleChat(c *gin.Context) {
 	var req ChatRequest
-	// Bind JSON body dari frontend
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{Error: "Invalid JSON format"})
 		return
 	}
 
-	// 1. Ambil Client ID (dari service.go / Cache)
+	// 1. Ambil Client ID
 	clientID, err := GetClientID()
 	if err != nil {
 		fmt.Printf("Error getting client ID: %v\n", err)
@@ -47,25 +46,15 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// 2. Susun Pesan (Messages Array)
+	// 2. Susun Pesan
 	var twMessages []TwMessage
 
-	// Logic: Jika ini chat pertama (SessionID kosong), kita suntikkan System Prompt
-	// Jika chat kedua (SessionID ada), Thirdweb sudah ingat konteksnya, 
-	// tapi aman juga untuk selalu mengirim System Prompt atau digabung dengan user message.
-	// Disini kita prepend system prompt ke user message agar hemat token & konteks terjaga.
-	
-	finalText := req.Message
-	if req.SessionID == "" {
-		// Inject Persona di awal percakapan
-		finalText = SystemPrompt + "\n\n" + req.Message
-	}
+	finalText := SystemPrompt + "\n\nUser Query: " + req.Message
 
 	userContent := []TwContent{
 		{Text: finalText, Type: "text"},
 	}
 
-	// Handle Image (jika ada)
 	if req.Image != "" {
 		userContent = append(userContent, TwContent{
 			Type:     "image_url",
@@ -78,16 +67,14 @@ func HandleChat(c *gin.Context) {
 		Content: userContent,
 	})
 
-	// 3. Susun Context (Session ID Logic)
-	// Jika req.SessionID kosong (""), maka field session_id akan hilang dari JSON (omitempty)
-	// Ini sesuai dengan payload Chat 1 Anda.
+	// 3. Susun Payload
 	payload := ThirdwebPayload{
 		Messages: twMessages,
 		Stream:   true,
 		Context: TwContext{
 			ChainIDs:                []string{},
 			AutoExecuteTransactions: false,
-			SessionID:               req.SessionID, 
+			SessionID:               req.SessionID,
 		},
 	}
 
@@ -97,15 +84,14 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// 4. Request ke API Thirdweb yang BENAR
-	targetURL := "https://api.thirdweb.com/ai/chat" 
+	// 4. Request ke Thirdweb
+	targetURL := "https://api.thirdweb.com/ai/chat"
 	reqPost, err := http.NewRequest("POST", targetURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to create request"})
 		return
 	}
 
-	// Headers
 	reqPost.Header.Set("Content-Type", "application/json")
 	reqPost.Header.Set("x-client-id", clientID)
 	reqPost.Header.Set("Origin", "https://playground.thirdweb.com")
@@ -119,55 +105,60 @@ func HandleChat(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "AI Service Unreachable"})
 		return
 	}
-	// Jangan close body disini, kita stream di bawah
+	defer resp.Body.Close()
 
+	// Handle Error dari Thirdweb (misal 403/500/503)
 	if resp.StatusCode != http.StatusOK {
-		resp.Body.Close()
+		respBody, _ := io.ReadAll(resp.Body)
+		fmt.Printf("AI Error: %d Body: %s\n", resp.StatusCode, string(respBody))
 		c.JSON(http.StatusServiceUnavailable, types.ErrorResponse{Error: "AI Service Busy"})
 		return
 	}
 
-	// 5. Streaming Proxy (SSE)
-	c.Header("Content-Type", "text/event-stream")
-	c.Header("Cache-Control", "no-cache")
-	c.Header("Connection", "keep-alive")
-	c.Header("Transfer-Encoding", "chunked")
+	// 5. Streaming Response Manual (FIX Vercel Panic)
+	// Kita set header manual
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.Header().Set("Transfer-Encoding", "chunked")
 
-	c.Stream(func(w io.Writer) bool {
-		scanner := bufio.NewScanner(resp.Body)
-		buf := make([]byte, 0, 64*1024)
-		scanner.Buffer(buf, 1024*1024)
+	// Flush header agar klien tahu stream dimulai
+	if f, ok := c.Writer.(http.Flusher); ok {
+		f.Flush()
+	}
 
-		var currentEvent string
+	scanner := bufio.NewScanner(resp.Body)
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 1024*1024)
 
-		for scanner.Scan() {
-			line := scanner.Text()
+	var currentEvent string
 
-			// Parse Event Name (init, presence, delta)
-			if strings.HasPrefix(line, "event:") {
-				currentEvent = strings.TrimSpace(strings.TrimPrefix(line, "event:"))
+	// Loop membaca stream dari Thirdweb
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Tangkap nama event
+		if strings.HasPrefix(line, "event:") {
+			currentEvent = strings.TrimSpace(strings.TrimPrefix(line, "event:"))
+			continue
+		}
+
+		// Tangkap data
+		if strings.HasPrefix(line, "data:") {
+			dataStr := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+			if dataStr == "" {
 				continue
 			}
 
-			// Parse Data Payload
-			if strings.HasPrefix(line, "data:") {
-				dataStr := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
-				if dataStr == "" {
-					continue
-				}
+			// Tulis langsung ke ResponseWriter Vercel
+			// Format SSE standar: "event: ...\ndata: ...\n\n"
+			fmt.Fprintf(c.Writer, "event: %s\n", currentEvent)
+			fmt.Fprintf(c.Writer, "data: %s\n\n", dataStr)
 
-				// Kita forward MENTAH-MENTAH ke Frontend
-				// Supaya frontend bisa baca event: "init" -> ambil session_id
-				// dan event: "delta" -> ambil teks jawaban
-				fmt.Fprintf(w, "event: %s\n", currentEvent)
-				fmt.Fprintf(w, "data: %s\n\n", dataStr)
-				
-				if f, ok := w.(http.Flusher); ok {
-					f.Flush()
-				}
+			// Flush data ke klien (User)
+			if f, ok := c.Writer.(http.Flusher); ok {
+				f.Flush()
 			}
 		}
-		resp.Body.Close()
-		return false
-	})
+	}
 }
