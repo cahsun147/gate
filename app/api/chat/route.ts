@@ -18,13 +18,12 @@ You will receive market insights in the form of an image. In this order you must
 When you reply, **format everything as a Telegram message** using _Markdown_`;
 
 // --- LOGIC SCRAPING CLIENT ID (Dynamic) ---
-// Kita gunakan cache memori sederhana agar tidak scraping setiap detik
 let cachedClientId: string | null = null;
 let lastScrapeTime = 0;
 
 async function getClientId() {
   const now = Date.now();
-  // Cache valid selama 1 jam (3600000 ms)
+  // Cache valid selama 1 jam
   if (cachedClientId && (now - lastScrapeTime < 3600000)) {
     return cachedClientId;
   }
@@ -36,22 +35,25 @@ async function getClientId() {
     });
     const html = await pageRes.text();
     
-    // 1. Cari path file JS
-    const scriptRegex = /_next\/static\/chunks\/app\/ai\/chat\/page-[^"']+\.js/;
+    // 1. Cari path file JS (FIX: Tambahkan \/ di awal regex)
+    // Regex ini sekarang mencari string yang dimulai dengan "/_next"
+    const scriptRegex = /\/_next\/static\/chunks\/app\/ai\/chat\/page-[^"']+\.js/;
+    
     const match = html.match(scriptRegex);
     if (!match) throw new Error("JS File not found in HTML");
 
+    // match[0] sekarang berisi "/_next/...", jadi URL-nya valid
+    const jsUrl = `https://playground.thirdweb.com${match[0]}`;
+    console.log("🔍 Fetching JS:", jsUrl);
+
     // 2. Fetch file JS
-    const jsRes = await fetch(`https://playground.thirdweb.com${match[0]}`, {
+    const jsRes = await fetch(jsUrl, {
       headers: { "User-Agent": "Mozilla/5.0" }
     });
     const jsContent = await jsRes.text();
 
     // 3. Extract Client ID
-    // Pola 1: "x-client-id":"..."
     let idMatch = jsContent.match(/"x-client-id"\s*:\s*"([a-f0-9]{32})"/);
-    
-    // Pola 2: clientId:"..." (Fallback)
     if (!idMatch) {
         idMatch = jsContent.match(/clientId\s*:\s*"([a-f0-9]{32})"/);
     }
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Failed to initialize AI Service" }, { status: 500 });
     }
 
-    // 3. Susun Pesan (Sesuai format n8n/Python yang berhasil)
+    // 3. Susun Pesan
     const messages = [
       {
         role: "system",
@@ -95,16 +97,14 @@ export async function POST(req: NextRequest) {
       }
     ];
 
-    // Susun konten user
     const userContent: any[] = [
       { type: "text", text: `User Query: ${message}` }
     ];
 
-    // Tambahkan gambar jika ada
     if (image) {
       userContent.push({
         type: "image",
-        b64: image // Format "b64" sesuai API Thirdweb
+        b64: image
       });
     }
 
@@ -113,14 +113,14 @@ export async function POST(req: NextRequest) {
       content: userContent
     });
 
-    // 4. Susun Payload Akhir
+    // 4. Susun Payload
     const payload = {
       messages: messages,
       stream: true,
       context: {
         chain_ids: [],
         auto_execute_transactions: false,
-        session_id: session_id || undefined // Kirim hanya jika ada
+        session_id: session_id || undefined
       }
     };
 
@@ -139,17 +139,16 @@ export async function POST(req: NextRequest) {
     });
 
     if (!upstreamRes.ok) {
-      const errText = await upstreamRes.text();
-      console.error("Thirdweb Error:", upstreamRes.status, errText);
-      return NextResponse.json({ error: "AI Service Busy or Blocked" }, { status: 503 });
+      return NextResponse.json({ error: "AI Service Busy" }, { status: 503 });
     }
 
     if (!upstreamRes.body) {
       return NextResponse.json({ error: "No response body" }, { status: 500 });
     }
 
-    // 6. STREAMING RESPONSE (Native Next.js)
-    // Kita pipe langsung stream dari Thirdweb ke User tanpa buffering
+    // 6. STREAMING RESPONSE (Pass-through raw stream)
+    // Langsung meneruskan stream dari Thirdweb ke Client (User)
+    // Termasuk event 'presence', 'init', 'delta' dsb.
     const stream = new ReadableStream({
       async start(controller) {
         const reader = upstreamRes.body!.getReader();
@@ -157,7 +156,6 @@ export async function POST(req: NextRequest) {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            // Teruskan chunk mentah (event: ..., data: ...) langsung ke client
             controller.enqueue(value);
           }
           controller.close();
