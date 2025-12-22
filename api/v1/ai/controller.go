@@ -14,7 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// System Prompt: Instruksi rahasia untuk AI
 const SystemPrompt = `You are XMODBlockchain AI, an expert options trader. You trade according to the following guidelines:
 - Can only trade these credit spreads: iron condor, butterfly, bear call/put vertical, bull call/put vertical.
 - Legs must be at least 30 days out and strikes should be at least 1 standard deviation away from the current price.
@@ -38,7 +37,6 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// 1. Ambil Client ID
 	clientID, err := GetClientID()
 	if err != nil {
 		fmt.Printf("Error getting client ID: %v\n", err)
@@ -46,18 +44,18 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// 2. Susun Pesan
 	var twMessages []TwMessage
-
 	finalText := SystemPrompt + "\n\nUser Query: " + req.Message
 
+	// Struktur konten pesan
 	userContent := []TwContent{
 		{Text: finalText, Type: "text"},
 	}
 
 	if req.Image != "" {
 		userContent = append(userContent, TwContent{
-			Type:     "image_url",
+			// PERBAIKAN 1: Ganti "image_url" menjadi "image" agar diterima Thirdweb
+			Type:     "image",
 			ImageURL: &TwImageURL{URL: req.Image},
 		})
 	}
@@ -67,7 +65,6 @@ func HandleChat(c *gin.Context) {
 		Content: userContent,
 	})
 
-	// 3. Susun Payload
 	payload := ThirdwebPayload{
 		Messages: twMessages,
 		Stream:   true,
@@ -84,7 +81,6 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// 4. Request ke Thirdweb
 	targetURL := "https://api.thirdweb.com/ai/chat"
 	reqPost, err := http.NewRequest("POST", targetURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
@@ -105,9 +101,9 @@ func HandleChat(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "AI Service Unreachable"})
 		return
 	}
+	// Jangan close body, kita baca stream
 	defer resp.Body.Close()
 
-	// Handle Error dari Thirdweb (misal 403/500/503)
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(resp.Body)
 		fmt.Printf("AI Error: %d Body: %s\n", resp.StatusCode, string(respBody))
@@ -115,16 +111,16 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// 5. Streaming Response Manual (FIX Vercel Panic)
-	// Kita set header manual
+	// PERBAIKAN 2: Hapus c.Stream(), gunakan manual write agar tidak Panic di Vercel
 	c.Writer.Header().Set("Content-Type", "text/event-stream")
 	c.Writer.Header().Set("Cache-Control", "no-cache")
 	c.Writer.Header().Set("Connection", "keep-alive")
 	c.Writer.Header().Set("Transfer-Encoding", "chunked")
 
-	// Flush header agar klien tahu stream dimulai
-	if f, ok := c.Writer.(http.Flusher); ok {
-		f.Flush()
+	// Cek apakah server mendukung Flush (Vercel Serverless mungkin tidak, tapi kita handle amannya)
+	flusher, hasFlush := c.Writer.(http.Flusher)
+	if hasFlush {
+		flusher.Flush()
 	}
 
 	scanner := bufio.NewScanner(resp.Body)
@@ -133,31 +129,27 @@ func HandleChat(c *gin.Context) {
 
 	var currentEvent string
 
-	// Loop membaca stream dari Thirdweb
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		// Tangkap nama event
 		if strings.HasPrefix(line, "event:") {
 			currentEvent = strings.TrimSpace(strings.TrimPrefix(line, "event:"))
 			continue
 		}
 
-		// Tangkap data
 		if strings.HasPrefix(line, "data:") {
 			dataStr := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
 			if dataStr == "" {
 				continue
 			}
 
-			// Tulis langsung ke ResponseWriter Vercel
-			// Format SSE standar: "event: ...\ndata: ...\n\n"
+			// Tulis langsung ke output writer
 			fmt.Fprintf(c.Writer, "event: %s\n", currentEvent)
 			fmt.Fprintf(c.Writer, "data: %s\n\n", dataStr)
 
-			// Flush data ke klien (User)
-			if f, ok := c.Writer.(http.Flusher); ok {
-				f.Flush()
+			// Lakukan flush jika didukung agar efek mengetik muncul
+			if hasFlush {
+				flusher.Flush()
 			}
 		}
 	}
