@@ -48,9 +48,7 @@ func init() {
 			v1Group.GET("/wallet/holdings/:network/:address", wallet.GetHoldings)
 			v1Group.GET("/wallet/flow/:network/:address", wallet.GetFlow)
 			v1Group.GET("/wallet/statistics/:network/:address", wallet.GetStatistics)
-
-			// AI routes
-			ai.RegisterRoutes(v1Group)
+)
 		}
 	}
 }
