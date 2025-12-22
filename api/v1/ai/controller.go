@@ -14,7 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// System Prompt
 const SystemPrompt = `You are XMODBlockchain AI, an expert options trader. You trade according to the following guidelines:
 - Can only trade these credit spreads: iron condor, butterfly, bear call/put vertical, bull call/put vertical.
 - Legs must be at least 30 days out and strikes should be at least 1 standard deviation away from the current price.
@@ -29,26 +28,7 @@ You will receive market insights in the form of an image. In this order you must
    d) entry, stop-loss, take-profit
 3. Finally, rate your confidence (%) for each scenario separately.
 
-Format everything as a Telegram message using Markdown.`
-
-// Payload Dinamis
-type ThirdwebDynamicPayload struct {
-	Messages []DynamicMessage `json:"messages"`
-	Stream   bool             `json:"stream"`
-	Context  TwContext        `json:"context"`
-}
-
-type DynamicMessage struct {
-	Role    string      `json:"role"`
-	Content interface{} `json:"content"` // Bisa String atau []TwContentItem
-}
-
-// FIX: Menggunakan tag "b64" sesuai script Python aichatimg.py
-type TwContentItem struct {
-	Type string `json:"type"`           // "text" atau "image"
-	Text string `json:"text,omitempty"` // Untuk text
-	B64  string `json:"b64,omitempty"`  // FIX: Ganti image_url jadi b64
-}
+When you reply, **format everything as a Telegram message** using _Markdown_`
 
 func HandleChat(c *gin.Context) {
 	var req ChatRequest
@@ -64,36 +44,43 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// --- 1. SUSUN PESAN ---
-	var finalMessages []DynamicMessage
+	// --- 1. MENYUSUN PESAN ---
+	var finalMessages []TwMessage
 
-	finalText := SystemPrompt + "\n\nUser Query: " + req.Message
+	// A. Pesan System
+	systemMessage := TwMessage{
+		Role: "system",
+		Content: []TwContentItem{
+			{Type: "text", Text: SystemPrompt},
+		},
+	}
+	finalMessages = append(finalMessages, systemMessage)
 
-	if req.Image == "" {
-		// KASUS TEXT ONLY: Kirim content sebagai String sederhana
-		finalMessages = append(finalMessages, DynamicMessage{
-			Role:    "user",
-			Content: finalText,
-		})
-	} else {
-		// KASUS IMAGE: Kirim content sebagai Array Object
-		contentArray := []TwContentItem{
-			{
-				Type: "text",
-				Text: finalText,
-			},
-			{
-				Type: "image",   // Tipe harus "image"
-				B64:  req.Image, // Field harus "b64" berisi data URI lengkap
-			},
-		}
-		finalMessages = append(finalMessages, DynamicMessage{
-			Role:    "user",
-			Content: contentArray,
+	// B. Pesan User
+	var userContent []TwContentItem
+
+	// 1. Tambahkan Teks
+	userContent = append(userContent, TwContentItem{
+		Type: "text",
+		Text: "User Query: " + req.Message,
+	})
+
+	// 2. Tambahkan Gambar (Jika ada)
+	if req.Image != "" {
+		userContent = append(userContent, TwContentItem{
+			Type: "image",
+			B64:  req.Image, // Field ini sekarang dikenali dari types.go
 		})
 	}
 
-	payload := ThirdwebDynamicPayload{
+	userMessage := TwMessage{
+		Role:    "user",
+		Content: userContent,
+	}
+	finalMessages = append(finalMessages, userMessage)
+
+	// --- 2. MEMBUAT PAYLOAD ---
+	payload := ThirdwebPayload{
 		Messages: finalMessages,
 		Stream:   true,
 		Context: TwContext{
@@ -103,9 +90,13 @@ func HandleChat(c *gin.Context) {
 		},
 	}
 
-	payloadBytes, _ := json.Marshal(payload)
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to create payload"})
+		return
+	}
 
-	// --- 2. REQUEST ---
+	// --- 3. REQUEST KE THIRDWEB ---
 	targetURL := "https://api.thirdweb.com/ai/chat"
 	reqPost, err := http.NewRequest("POST", targetURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
@@ -130,19 +121,17 @@ func HandleChat(c *gin.Context) {
 
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(resp.Body)
-		// Log error body untuk debugging jika masih gagal
 		fmt.Printf("AI Error %d: %s\n", resp.StatusCode, string(respBody))
 		c.JSON(http.StatusServiceUnavailable, types.ErrorResponse{Error: "AI Service Busy"})
 		return
 	}
 
-	// --- 3. STREAMING (Manual Write Loop) ---
+	// --- 4. MANUAL STREAMING ---
 	c.Writer.Header().Set("Content-Type", "text/event-stream")
 	c.Writer.Header().Set("Cache-Control", "no-cache")
 	c.Writer.Header().Set("Connection", "keep-alive")
 
 	scanner := bufio.NewScanner(resp.Body)
-	// Buffer besar untuk menangani chunk base64/json panjang
 	buf := make([]byte, 0, 128*1024)
 	scanner.Buffer(buf, 1024*1024)
 
@@ -162,14 +151,8 @@ func HandleChat(c *gin.Context) {
 				continue
 			}
 
-			// Forward ke Client
 			fmt.Fprintf(c.Writer, "event: %s\n", currentEvent)
 			fmt.Fprintf(c.Writer, "data: %s\n\n", dataStr)
-
-			// Flush opsional (Vercel handle otomatis, tapi aman ditambahkan check)
-			if f, ok := c.Writer.(http.Flusher); ok {
-				f.Flush()
-			}
 		}
 	}
 }
