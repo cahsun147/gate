@@ -21,7 +21,7 @@ const MobileMenu = (props: MobileMenuProps): JSX.Element => {
       unmountOnDisabled={!isMenuOpen}
       duration={{ exit: 0.4 }}
     >
-      <Modal contentClassName="flex flex-col gap-6" header="Index" onClose={closeMenu}>
+      <Modal contentClassName="flex flex-col gap-6" header="GATE HEHE" onClose={closeMenu}>
         <Animator combine manager="stagger">
           <div className="overflow-y-auto flex-1 flex min-w-0 min-h-0 max-h-[25rem]">
             <Nav onLink={closeMenu} />
