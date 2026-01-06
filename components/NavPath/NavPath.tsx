@@ -10,6 +10,7 @@ const paths: Record<string, string> = {
   '/docs': 'Docs',
   '/docs/design': 'Design',
   '/docs/develop': 'Develop',
+  '/docs/developer': 'Developer',
   '/docs/develop/fundamentals': 'Fundamentals',
   '/docs/develop/vanilla': 'Vanilla',
   '/docs/develop/tailwind': 'Tailwind',

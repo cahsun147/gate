@@ -144,6 +144,10 @@ const NavDocs = (props: NavSectionProps): JSX.Element => {
         <Item href="/docs/develop/solid" icon={<IconSolid />} text="Solid" onLink={onLink} />
         <Item href="/docs/develop/svelte" icon={<IconSvelte />} text="Svelte" onLink={onLink} />
       </Item>
+      <Item href="/docs/developer" icon={<IconDocsDevelop />} text="Developer" onLink={onLink}>
+        <Item href="/docs/developer/overview" text="Overview" onLink={onLink} />
+        <Item href="/docs/developer/chains" icon={<IconFundamentals />} text="API" onLink={onLink} />
+      </Item>
       <Item href="/docs/community" icon={<IconDocsCommunity />} text="Community" onLink={onLink}>
         <Item href="/docs/community/apps" icon={<IconApps />} text="Apps" onLink={onLink} />
         <Item

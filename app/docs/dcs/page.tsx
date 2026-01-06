@@ -1,11 +1,3 @@
-import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 
-import { settings } from '@/config/settings'
-import OverviewPage from './overview/page'
-
-export const metadata: Metadata = {
-  title: `DCS | ${settings.title}`,
-  description: settings.description
-}
-
-export default OverviewPage
+export default (): never => redirect('/docs/developer')

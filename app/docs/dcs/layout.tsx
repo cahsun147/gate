@@ -1,5 +1,3 @@
-'use client'
-
 import { LayoutContent, Nav } from '@/components'
 
 type LayoutDcsProps = {
