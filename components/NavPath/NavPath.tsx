@@ -11,6 +11,7 @@ const paths: Record<string, string> = {
   '/docs/design': 'Design',
   '/docs/develop': 'Develop',
   '/docs/developer': 'For Developer',
+  '/docs/developer/dex-api': 'DEX API',
   '/docs/for-developer': 'For Developer',
   '/docs/xgate-tutorial': 'XGATE Tutorial',
   '/docs/develop/fundamentals': 'Fundamentals',
