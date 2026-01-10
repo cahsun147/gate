@@ -4,7 +4,7 @@ import { settings } from '@/config/settings'
 import OverviewPage from './overview/page'
 
 export const metadata: Metadata = {
-  title: `Developer | ${settings.title}`,
+  title: `For Developer | ${settings.title}`,
   description: settings.description
 }
 

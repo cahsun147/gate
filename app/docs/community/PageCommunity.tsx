@@ -2,12 +2,12 @@
 
 import Link from 'next/link'
 import { Animated, Animator, BleepsOnAnimator, Text } from '@arwes/react'
-import { Page as IconDocs, Book as IconDocumentation } from 'iconoir-react'
+import { Community as IconCommunity, Page as IconDocs } from 'iconoir-react'
 
 import { type BleepNames, theme } from '@/config'
 import { Button, FrameAlert } from '@/components'
 
-const PageDocs = (): JSX.Element => {
+const PageCommunity = (): JSX.Element => {
   return (
     <Animator combine>
       <BleepsOnAnimator<BleepNames> transitions={{ entering: 'intro' }} continuous />
@@ -24,13 +24,13 @@ const PageDocs = (): JSX.Element => {
                 className="text-primary-4 text-[4rem]"
                 animated={['flicker', ['y', theme.space(4), 0]]}
               >
-                <IconDocumentation />
+                <IconCommunity />
               </Animated>
             </Animator>
 
             <Animator>
               <Text as="h1" className="font-header text-size-2 leading-none text-primary-5" fixed>
-                Documentation
+                Community
               </Text>
             </Animator>
 
@@ -40,7 +40,7 @@ const PageDocs = (): JSX.Element => {
                 className="font-body text-size-8 md:text-size-7 text-primary-3"
                 animated={['flicker', ['y', theme.space(-4), 0]]}
               >
-                Comprehensive guides and API documentation.
+                Halaman community sedang disiapkan.
               </Animated>
             </Animator>
 
@@ -49,24 +49,9 @@ const PageDocs = (): JSX.Element => {
                 className="flex flex-row items-center gap-4"
                 animated={['flicker', ['y', theme.space(-6), 0]]}
               >
-                <Link href="/docs/developer">
+                <Link href="/docs">
                   <Button tabIndex={-1}>
-                    For Developer <IconDocs />
-                  </Button>
-                </Link>
-                <Link href="/docs/xgate-tutorial">
-                  <Button tabIndex={-1}>
-                    XGATE Tutorial <IconDocs />
-                  </Button>
-                </Link>
-                <Link href="/docs/community">
-                  <Button tabIndex={-1}>
-                    Community <IconDocs />
-                  </Button>
-                </Link>
-                <Link href="/">
-                  <Button tabIndex={-1}>
-                    Home <IconDocs />
+                    Kembali <IconDocs />
                   </Button>
                 </Link>
               </Animated>
@@ -78,4 +63,4 @@ const PageDocs = (): JSX.Element => {
   )
 }
 
-export { PageDocs }
+export { PageCommunity }

@@ -6,15 +6,11 @@ import {
   Dashboard as IconRoot,
   Page as IconDocs,
   Code as IconDocsDevelop,
-  DesignNib as IconDocsDesign,
+  Book as IconDocsTutorial,
   Community as IconDocsCommunity,
   CollageFrame as IconDemos,
   Codepen as IconPlay,
-  DashboardSpeed as IconPerf,
-  Axes as IconFundamentals,
-  Cube as IconVanilla,
-  Component as IconApps,
-  Copy as IconSimilars
+  DashboardSpeed as IconPerf
 } from 'iconoir-react'
 
 import { settings, theme } from '@/config'
@@ -112,51 +108,15 @@ const NavDocs = (props: NavSectionProps): JSX.Element => {
   const { onLink } = props
   return (
     <>
-      <Item href="/docs/design" icon={<IconDocsDesign />} text="Design" onLink={onLink} />
-      <Item href="/docs/develop" icon={<IconDocsDevelop />} text="Develop" onLink={onLink}>
-        <Item
-          href="/docs/develop/fundamentals"
-          icon={<IconFundamentals />}
-          text="Fundamentals"
-          onLink={onLink}
-        >
-          <Item href="/docs/develop/fundamentals/visual" text="Visual" onLink={onLink} />
-          <Item href="/docs/develop/fundamentals/motion" text="Motion" onLink={onLink} />
-          <Item href="/docs/develop/fundamentals/audio" text="Audio" onLink={onLink} />
-          <Item href="/docs/develop/fundamentals/text" text="Text" onLink={onLink} />
-          <Item href="/docs/develop/fundamentals/frames" text="Frames" onLink={onLink} />
-          <Item href="/docs/develop/fundamentals/bgs" text="Backgrounds" onLink={onLink} />
-        </Item>
-        <Item href="/docs/develop/vanilla" icon={<IconVanilla />} text="Vanilla" onLink={onLink} />
-        <Item
-          href="/docs/develop/tailwind"
-          icon={<IconTailwind />}
-          text="Tailwind"
-          onLink={onLink}
-        />
-        <Item href="/docs/develop/react" icon={<IconReact />} text="React" onLink={onLink}>
-          <Item href="/docs/develop/react/animators" text="Animators" onLink={onLink} />
-          <Item href="/docs/develop/react/bleeps" text="Bleeps" onLink={onLink} />
-          <Item href="/docs/develop/react/text" text="Text" onLink={onLink} />
-          <Item href="/docs/develop/react/frames" text="Frames" onLink={onLink} />
-          <Item href="/docs/develop/react/bgs" text="Backgrounds" onLink={onLink} />
-        </Item>
-        <Item href="/docs/develop/solid" icon={<IconSolid />} text="Solid" onLink={onLink} />
-        <Item href="/docs/develop/svelte" icon={<IconSvelte />} text="Svelte" onLink={onLink} />
-      </Item>
-      <Item href="/docs/developer" icon={<IconDocsDevelop />} text="Developer" onLink={onLink}>
+      <Item href="/docs/developer" icon={<IconDocsDevelop />} text="For Developer" onLink={onLink}>
         <Item href="/docs/developer/overview" text="Overview" onLink={onLink} />
-        <Item href="/docs/developer/chains" icon={<IconFundamentals />} text="API" onLink={onLink} />
+        <Item href="/docs/developer/dex-api" text="DEX API" onLink={onLink}>
+          <Item href="/docs/developer/dex-api/supported" text="Supported" onLink={onLink} />
+          <Item href="/docs/developer/dex-api/example-request" text="Example Request" onLink={onLink} />
+        </Item>
       </Item>
-      <Item href="/docs/community" icon={<IconDocsCommunity />} text="Community" onLink={onLink}>
-        <Item href="/docs/community/apps" icon={<IconApps />} text="Apps" onLink={onLink} />
-        <Item
-          href="/docs/community/similars"
-          icon={<IconSimilars />}
-          text="Similars"
-          onLink={onLink}
-        />
-      </Item>
+      <Item href="/docs/xgate-tutorial" icon={<IconDocsTutorial />} text="XGATE Tutorial" onLink={onLink} />
+      <Item href="/docs/community" icon={<IconDocsCommunity />} text="Community" onLink={onLink} />
     </>
   )
 }

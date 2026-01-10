@@ -1,101 +1,67 @@
 'use client'
 
-import type { ReactElement } from 'react'
-import { Animated, Animator, BleepsOnAnimator } from '@arwes/react'
+import { AR } from '@/components'
+import { Code as IconCode } from 'iconoir-react'
 
-import { type BleepNames } from '@/config'
-
-export default function Page(): ReactElement {
+export default function Page(): JSX.Element {
   return (
-    <Animator combine>
-      <BleepsOnAnimator<BleepNames> transitions={{ entering: 'intro' }} continuous />
+    <>
+      <AR.Header>For Developer</AR.Header>
 
-      <Animator>
-        <Animated as="h1" animated={['flicker']}>
-          Developer Documentation
-        </Animated>
-      </Animator>
+      <AR.P>
+        Dokumentasi ini menjelaskan cara request API XGATE dan endpoint apa saja yang tersedia.
+      </AR.P>
 
-      <Animator>
-        <Animated as="p" animated={['flicker']}>
-          Panduan cara request API project XGATE (Data & Crypto Screener) dan struktur responsenya.
-        </Animated>
-      </Animator>
+      <AR.H2>Daftar Endpoint API</AR.H2>
 
-      <Animator>
-        <Animated as="h2" animated={['flicker']}>
-          Endpoint: /api/dex
-        </Animated>
-      </Animator>
+      <AR.Table minWidth="40rem" className="not-prose">
+        <AR.Row>
+          <AR.Cell isHeader>Endpoint</AR.Cell>
+          <AR.Cell isHeader>Method</AR.Cell>
+          <AR.Cell isHeader>Deskripsi</AR.Cell>
+        </AR.Row>
+        <AR.Row>
+          <AR.Cell>/api</AR.Cell>
+          <AR.Cell>GET</AR.Cell>
+          <AR.Cell>Tes root API.</AR.Cell>
+        </AR.Row>
+        <AR.Row>
+          <AR.Cell>/api/v1/dex</AR.Cell>
+          <AR.Cell>GET</AR.Cell>
+          <AR.Cell>DEX screener/proxy untuk data trending pair.</AR.Cell>
+        </AR.Row>
+        <AR.Row>
+          <AR.Cell>/api/dex</AR.Cell>
+          <AR.Cell>GET</AR.Cell>
+          <AR.Cell>Alias yang dipakai di README (jika deployment kamu menyediakan proxy/compat).</AR.Cell>
+        </AR.Row>
+        <AR.Row>
+          <AR.Cell>/api/v1/tokens/holder/&lt;network&gt;/&lt;contract_address&gt;</AR.Cell>
+          <AR.Cell>GET</AR.Cell>
+          <AR.Cell>Ambil daftar holder token.</AR.Cell>
+        </AR.Row>
+        <AR.Row>
+          <AR.Cell>/api/v1/tokens/traders/&lt;network&gt;/&lt;contract_address&gt;</AR.Cell>
+          <AR.Cell>GET</AR.Cell>
+          <AR.Cell>Ambil daftar trader token.</AR.Cell>
+        </AR.Row>
+        <AR.Row>
+          <AR.Cell>/api/v1/wallet/holdings/&lt;network&gt;/&lt;wallet_address&gt;</AR.Cell>
+          <AR.Cell>GET</AR.Cell>
+          <AR.Cell>Ambil daftar holdings untuk wallet address.</AR.Cell>
+        </AR.Row>
+      </AR.Table>
 
-      <Animator>
-        <Animated as="h3" animated={['flicker']}>
-          Request Parameters (Query String)
-        </Animated>
-      </Animator>
+      <AR.H2>DEX API</AR.H2>
 
-      <Animator>
-        <Animated as="p" animated={['flicker']}>
-          Parameter yang bisa dipakai untuk filter data:
-        </Animated>
-      </Animator>
+      <AR.P>
+        Untuk dokumentasi detail endpoint <code>/api/v1/dex</code> / <code>/api/dex</code> (parameter,
+        supported chain/DEX, dan contoh request), lihat section berikut.
+      </AR.P>
 
-      <Animator>
-        <Animated as="ul" animated={['flicker']}>
-          <li>
-            <strong>chainId</strong> (string, optional): Nama jaringan (contoh: solana, ethereum, bsc).
-          </li>
-          <li>
-            <strong>dexId</strong> (string, optional): Nama DEX (bergantung chainId).
-          </li>
-          <li>
-            <strong>trendingscore</strong> (string, default: h6): m5, h1, h6, h24.
-          </li>
-          <li>
-            <strong>tokenprofile</strong> (boolean, default: false)
-          </li>
-          <li>
-            <strong>booster</strong> (boolean, default: false)
-          </li>
-          <li>
-            <strong>advertising</strong> (boolean, default: false)
-          </li>
-        </Animated>
-      </Animator>
+      <AR.Links links={[{ href: '/docs/developer/dex-api', text: 'DEX API', icon: <IconCode /> }]} />
 
-      <Animator>
-        <Animated as="h3" animated={['flicker']}>
-          Example Request
-        </Animated>
-      </Animator>
-
-      <Animator>
-        <Animated as="pre" animated={['flicker']}>
-          <code>GET /api/dex?trendingscore=h6</code>
-        </Animated>
-      </Animator>
-
-      <Animator>
-        <Animated as="pre" animated={['flicker']}>
-          <code>GET /api/dex?chainId=solana&amp;trendingscore=h6</code>
-        </Animated>
-      </Animator>
-
-      <Animator>
-        <Animated as="h3" animated={['flicker']}>
-          Response (JSON)
-        </Animated>
-      </Animator>
-
-      <Animator>
-        <Animated as="pre" animated={['flicker']}>
-          <code>{`{
-  "pairs": [
-    // list of token pair info
-  ]
-}`}</code>
-        </Animated>
-      </Animator>
-    </Animator>
+      <AR.Navigation prevHref="/docs" prev="Index" nextHref="/docs/developer/dex-api" next="DEX API" />
+    </>
   )
 }

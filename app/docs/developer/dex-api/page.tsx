@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 
 import { settings } from '@/config/settings'
-import { redirect } from 'next/navigation'
+import { PageDexApi } from './PageDexApi'
 
 export const metadata: Metadata = {
-  title: `Community Projects | ${settings.title}`,
+  title: `DEX API | ${settings.title}`,
   description: settings.description
 }
 
-export default (): never => redirect('/docs/community')
+export default (): JSX.Element => <PageDexApi />
