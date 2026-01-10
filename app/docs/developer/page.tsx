@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 
 import { settings } from '@/config/settings'
-import OverviewPage from './overview/page'
+import { PageDeveloper } from './PageDeveloper'
 
 export const metadata: Metadata = {
-  title: `For Developer | ${settings.title}`,
+  title: `Developer | ${settings.title}`,
   description: settings.description
 }
 
-export default OverviewPage
+export default PageDeveloper

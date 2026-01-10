@@ -8,18 +8,18 @@ const PageDexApi = (): JSX.Element => {
       <AR.Header>DEX API</AR.Header>
 
       <AR.P>
-        Endpoint DEX digunakan untuk mengambil data trending pair dari DexScreener melalui backend XGATE.
-        Route backend yang tersedia adalah <code>/api/v1/dex</code>.
+        The DEX endpoint is used to fetch trending pair data from DexScreener through the XGATE backend.
+        The backend route is <code>/api/v1/dex</code>.
       </AR.P>
 
       <AR.H2>Endpoint</AR.H2>
 
       <AR.UL>
         <li>
-          <code>GET /api/v1/dex</code> (mode screener)
+          <code>GET /api/v1/dex</code> (screener mode)
         </li>
         <li>
-          <code>GET /api/v1/dex/:network/:address</code> (mode detail)
+          <code>GET /api/v1/dex/:network/:address</code> (detail mode)
         </li>
       </AR.UL>
 
@@ -30,7 +30,7 @@ const PageDexApi = (): JSX.Element => {
           <AR.Cell isHeader>Parameter</AR.Cell>
           <AR.Cell isHeader>Type</AR.Cell>
           <AR.Cell isHeader>Default</AR.Cell>
-          <AR.Cell isHeader>Catatan</AR.Cell>
+          <AR.Cell isHeader>Notes</AR.Cell>
         </AR.Row>
         <AR.Row>
           <AR.Cell>
@@ -38,7 +38,7 @@ const PageDexApi = (): JSX.Element => {
           </AR.Cell>
           <AR.Cell>string</AR.Cell>
           <AR.Cell>-</AR.Cell>
-          <AR.Cell>Filter network (harus termasuk dalam daftar supported chains).</AR.Cell>
+          <AR.Cell>Network filter (must be included in the supported chains list).</AR.Cell>
         </AR.Row>
         <AR.Row>
           <AR.Cell>
@@ -46,7 +46,7 @@ const PageDexApi = (): JSX.Element => {
           </AR.Cell>
           <AR.Cell>string</AR.Cell>
           <AR.Cell>-</AR.Cell>
-          <AR.Cell>Filter DEX (bergantung pada <code>chainId</code>).</AR.Cell>
+          <AR.Cell>DEX filter (depends on <code>chainId</code>).</AR.Cell>
         </AR.Row>
         <AR.Row>
           <AR.Cell>
@@ -64,7 +64,7 @@ const PageDexApi = (): JSX.Element => {
           </AR.Cell>
           <AR.Cell>boolean</AR.Cell>
           <AR.Cell>false</AR.Cell>
-          <AR.Cell>Parameter ini ada di README, namun tidak divalidasi oleh handler Go saat ini.</AR.Cell>
+          <AR.Cell>This parameter exists in the README, but is not currently validated by the Go handler.</AR.Cell>
         </AR.Row>
         <AR.Row>
           <AR.Cell>
@@ -72,7 +72,7 @@ const PageDexApi = (): JSX.Element => {
           </AR.Cell>
           <AR.Cell>boolean</AR.Cell>
           <AR.Cell>false</AR.Cell>
-          <AR.Cell>Parameter ini ada di README, namun tidak divalidasi oleh handler Go saat ini.</AR.Cell>
+          <AR.Cell>This parameter exists in the README, but is not currently validated by the Go handler.</AR.Cell>
         </AR.Row>
         <AR.Row>
           <AR.Cell>
@@ -80,11 +80,11 @@ const PageDexApi = (): JSX.Element => {
           </AR.Cell>
           <AR.Cell>boolean</AR.Cell>
           <AR.Cell>false</AR.Cell>
-          <AR.Cell>Parameter ini ada di README, namun tidak divalidasi oleh handler Go saat ini.</AR.Cell>
+          <AR.Cell>This parameter exists in the README, but is not currently validated by the Go handler.</AR.Cell>
         </AR.Row>
       </AR.Table>
 
-      <AR.H2>Dokumentasi Lanjutan</AR.H2>
+      <AR.H2>Further Documentation</AR.H2>
 
       <AR.Links
         compact

@@ -108,7 +108,7 @@ const NavDocs = (props: NavSectionProps): JSX.Element => {
   const { onLink } = props
   return (
     <>
-      <Item href="/docs/developer" icon={<IconDocsDevelop />} text="For Developer" onLink={onLink}>
+      <Item href="/docs/developer" icon={<IconDocsDevelop />} text="Developer" onLink={onLink}>
         <Item href="/docs/developer/overview" text="Overview" onLink={onLink} />
         <Item href="/docs/developer/dex-api" text="DEX API" onLink={onLink}>
           <Item href="/docs/developer/dex-api/supported" text="Supported" onLink={onLink} />

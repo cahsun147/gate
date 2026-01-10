@@ -51,7 +51,7 @@ const PageDocs = (): JSX.Element => {
               >
                 <Link href="/docs/developer" className="w-full sm:w-auto">
                   <Button tabIndex={-1} className="w-full sm:w-auto text-size-11 sm:text-size-10">
-                    For Developer <IconDocs />
+                    Developer <IconDocs />
                   </Button>
                 </Link>
                 <Link href="/docs/xgate-tutorial" className="w-full sm:w-auto">

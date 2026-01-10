@@ -1,6 +1,6 @@
 export const settings = Object.freeze({
   title: 'XGATE',
-  description: 'Futuristic Sci-Fi UI Web Framework',
+  description: 'Blokchain AI',
   background: 'hsl(180, 20%, 4%)',
   version: '1.0.0-xgate',
   deployTime: new Date().toISOString(),

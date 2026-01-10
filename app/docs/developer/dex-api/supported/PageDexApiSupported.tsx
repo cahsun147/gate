@@ -492,7 +492,7 @@ const PageDexApiSupported = (): JSX.Element => {
       <AR.Header>Supported Chains & DEXs</AR.Header>
 
       <AR.P>
-        Daftar ini diambil dari konfigurasi backend (<code>allowedChains</code>) pada handler Go.
+        This list is sourced from the backend configuration (<code>allowedChains</code>) in the Go handler.
       </AR.P>
 
       <AR.H2>Trendingscore</AR.H2>

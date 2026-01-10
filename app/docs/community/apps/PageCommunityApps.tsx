@@ -14,17 +14,17 @@ type CommunityProject = {
 const projects: CommunityProject[] = [
   {
     title: 'Crypto Screener',
-    description: 'Daftar tools / dashboard untuk analisa token & market (coming soon).',
+    description: 'Tools / dashboards for token and market analysis (coming soon).',
     href: '#'
   },
   {
     title: 'Onchain Data',
-    description: 'Resource untuk data onchain, explorer, indexer, dan analytics (coming soon).',
+    description: 'Onchain data resources: explorers, indexers, and analytics (coming soon).',
     href: '#'
   },
   {
     title: 'Trading Tools',
-    description: 'Bot / utility untuk trading dan monitoring (coming soon).',
+    description: 'Bots / utilities for trading and monitoring (coming soon).',
     href: '#'
   }
 ]

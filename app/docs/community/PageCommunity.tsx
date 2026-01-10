@@ -40,7 +40,7 @@ const PageCommunity = (): JSX.Element => {
                 className="font-body text-size-8 md:text-size-7 text-primary-3"
                 animated={['flicker', ['y', theme.space(-4), 0]]}
               >
-                Halaman community sedang disiapkan.
+                Community content is being prepared.
               </Animated>
             </Animator>
 
@@ -51,7 +51,7 @@ const PageCommunity = (): JSX.Element => {
               >
                 <Link href="/docs">
                   <Button tabIndex={-1}>
-                    Kembali <IconDocs />
+                    Back <IconDocs />
                   </Button>
                 </Link>
               </Animated>

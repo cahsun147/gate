@@ -13,7 +13,7 @@ const PageCommunitySimilars = (): JSX.Element => {
 
       <Animator>
         <Animated as="p" className="font-body text-size-8 text-primary-main-5" animated={['flicker']}>
-          Halaman ini akan berisi referensi project crypto, list DEX/chain, sumber data, dan link tools.
+          This page will include references to crypto projects, DEX/chain lists, data sources, and useful tools.
         </Animated>
       </Animator>
 

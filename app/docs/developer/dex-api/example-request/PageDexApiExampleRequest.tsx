@@ -8,8 +8,8 @@ const PageDexApiExampleRequest = (): JSX.Element => {
       <AR.Header>Example Request</AR.Header>
 
       <AR.P>
-        Di bawah ini contoh request untuk endpoint <code>/api/v1/dex</code>. Beberapa dokumentasi lama
-        menggunakan alias <code>/api/dex</code>.
+        Below are example requests for the <code>/api/v1/dex</code> endpoint. Some older documentation
+        uses the <code>/api/dex</code> alias.
       </AR.P>
 
       <AR.H2>Screener Mode (All Networks)</AR.H2>
