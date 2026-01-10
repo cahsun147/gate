@@ -1,6 +1,6 @@
 'use client'
 
-import { Code as IconCode, X } from 'iconoir-react'
+import { Code as IconCode } from 'iconoir-react'
 
 import { AR } from '@/components'
 
@@ -29,22 +29,20 @@ const PageDeveloper = (): JSX.Element => {
       <AR.H2>Deliverables</AR.H2>
 
       <AR.P>
-        This API is useful for both community and personal use. If you have a high-quality DEX data
-        source or any tools that could help improve the XGATE community, please reach out.
-      </AR.P>
-
-      <AR.H2>Contact</AR.H2>
-
-      <AR.P>
-        Contact me on X:{' '}
+        API ini berguna untuk komunitas maupun personal. Saya sangat berharap jika ada yang memiliki
+        sumber data DEX yang bagus atau tools apapun yang dapat membantu meningkatkan kualitas
+        komunitas XGATE silakan hubungi{' '}
         <a
           className="brightness-[0.8] transition-all ease-out duration-200 hover:brightness-100"
           href="https://x.com/styra0x"
           target="_blank"
           rel="noreferrer"
-          title="Contact on X"
         >
-          <X />
+          <img
+            className="!m-0"
+            src="https://img.shields.io/twitter/follow/styra0x?style=social"
+            alt="Follow styra0x on X"
+          />
         </a>
       </AR.P>
 
