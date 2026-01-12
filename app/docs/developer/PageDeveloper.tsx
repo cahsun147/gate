@@ -31,9 +31,9 @@ const PageDeveloper = (): JSX.Element => {
       <AR.P>
         API ini berguna untuk komunitas maupun personal. Saya sangat berharap jika ada yang memiliki
         sumber data DEX yang bagus atau tools apapun yang dapat membantu meningkatkan kualitas
-        komunitas XGATE silakan hubungi{' '}
+        komunitas XGATE silakan hubungi
         <a
-          className="brightness-[0.8] transition-all ease-out duration-200 hover:brightness-100"
+          className="inline-flex items-center align-middle ml-2 brightness-[0.8] transition-all ease-out duration-200 hover:brightness-100"
           href="https://x.com/styra0x"
           target="_blank"
           rel="noreferrer"
