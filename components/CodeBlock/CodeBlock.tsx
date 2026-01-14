@@ -7,7 +7,7 @@ type CodeBlockProps = {
   className?: string
   animated?: AnimatedProp
   filename?: string
-  lang?: 'html' | 'css' | 'tsx' | 'json' | 'bash'
+  lang?: 'html' | 'css' | 'tsx' | 'json' | 'bash' | 'javascript' | 'python' | 'powershell'
   highlightLines?: number[]
   code: string
 }
