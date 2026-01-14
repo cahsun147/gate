@@ -498,13 +498,13 @@ const PageDexApiSupported = (): JSX.Element => {
       <AR.H2>Supported DEXs by Chain</AR.H2>
 
       <AR.Table minWidth="56rem" className="not-prose">
-        <AR.Row>
+        <AR.Row className="grid grid-cols-[8rem_1fr] lg:grid-cols-[12rem_1fr]">
           <AR.Cell isHeader>Chain</AR.Cell>
           <AR.Cell isHeader>DEXs</AR.Cell>
         </AR.Row>
         {entries.map(([chain, dexs]) => (
-          <AR.Row key={chain}>
-            <AR.Cell className="shrink-0">
+          <AR.Row key={chain} className="grid grid-cols-[8rem_1fr] lg:grid-cols-[12rem_1fr]">
+            <AR.Cell className="whitespace-nowrap">
               <code>{chain}</code>
             </AR.Cell>
             <AR.Cell className="flex-1">
