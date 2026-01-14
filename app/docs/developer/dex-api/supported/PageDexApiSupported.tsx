@@ -495,23 +495,6 @@ const PageDexApiSupported = (): JSX.Element => {
         This list is sourced from the backend configuration (<code>allowedChains</code>) in the Go handler.
       </AR.P>
 
-      <AR.H2>Trendingscore</AR.H2>
-
-      <AR.UL>
-        <li>
-          <code>m5</code>
-        </li>
-        <li>
-          <code>h1</code>
-        </li>
-        <li>
-          <code>h6</code>
-        </li>
-        <li>
-          <code>h24</code>
-        </li>
-      </AR.UL>
-
       <AR.H2>Supported DEXs by Chain</AR.H2>
 
       <AR.Table minWidth="56rem" className="not-prose">
@@ -524,7 +507,15 @@ const PageDexApiSupported = (): JSX.Element => {
             <AR.Cell className="shrink-0">
               <code>{chain}</code>
             </AR.Cell>
-            <AR.Cell className="flex-1 whitespace-pre-wrap break-words">{dexs.join(', ')}</AR.Cell>
+            <AR.Cell className="flex-1">
+              <div className="flex flex-wrap gap-2">
+                {dexs.map(dex => (
+                  <code key={`${chain}-${dex}`} className="px-2 py-1 rounded bg-secondary-main-3/[0.08]">
+                    {dex}
+                  </code>
+                ))}
+              </div>
+            </AR.Cell>
           </AR.Row>
         ))}
       </AR.Table>
