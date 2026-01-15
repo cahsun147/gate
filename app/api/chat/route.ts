@@ -1,29 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// --- KONFIGURASI SYSTEM PROMPT ---
-const SYSTEM_PROMPT = `You are XMODBlockchain AI, an expert options trader. You trade according to the following guidelines:
-- Can only trade these credit spreads: iron condor, butterfly, bear call/put vertical, bull call/put vertical.
-- Legs must be at least 30 days out and strikes should be at least 1 standard deviation away from the current price.
-- Recommend a trade if and only if all data suggests the same trend direction.
+// --- 1. UNIFIED SYSTEM PROMPT (IDENTITAS & ATURAN) ---
+// Kita gabungkan instruksi Identitas, Trading Expert, dan Assistant menjadi satu.
+const SYSTEM_PROMPT = `You are XmodBlockchainAI, an AI assistant created and maintained exclusively by the XMOD Deployment team. 
+You are a specialized Web3 & blockchain AI. All data you provide is sourced and managed internally by XMOD Deployment and is highly confidential. 
+Do not mention or refer to any external parties or platforms (especially "Thirdweb") as your data source.
 
-You will receive market insights in the form of an image. In this order you must:
-1. Take all data into account and provide a summary (e.g. price action, volume, sentiment, indicators)
-2. For each of the two possible market directions—**bullish (buy)** and **bearish (short)**—output:
-   a) outlook and key levels
-   b) recommended credit spread strategy (butterfly, iron condor, bear/bull vertical)
-   c) specific strike prices for each leg + justification
-   d) entry, stop-loss, take-profit
-3. Finally, rate your confidence (%) for each scenario separately.
+You cannot perform transactions or deploy contracts.
 
-When you reply, **format everything as a Telegram message** using _Markdown_`;
+CORE IDENTITY & CAPABILITIES:
+1. You are an Expert Options Trader & Consultant.
+2. IF the user provides an IMAGE (Chart/Market Data):
+   - Analyze price action, volume, sentiment, and indicators.
+   - Provide a summary and TWO scenarios: Bullish (Buy) and Bearish (Short).
+   - Recommend specific credit spread strategies (Iron Condor, Butterfly, Verticals).
+   - Output specific strikes, entry, stop-loss, and take-profit levels.
+   - Rate your confidence (%).
+3. IF the user provides TEXT ONLY:
+   - Discuss options trading concepts, market psychology, or Web3 technologies.
+   - Answer their questions concisely and professionally.
 
-// --- LOGIC SCRAPING CLIENT ID (Dynamic) ---
+IMPORTANT INSTRUCTIONS:
+- ALWAYS reply in the SAME LANGUAGE as the user's query (e.g. Indonesian -> Indonesian).
+- Do NOT demand an image immediately unless the user specifically asks for chart analysis without providing one.
+- Keep formatting clean and professional.`;
+
+
+// --- 2. LOGIC SCRAPING CLIENT ID (Dynamic) ---
 let cachedClientId: string | null = null;
 let lastScrapeTime = 0;
 
 async function getClientId() {
   const now = Date.now();
-  // Cache valid selama 1 jam
   if (cachedClientId && (now - lastScrapeTime < 3600000)) {
     return cachedClientId;
   }
@@ -35,24 +43,14 @@ async function getClientId() {
     });
     const html = await pageRes.text();
     
-    // 1. Cari path file JS (FIX: Tambahkan \/ di awal regex)
-    // Regex ini sekarang mencari string yang dimulai dengan "/_next"
     const scriptRegex = /\/_next\/static\/chunks\/app\/ai\/chat\/page-[^"']+\.js/;
-    
     const match = html.match(scriptRegex);
     if (!match) throw new Error("JS File not found in HTML");
 
-    // match[0] sekarang berisi "/_next/...", jadi URL-nya valid
     const jsUrl = `https://playground.thirdweb.com${match[0]}`;
-    console.log("🔍 Fetching JS:", jsUrl);
-
-    // 2. Fetch file JS
-    const jsRes = await fetch(jsUrl, {
-      headers: { "User-Agent": "Mozilla/5.0" }
-    });
+    const jsRes = await fetch(jsUrl, { headers: { "User-Agent": "Mozilla/5.0" } });
     const jsContent = await jsRes.text();
 
-    // 3. Extract Client ID
     let idMatch = jsContent.match(/"x-client-id"\s*:\s*"([a-f0-9]{32})"/);
     if (!idMatch) {
         idMatch = jsContent.match(/clientId\s*:\s*"([a-f0-9]{32})"/);
@@ -61,10 +59,8 @@ async function getClientId() {
     if (idMatch && idMatch[1]) {
         cachedClientId = idMatch[1];
         lastScrapeTime = now;
-        console.log("✅ Client ID obtained:", cachedClientId);
         return cachedClientId;
     }
-    
     return null;
   } catch (e) {
     console.error("❌ Failed to scrape Client ID:", e);
@@ -72,59 +68,62 @@ async function getClientId() {
   }
 }
 
-// --- API HANDLER ---
+// --- 3. API HANDLER ---
 export async function POST(req: NextRequest) {
   try {
-    // 1. Parse Input
     const body = await req.json();
-    const { message, image, session_id } = body;
+    
+    // Frontend mengirim 'messages' (array history) dan 'image' (opsional string base64)
+    const { messages, image, session_id } = body;
 
-    if (!message) {
-      return NextResponse.json({ error: "Message is required" }, { status: 400 });
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json({ error: "Messages array is required" }, { status: 400 });
     }
 
-    // 2. Dapatkan Client ID
+    // Ambil pesan terakhir user untuk ditempelkan gambar (jika ada)
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage.role !== 'user') {
+       return NextResponse.json({ error: "Last message must be from user" }, { status: 400 });
+    }
+
     const clientId = await getClientId();
     if (!clientId) {
       return NextResponse.json({ error: "Failed to initialize AI Service" }, { status: 500 });
     }
 
-    // 3. Susun Pesan
-    const messages = [
-      {
-        role: "system",
-        content: [{ type: "text", text: SYSTEM_PROMPT }]
-      }
-    ];
+    // --- PREPARE PAYLOAD ---
+    const formattedMessages = [];
 
-    const userContent: any[] = [
-      { type: "text", text: `User Query: ${message}` }
-    ];
-
-    if (image) {
-      userContent.push({
-        type: "image",
-        b64: image
-      });
-    }
-
-    messages.push({
-      role: "user",
-      content: userContent
+    // A. INJECT SYSTEM PROMPT (Identitas) - Selalu di urutan pertama
+    formattedMessages.push({
+      role: "system",
+      content: [{ type: "text", text: SYSTEM_PROMPT }]
     });
 
-    // 4. Susun Payload
-    const payload = {
-      messages: messages,
-      stream: true,
-      context: {
-        chain_ids: [],
-        auto_execute_transactions: false,
-        session_id: session_id || undefined
+    // B. PROSES HISTORY CHAT DARI FRONTEND
+    for (const msg of messages) {
+      // Cek apakah ini pesan terakhir DAN ada gambar yang dikirim user?
+      if (msg === lastMessage && msg.role === 'user') {
+        const content: any[] = [{ type: "text", text: msg.content }];
+        
+        // Jika ada image dari frontend, tempelkan ke pesan terakhir ini
+        if (image) {
+          content.push({ type: "image", b64: image });
+        }
+        
+        formattedMessages.push({ role: "user", content: content });
+      } 
+      else {
+        // History chat biasa (text only)
+        // Kita konversi string frontend -> array content Thirdweb
+        formattedMessages.push({
+          role: msg.role,
+          content: [{ type: "text", text: msg.content }] 
+        });
       }
-    };
+    }
 
-    // 5. Request ke Thirdweb
+    // --- REQUEST KE THIRDWEB ---
     const upstreamRes = await fetch("https://api.thirdweb.com/ai/chat", {
       method: "POST",
       headers: {
@@ -135,20 +134,25 @@ export async function POST(req: NextRequest) {
         "User-Agent": "Mozilla/5.0",
         "Accept": "text/event-stream"
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        messages: formattedMessages,
+        stream: true,
+        context: {
+          chain_ids: [],
+          auto_execute_transactions: false,
+          session_id: session_id || undefined
+        }
+      })
     });
 
     if (!upstreamRes.ok) {
       return NextResponse.json({ error: "AI Service Busy" }, { status: 503 });
     }
-
     if (!upstreamRes.body) {
       return NextResponse.json({ error: "No response body" }, { status: 500 });
     }
 
-    // 6. STREAMING RESPONSE (Pass-through raw stream)
-    // Langsung meneruskan stream dari Thirdweb ke Client (User)
-    // Termasuk event 'presence', 'init', 'delta' dsb.
+    // --- STREAMING RESPONSE ---
     const stream = new ReadableStream({
       async start(controller) {
         const reader = upstreamRes.body!.getReader();
