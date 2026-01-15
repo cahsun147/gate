@@ -45,17 +45,6 @@ const PageHome = (): JSX.Element => {
             className="flex flex-row justify-center items-center gap-2 md:gap-4"
             animated={['flicker']}
           >
-            <Link href="/docs">
-              <ButtonSimple
-                tabIndex={-1}
-                title="Go to Documentation"
-                animated={[['x', theme.spacen(-6), 0, 0]]}
-              >
-                <Page className="text-size-[1.5em] xhidden x2sm:block" />
-                <span>Docs</span>
-              </ButtonSimple>
-            </Link>
-
             <Link href="/chat">
               <ButtonSimple
                 tabIndex={-1}
@@ -88,6 +77,17 @@ const PageHome = (): JSX.Element => {
                 <span>Tokenomic</span>
               </ButtonSimple>
             </Link>
+
+            <Link href="/docs">
+              <ButtonSimple
+                tabIndex={-1}
+                title="Go to Documentation"
+                animated={[['x', theme.spacen(-6), 0, 0]]}
+              >
+                <Page className="text-size-[1.5em] xhidden x2sm:block" />
+                <span>Docs</span>
+              </ButtonSimple>
+            </Link>            
           </Animated>
         </Animator>
       </Animated>
