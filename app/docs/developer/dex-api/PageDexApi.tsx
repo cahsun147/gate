@@ -25,7 +25,7 @@ const PageDexApi = (): JSX.Element => {
 
       <AR.H2>Query Parameters</AR.H2>
 
-      <AR.Table minWidth="48rem" className="not-prose">
+      <AR.Table minWidth="25rem" className="not-prose">
         <AR.Row className="grid grid-cols-[8rem_1fr] lg:grid-cols-[12rem_1fr]">
           <AR.Cell isHeader>Parameter</AR.Cell>
           <AR.Cell isHeader>Type</AR.Cell>
