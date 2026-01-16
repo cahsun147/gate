@@ -21,7 +21,7 @@ const PageDeveloper = (): JSX.Element => {
         links={[
           { href: '/docs/developer/overview', text: 'Overview', icon: <IconCode /> },
           { href: '/docs/developer/dex-api', text: 'DEX API', icon: <IconCode /> },
-          { href: '/docs/developer/dex-api/supported', text: 'Supported Chains & DEXs', icon: <IconCode /> },
+          { href: '/docs/developer/dex-api/supported', text: 'Chains & DEXs', icon: <IconCode /> },
           { href: '/docs/developer/dex-api/example-request', text: 'Example Request', icon: <IconCode /> }
         ]}
       />

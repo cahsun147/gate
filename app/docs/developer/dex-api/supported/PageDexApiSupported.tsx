@@ -495,7 +495,7 @@ const PageDexApiSupported = (): JSX.Element => {
         This list is sourced from the backend configuration (<code>allowedChains</code>) in the Go handler.
       </AR.P>
 
-      <AR.H2>Supported DEXs by Chain</AR.H2>
+      <AR.H2>Supported Chain</AR.H2>
 
       <AR.Table minWidth="56rem" className="not-prose">
         <AR.Row className="grid grid-cols-[8rem_1fr] lg:grid-cols-[12rem_1fr]">

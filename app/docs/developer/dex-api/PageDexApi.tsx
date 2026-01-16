@@ -26,62 +26,28 @@ const PageDexApi = (): JSX.Element => {
       <AR.H2>Query Parameters</AR.H2>
 
       <AR.Table minWidth="48rem" className="not-prose">
-        <AR.Row>
+        <AR.Row className="grid grid-cols-[8rem_1fr] lg:grid-cols-[12rem_1fr]">
           <AR.Cell isHeader>Parameter</AR.Cell>
           <AR.Cell isHeader>Type</AR.Cell>
           <AR.Cell isHeader>Default</AR.Cell>
           <AR.Cell isHeader>Notes</AR.Cell>
         </AR.Row>
-        <AR.Row>
-          <AR.Cell>
-            <code>chainId</code>
-          </AR.Cell>
-          <AR.Cell>string</AR.Cell>
-          <AR.Cell>-</AR.Cell>
-          <AR.Cell>Network filter (must be included in the supported chains list).</AR.Cell>
-        </AR.Row>
-        <AR.Row>
-          <AR.Cell>
-            <code>dexId</code>
-          </AR.Cell>
-          <AR.Cell>string</AR.Cell>
-          <AR.Cell>-</AR.Cell>
-          <AR.Cell>DEX filter (depends on <code>chainId</code>).</AR.Cell>
-        </AR.Row>
-        <AR.Row>
-          <AR.Cell>
-            <code>trendingscore</code>
-          </AR.Cell>
-          <AR.Cell>string</AR.Cell>
-          <AR.Cell>h6</AR.Cell>
-          <AR.Cell>
-            Valid: <code>m5</code>, <code>h1</code>, <code>h6</code>, <code>h24</code>.
-          </AR.Cell>
-        </AR.Row>
-        <AR.Row>
-          <AR.Cell>
-            <code>tokenprofile</code>
-          </AR.Cell>
-          <AR.Cell>boolean</AR.Cell>
-          <AR.Cell>false</AR.Cell>
-          <AR.Cell>This parameter exists in the README, but is not currently validated by the Go handler.</AR.Cell>
-        </AR.Row>
-        <AR.Row>
-          <AR.Cell>
-            <code>booster</code>
-          </AR.Cell>
-          <AR.Cell>boolean</AR.Cell>
-          <AR.Cell>false</AR.Cell>
-          <AR.Cell>This parameter exists in the README, but is not currently validated by the Go handler.</AR.Cell>
-        </AR.Row>
-        <AR.Row>
-          <AR.Cell>
-            <code>advertising</code>
-          </AR.Cell>
-          <AR.Cell>boolean</AR.Cell>
-          <AR.Cell>false</AR.Cell>
-          <AR.Cell>This parameter exists in the README, but is not currently validated by the Go handler.</AR.Cell>
-        </AR.Row>
+        {[
+          { parameter:'chainId',type:'string', description: 'Network filter (must be included in the supported chains list)' },
+          { parameter:'dexID',type:'string', description: 'DEX filter (depends on chainId)' },
+          { parameter:'trendingscore', type:'string', description: 'Valid: m5, h1, h6, h24' },
+          { parameter:'tokenprofile', type:'boolean', description: 'paid dex or somting' },
+          { parameter:'booster', type:'boolean', description: 'Token has booster' },
+          { parameter:'advertising', type:'boolean', description: 'Filtering Aadvertising tokens' },
+        ].map(({ parameter, type, description }) => (
+          <AR.Row key={parameter} className="grid grid-cols-[10rem_1fr] lg:grid-cols-[15rem_1fr]">
+            <AR.Cell>
+              <code>{parameter}</code>
+            </AR.Cell>
+            <AR.Cell>{type}</AR.Cell>
+            <AR.Cell>{description}</AR.Cell>
+          </AR.Row>
+        ))}
       </AR.Table>
 
       <AR.H2>Further Documentation</AR.H2>
@@ -89,7 +55,7 @@ const PageDexApi = (): JSX.Element => {
       <AR.Links
         compact
         links={[
-          { href: '/docs/developer/dex-api/supported', text: 'Supported Chains & DEXs' },
+          { href: '/docs/developer/dex-api/supported', text: 'Chains & DEXs' },
           { href: '/docs/developer/dex-api/example-request', text: 'Example Request' }
         ]}
       />
