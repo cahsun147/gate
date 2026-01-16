@@ -29,7 +29,6 @@ const PageDexApi = (): JSX.Element => {
         <AR.Row className="grid grid-cols-[8rem_1fr] lg:grid-cols-[12rem_1fr]">
           <AR.Cell isHeader>Parameter</AR.Cell>
           <AR.Cell isHeader>Type</AR.Cell>
-          <AR.Cell isHeader>Default</AR.Cell>
           <AR.Cell isHeader>Notes</AR.Cell>
         </AR.Row>
         {[
