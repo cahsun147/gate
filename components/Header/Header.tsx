@@ -15,7 +15,7 @@ import {
 import {
   X,
   Page,
-  Codepen,
+  Atom,
   Settings,
   CollageFrame,
   DashboardSpeed,
@@ -140,25 +140,18 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                   unmountOnExited
                   unmountOnDisabled={isIndex}
                 >
-                  <Menu className={HEIGHT_CLASS}>
+                  <Menu className={HEIGHT_CLASS}>         
                     <Animator>
-                      <MenuItem active={pathname.startsWith('/docs')} animated={['flicker']}>
-                        <Link href="/docs" title="Go to Documentation">
-                          <Page /> <span className="hidden md:block">Docs</span>
+                      <MenuItem active={pathname.startsWith('/terminal')} animated={['flicker']}>
+                        <Link href="/demos" title="Go to Terminal">
+                          <CollageFrame /> <span className="hidden md:block">Terminal</span>
                         </Link>
                       </MenuItem>
                     </Animator>
                     <Animator>
-                      <MenuItem active={pathname.startsWith('/demos')} animated={['flicker']}>
-                        <Link href="/demos" title="Go to Demos">
-                          <CollageFrame /> <span className="hidden md:block">Demos</span>
-                        </Link>
-                      </MenuItem>
-                    </Animator>
-                    <Animator>
-                      <MenuItem active={pathname.startsWith('/play')} animated={['flicker']}>
-                        <a href={settings.apps.play.url} title="Go to Playground">
-                          <Codepen /> <span className="hidden md:block">Play</span>
+                      <MenuItem active={pathname.startsWith('/chat')} animated={['flicker']}>
+                        <a href={settings.apps.play.url} title="Go to Chat">
+                          <Atom /> <span className="hidden md:block">AI Chat</span>
                         </a>
                       </MenuItem>
                     </Animator>
@@ -167,6 +160,13 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                         <a href={settings.apps.perf.url} title="Go to Performance">
                           <DashboardSpeed /> <span className="hidden md:block">Perf</span>
                         </a>
+                      </MenuItem>
+                    </Animator>
+                    <Animator>
+                      <MenuItem active={pathname.startsWith('/docs')} animated={['flicker']}>
+                        <Link href="/docs" title="Go to Documentation">
+                          <Page /> <span className="hidden md:block">Docs</span>
+                        </Link>
                       </MenuItem>
                     </Animator>
                   </Menu>
@@ -224,7 +224,7 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                       <MenuItem animated={['flicker']}>
                         <a
                           className="normal-case"
-                          href={`https://github.com/arwes/arwes/releases/tag/v${settings.version}`}
+                          href={`https://github.com/xgate/releases/tag/v${settings.version}`}
                           target="version"
                           title={new Date(settings.deployTime).toString()}
                         >
@@ -239,7 +239,7 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                         <a
                           className="!gap-0 group-hover:text-fuchsia-300"
                           href="https://x.com/styra0x"
-                          target="sponsor"
+                          target="developer"
                         >
                           <Heart />
                           <div
@@ -249,7 +249,7 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                               'group-hover:grid-cols-[1fr] group-hover:pl-2'
                             )}
                           >
-                            <div className="overflow-hidden">Sponsor</div>
+                            <div className="overflow-hidden">Developer</div>
                           </div>
                         </a>
                       </MenuItem>
