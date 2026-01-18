@@ -9,57 +9,49 @@ export default function Page(): JSX.Element {
       <AR.Header>Overview</AR.Header>
 
       <AR.P>
-        This documentation explains how to call XGATE APIs and which endpoints are available.
-      </AR.P>
-
-      <AR.H2>API Endpoints</AR.H2>
-
-      <AR.Table minWidth="40rem" className="not-prose">
-        <AR.Row>
-          <AR.Cell isHeader>Endpoint</AR.Cell>
-          <AR.Cell isHeader>Method</AR.Cell>
-          <AR.Cell isHeader>Description</AR.Cell>
-        </AR.Row>
-        <AR.Row>
-          <AR.Cell>/api</AR.Cell>
-          <AR.Cell>GET</AR.Cell>
-          <AR.Cell>Root API health check.</AR.Cell>
-        </AR.Row>
-        <AR.Row>
-          <AR.Cell>/api/v1/dex</AR.Cell>
-          <AR.Cell>GET</AR.Cell>
-          <AR.Cell>DEX screener/proxy for trending pair data.</AR.Cell>
-        </AR.Row>
-        <AR.Row>
-          <AR.Cell>/api/dex</AR.Cell>
-          <AR.Cell>GET</AR.Cell>
-          <AR.Cell>Alias used in the README (if your deployment provides a proxy/compat route).</AR.Cell>
-        </AR.Row>
-        <AR.Row>
-          <AR.Cell>/api/v1/tokens/holder/&lt;network&gt;/&lt;contract_address&gt;</AR.Cell>
-          <AR.Cell>GET</AR.Cell>
-          <AR.Cell>Fetch token holders.</AR.Cell>
-        </AR.Row>
-        <AR.Row>
-          <AR.Cell>/api/v1/tokens/traders/&lt;network&gt;/&lt;contract_address&gt;</AR.Cell>
-          <AR.Cell>GET</AR.Cell>
-          <AR.Cell>Fetch token traders.</AR.Cell>
-        </AR.Row>
-        <AR.Row>
-          <AR.Cell>/api/v1/wallet/holdings/&lt;network&gt;/&lt;wallet_address&gt;</AR.Cell>
-          <AR.Cell>GET</AR.Cell>
-          <AR.Cell>Fetch holdings for a wallet address.</AR.Cell>
-        </AR.Row>
-      </AR.Table>
-
-      <AR.H2>DEX API</AR.H2>
-
-      <AR.P>
-        For detailed documentation of <code>/api/v1/dex</code> / <code>/api/dex</code> (parameters,
-        supported chains/DEXs, and example requests), see the section below.
+        Dokumentasi ini berisi informasi dasar untuk menggunakan API XGATE, termasuk hal-hal penting
+        terkait penggunaan layanan, privasi, dan pertanyaan umum sebelum kamu mulai mengintegrasikan
+        endpoint yang tersedia.
       </AR.P>
 
       <AR.Links links={[{ href: '/docs/developer/dex-api', text: 'DEX API', icon: <IconCode /> }]} />
+
+      <AR.H2>Disclaimer</AR.H2>
+
+      <AR.P>
+        Informasi dan data yang disediakan oleh XGATE ditujukan untuk kebutuhan riset, komunitas, dan
+        pengembangan. XGATE bukan penasihat keuangan, dan penggunaan data sepenuhnya menjadi
+        tanggung jawab pengguna. Data dapat berubah, tertunda, atau tidak akurat tergantung kondisi
+        jaringan dan penyedia sumber data.
+      </AR.P>
+
+      <AR.H2>Privacy Policy</AR.H2>
+
+      <AR.P>
+        XGATE tidak meminta ataupun menyimpan private key, seed phrase, atau kredensial sensitif.
+        Permintaan API dapat tercatat dalam bentuk log teknis (misalnya IP, user-agent, waktu akses)
+        untuk kebutuhan keamanan dan pemeliharaan layanan. Jika kamu memanggil API dari aplikasi kamu
+        sendiri, pastikan kamu tidak mengirimkan data sensitif melalui query/body.
+      </AR.P>
+
+      <AR.H2>FAQ</AR.H2>
+
+      <AR.H3>Does XGATE have a token?</AR.H3>
+
+      <AR.P>
+        Ya, XGATE memiliki token. Informasi resmi terkait jaringan, kontrak, utilitas, dan rencana
+        pengembangan token akan diumumkan melalui kanal resmi. Mohon selalu verifikasi sumber sebelum
+        berinteraksi dengan kontrak/token apa pun.
+      </AR.P>
+
+      <AR.H3>Where does XGATE get data from?</AR.H3>
+
+      <AR.P>
+        Data XGATE berasal dari data on-chain (langsung dari blockchain) dan beberapa penyedia API/data
+        blockchain (misalnya RPC provider, explorer/indexer, dan layanan agregasi pasar). Untuk bagian
+        tertentu seperti DEX trending, backend dapat mengambil data dari penyedia data DEX publik dan
+        kemudian memprosesnya agar lebih mudah dipakai.
+      </AR.P>
 
       <AR.Navigation prevHref="/docs" prev="Index" nextHref="/docs/developer/dex-api" next="DEX API" />
     </>

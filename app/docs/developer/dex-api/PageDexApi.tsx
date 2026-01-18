@@ -8,8 +8,8 @@ const PageDexApi = (): JSX.Element => {
       <AR.Header>DEX API</AR.Header>
 
       <AR.P>
-        The DEX endpoint is used to fetch trending pair data from DexScreener through the XGATE backend.
-        The backend route is <code>/api/v1/dex</code>.
+        DEX API berguna untuk mendapatkan data trending token dari chain dan DEX yang didukung melalui
+        backend XGATE. Backend route-nya adalah <code>/api/v1/dex</code>.
       </AR.P>
 
       <AR.H2>Endpoint</AR.H2>
@@ -25,25 +25,34 @@ const PageDexApi = (): JSX.Element => {
 
       <AR.H2>Query Parameters</AR.H2>
 
-      <AR.Table minWidth="25rem" className="not-prose">
-        <AR.Row className="grid grid-cols-[8rem_1fr] lg:grid-cols-[12rem_1fr]">
+      <AR.Table minWidth="48rem" className="not-prose">
+        <AR.Row className="grid grid-cols-[8rem_6rem_1fr] lg:grid-cols-[12rem_8rem_1fr]">
           <AR.Cell isHeader>Parameter</AR.Cell>
           <AR.Cell isHeader>Type</AR.Cell>
           <AR.Cell isHeader>Notes</AR.Cell>
         </AR.Row>
         {[
-          { parameter:'chainId',type:'string', description: 'Network filter (must be included in the supported chains list)' },
-          { parameter:'dexID',type:'string', description: 'DEX filter (depends on chainId)' },
-          { parameter:'trendingscore', type:'string', description: 'Valid: m5, h1, h6, h24' },
-          { parameter:'tokenprofile', type:'boolean', description: 'paid dex or somting' },
-          { parameter:'booster', type:'boolean', description: 'Token has booster' },
-          { parameter:'advertising', type:'boolean', description: 'Filtering Aadvertising tokens' },
+          {
+            parameter: 'chainId',
+            type: 'string',
+            description: 'Filter network (harus termasuk di daftar chain yang didukung).'
+          },
+          {
+            parameter: 'dexId',
+            type: 'string',
+            description: 'Filter DEX (tergantung chainId).'
+          },
+          {
+            parameter: 'trendingscore',
+            type: 'string',
+            description: 'Trending window. Valid: m5, h1, h6, h24 (default biasanya h6).'
+          }
         ].map(({ parameter, type, description }) => (
-          <AR.Row key={parameter} className="grid grid-cols-[10rem_1fr] lg:grid-cols-[15rem_1fr]">
-            <AR.Cell>
+          <AR.Row key={parameter} className="grid grid-cols-[8rem_6rem_1fr] lg:grid-cols-[12rem_8rem_1fr]">
+            <AR.Cell className="whitespace-nowrap">
               <code>{parameter}</code>
             </AR.Cell>
-            <AR.Cell>{type}</AR.Cell>
+            <AR.Cell className="whitespace-nowrap">{type}</AR.Cell>
             <AR.Cell>{description}</AR.Cell>
           </AR.Row>
         ))}
