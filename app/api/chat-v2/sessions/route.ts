@@ -1,62 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 
-// GET Handler
+// HELPER: Safe Parse
+function safeParse(data: any) {
+  if (typeof data === 'string') {
+    try { return JSON.parse(data); } catch (e) { return null; }
+  }
+  return data;
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
 
   try {
-    // A. SKENARIO DETAIL PESAN (Load Chat)
+    // 1. DETAIL CHAT (Isi Pesan)
     if (id) {
-      const rawMessages = await redis.lrange(`chat:messages:${id}`, 0, -1);
-      const messages = rawMessages.map((msg: any) => {
-         return typeof msg === 'string' ? JSON.parse(msg) : msg;
-      });
+      // Baca dari LIST 'chat:history:ID'
+      const rawMessages = await redis.lrange(`chat:history:${id}`, 0, -1);
+      const messages = rawMessages.map(safeParse).filter(Boolean);
       return NextResponse.json({ messages });
     }
 
-    // B. SKENARIO SIDEBAR (List Sessions)
+    // 2. LIST SIDEBAR
     const rawSessions = await redis.zrange("chat:sessions", 0, -1, { rev: true });
-    
-    // Safety Parsing: Pastikan data yang dikirim ke frontend adalah Object, bukan String
-    const sessions = rawSessions.map((s: any) => {
-        return typeof s === 'string' ? JSON.parse(s) : s;
-    });
-    
+    const sessions = rawSessions.map(safeParse).filter(Boolean);
     return NextResponse.json(sessions);
 
   } catch (error) {
-    console.error("Redis Error:", error);
     return NextResponse.json([], { status: 500 });
   }
 }
 
-// DELETE Handler
+// DELETE Handler (Sesuaikan Key)
 export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
-
   if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
 
   try {
-    await redis.del(`chat:messages:${id}`);
+    await redis.del(`chat:history:${id}`); // Hapus History List
     
-    // Cari member spesifik untuk dihapus dari ZSET
-    const allSessions: any[] = await redis.zrange("chat:sessions", 0, -1);
-    // Parse dulu jika string, untuk pencarian
-    const sessionToDelete = allSessions.find((s) => {
-        const obj = typeof s === 'string' ? JSON.parse(s) : s;
-        return obj.id === id;
+    // Hapus dari ZSET (Sidebar)
+    const allSessions = await redis.zrange("chat:sessions", 0, -1);
+    const sessionToDelete = allSessions.find((s: any) => {
+        const obj = safeParse(s);
+        return obj && obj.id === id;
     });
-    
-    if (sessionToDelete) {
-        // Hapus member asli (raw) dari Redis
-        await redis.zrem("chat:sessions", sessionToDelete);
-    }
+    if (sessionToDelete) await redis.zrem("chat:sessions", sessionToDelete);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
