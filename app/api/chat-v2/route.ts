@@ -2,12 +2,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 
 // --- CONFIG ---
-const SYSTEM_PROMPT = `You are XmodBlockchainAI, created by XMOD Deployment team.
-You are a specialized Web3 & blockchain AI.
-IF user sends IMAGE: Analyze it deeply.
-IF user sends TEXT: Chat professionally.`;
+const SYSTEM_PROMPT = `You are XmodBlockchainAI, an AI assistant created and maintained exclusively by the XMOD Deployment team. 
+You are a specialized Web3 & blockchain AI. All data you provide is sourced and managed internally by XMOD Deployment and is highly confidential. 
+Do not mention or refer to any external parties or platforms (especially "Thirdweb") as your data source.
 
-// --- HELPER: Safe Parse JSON ---
+You cannot perform transactions or deploy contracts.
+
+CORE IDENTITY & CAPABILITIES:
+1. You are an Expert Options Trader & Consultant.
+2. IF the user provides an IMAGE (Chart/Market Data):
+   - Analyze price action, volume, sentiment, and indicators.
+   - Provide a summary and TWO scenarios: Bullish (Buy) and Bearish (Short).
+   - Recommend specific credit spread strategies (Iron Condor, Butterfly, Verticals).
+   - Output specific strikes, entry, stop-loss, and take-profit levels.
+   - Rate your confidence (%).
+3. IF the user provides TEXT ONLY:
+   - Discuss options trading concepts, market psychology, or Web3 technologies.
+   - Answer their questions concisely and professionally.
+
+IMPORTANT INSTRUCTIONS:
+- ALWAYS reply in the SAME LANGUAGE as the user's query (e.g. Indonesian -> Indonesian).
+- Do NOT demand an image immediately unless the user specifically asks for chart analysis without providing one.
+- Keep formatting clean and professional`;
+
+// --- HELPER: Safe Parse ---
 function safeParse(data: any) {
   if (typeof data === 'string') {
     try { return JSON.parse(data); } catch (e) { return null; }
@@ -15,7 +33,7 @@ function safeParse(data: any) {
   return data;
 }
 
-// --- HELPER: Get Client ID (V1 Logic - Stabil) ---
+// --- HELPER: Client ID ---
 let cachedClientId: string | null = null;
 let lastScrapeTime = 0;
 
@@ -57,43 +75,40 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     let { message, image, session_id } = body;
 
-    // 1. SIAPKAN CONTEXT (History)
-    // Jika session_id ada (chat kedua dst), ambil history dari Redis
+    // A. VALIDASI UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!session_id || !uuidRegex.test(session_id)) {
+        session_id = crypto.randomUUID(); 
+    }
+
+    // B. SIAPKAN CONTEXT (Gunakan Key Baru: chat:msg:{id})
     const formattedMessages = [];
     formattedMessages.push({ role: "system", content: [{ type: "text", text: SYSTEM_PROMPT }] });
 
-    if (session_id) {
-        // Ambil history dari list context utama
-        const rawHistory = await redis.lrange(`chat:history:${session_id}`, -6, -1);
-        rawHistory.forEach((item: any) => {
-            const msg = safeParse(item);
-            if (msg) formattedMessages.push({ 
-                role: msg.role, 
-                content: [{ type: "text", text: msg.content }] 
-            });
+    // Ambil history dari KEY BARU
+    const rawHistory = await redis.lrange(`chat:msg:${session_id}`, -6, -1);
+    rawHistory.forEach((item: any) => {
+        const msg = safeParse(item);
+        if (msg) formattedMessages.push({ 
+            role: msg.role, 
+            content: [{ type: "text", text: msg.content }] 
         });
-    }
+    });
 
-    // Tambahkan pesan user saat ini ke payload Thirdweb
     const currentUserContent: any[] = [{ type: "text", text: message }];
     if (image) currentUserContent.push({ type: "image", b64: image });
     formattedMessages.push({ role: "user", content: currentUserContent });
 
-    // 2. DAPATKAN CLIENT ID
+    // C. DAPATKAN CLIENT ID
     const clientId = await getClientId();
     if (!clientId) return NextResponse.json({ error: "Init Failed" }, { status: 500 });
 
-    // 3. REQUEST KE THIRDWEB (Tanpa maksa session_id jika null)
+    // D. REQUEST KE THIRDWEB
     const payload: any = {
       messages: formattedMessages,
       stream: true,
-      context: { chain_ids: [], auto_execute_transactions: false }
+      context: { chain_ids: [], auto_execute_transactions: false, session_id: session_id }
     };
-    
-    // Hanya kirim session_id jika sudah ada (Chat ke-2++)
-    if (session_id) {
-        payload.context.session_id = session_id;
-    }
 
     const upstreamRes = await fetch("https://api.thirdweb.com/ai/chat", {
       method: "POST",
@@ -110,15 +125,13 @@ export async function POST(req: NextRequest) {
 
     if (!upstreamRes.ok) return NextResponse.json({ error: "AI Busy" }, { status: 503 });
 
-    // 4. STREAMING & CAPTURE ID
+    // E. STREAMING & SIMPAN DATA
     const stream = new ReadableStream({
       async start(controller) {
         const reader = upstreamRes.body!.getReader();
         const decoder = new TextDecoder();
         
         let fullAiText = "";
-        let activeSessionId = session_id; // Bisa null di awal
-        let activeRequestId = null;
         let isFirstInit = true;
 
         try {
@@ -130,75 +143,54 @@ export async function POST(req: NextRequest) {
             const lines = chunk.split("\n");
 
             for (const line of lines) {
-                // A. DETEKSI EVENT INIT (Dapat ID dari Thirdweb)
+                // TANGKAP INIT
                 if (line.includes(`"type":"init"`)) {
-                    try {
-                        // Parse JSON dari baris data: {...}
-                        const jsonStr = line.replace("data: ", "").trim();
-                        const data = JSON.parse(jsonStr);
+                    if (isFirstInit) {
+                        isFirstInit = false;
                         
-                        if (data.session_id) {
-                            activeSessionId = data.session_id;
-                            activeRequestId = data.request_id;
+                        // 1. Simpan Pesan User ke LIST (chat:msg:{id})
+                        const userMsgStr = JSON.stringify({ role: "user", content: message, type: image ? "image" : "text" });
+                        await redis.rpush(`chat:msg:${session_id}`, userMsgStr);
 
-                            // --- TRIGGER SIMPAN KE REDIS (Saat ID ditemukan) ---
-                            if (isFirstInit) {
-                                console.log(`✅ [V2] Got ID: ${activeSessionId} | Req: ${activeRequestId}`);
-                                
-                                // 1. Simpan Client ID Mapping (Sesuai request Anda)
-                                await redis.set(`chat:client-id:${clientId}`, activeSessionId);
-
-                                // 2. Simpan Pesan User (Sekarang kita punya ID-nya)
-                                const userMsgObj = { role: "user", content: message, type: image ? "image" : "text" };
-                                const userMsgStr = JSON.stringify(userMsgObj);
-                                
-                                // A: Simpan ke Log Request Spesifik (Sesuai request Anda)
-                                await redis.set(`chat:msg:${activeSessionId}:${activeRequestId}`, userMsgStr);
-                                
-                                // B: Simpan ke History List (Wajib untuk context chat berikutnya)
-                                await redis.rpush(`chat:history:${activeSessionId}`, userMsgStr);
-                                
-                                // C: Update Sidebar
-                                const sessionMeta = {
-                                    id: activeSessionId,
-                                    title: message.substring(0, 30) + "...",
-                                    timestamp: Date.now()
-                                };
-                                await redis.zadd("chat:sessions", { score: Date.now(), member: JSON.stringify(sessionMeta) });
-
-                                isFirstInit = false;
-                            }
-                        }
+                        // 2. Simpan Sesi ke ZSET KHUSUS CLIENT (chat:sessions:{clientId})
+                        const sessionsKey = `chat:sessions:${clientId}`;
                         
-                        // Teruskan event init ke frontend agar state frontend update
-                        controller.enqueue(new TextEncoder().encode(line + "\n\n"));
-                    } catch (e) { console.error("Parse Init Error", e); }
+                        // Hapus duplikat lama
+                        const allSessions = await redis.zrange(sessionsKey, 0, -1);
+                        const oldSession = allSessions.find((s: any) => {
+                            const p = safeParse(s);
+                            return p && p.id === session_id;
+                        });
+                        if (oldSession) await redis.zrem(sessionsKey, oldSession);
+
+                        // Simpan Baru
+                        const newMeta = {
+                            id: session_id,
+                            title: message.substring(0, 30) + "...",
+                            timestamp: Date.now()
+                        };
+                        await redis.zadd(sessionsKey, { score: Date.now(), member: JSON.stringify(newMeta) });
+                    }
+                    controller.enqueue(new TextEncoder().encode(line + "\n\n"));
                 } 
-                // B. DETEKSI JAWABAN (Delta)
+                // TANGKAP DATA
                 else if (line.startsWith("data:")) {
                     try {
                         const json = JSON.parse(line.replace("data:", ""));
                         if (json.v) fullAiText += json.v;
-                        controller.enqueue(new TextEncoder().encode(line + "\n\n")); // Teruskan ke frontend
+                        controller.enqueue(new TextEncoder().encode(line + "\n\n"));
                     } catch (e) {}
                 } 
-                // C. EVENT LAIN (Presence, etc)
                 else if (line.trim() !== "") {
                     controller.enqueue(new TextEncoder().encode(line + "\n"));
                 }
             }
           }
           
-          // 5. SETELAH STREAM SELESAI: Simpan Jawaban AI
-          if (fullAiText && activeSessionId) {
-             const aiMsgObj = { role: "assistant", content: fullAiText, type: "text" };
-             const aiMsgStr = JSON.stringify(aiMsgObj);
-             
-             // Simpan ke History List (untuk context)
-             await redis.rpush(`chat:history:${activeSessionId}`, aiMsgStr);
-             
-             // Opsional: Simpan ke Log Request juga jika perlu
-             // await redis.append(`chat:msg:${activeSessionId}:${activeRequestId}`, " | AI: " + fullAiText);
+          // SIMPAN JAWABAN AI
+          if (fullAiText) {
+             const aiMsgStr = JSON.stringify({ role: "assistant", content: fullAiText, type: "text" });
+             await redis.rpush(`chat:msg:${session_id}`, aiMsgStr);
           }
 
           controller.close();
@@ -213,7 +205,6 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error("API Error:", error);
-    return NextResponse.json({ error: "Internal Error", details: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
 }
