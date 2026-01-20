@@ -17,7 +17,7 @@ type ChatSession = {
 
 export default function ChatPageV2() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  // STATE ID DIMULAI NULL (Tunggu dari server)
+  // KEMBALI KE NULL: Tunggu server/Thirdweb yang kasih ID
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -27,7 +27,7 @@ export default function ChatPageV2() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load Sidebar History
+  // Load Sidebar
   useEffect(() => {
     const fetchHistory = async () => {
       try {
@@ -35,6 +35,8 @@ export default function ChatPageV2() {
         if (res.ok) {
             const data = await res.json();
             setSessions(data);
+            // Jangan auto-load session jika user ingin "New Chat" di awal
+            // Tapi jika history ada, bisa opsi load yang terakhir (opsional)
         }
       } catch (e) {}
     };
@@ -44,12 +46,14 @@ export default function ChatPageV2() {
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const refreshSidebar = async () => {
-    const res = await fetch("/api/chat-v2/sessions");
-    if (res.ok) setSessions(await res.json());
+    try {
+      const res = await fetch("/api/chat-v2/sessions");
+      if (res.ok) setSessions(await res.json());
+    } catch (e) {}
   };
 
   const createNewSession = () => {
-    setCurrentSessionId(null); // Reset ke Null -> Chat baru
+    setCurrentSessionId(null); // Reset ke Null
     setMessages([]);
     setSidebarOpen(false);
     setSelectedImage(null);
@@ -117,7 +121,7 @@ export default function ChatPageV2() {
       const decoder = new TextDecoder();
       let done = false;
       let fullResponse = "";
-      let hasUpdatedId = false;
+      let hasUpdatedId = false; // Flag agar refresh sidebar cuma sekali
 
       while (!done) {
         const { value, done: doneReading } = await reader.read();
@@ -127,13 +131,16 @@ export default function ChatPageV2() {
         const lines = chunkValue.split("\n");
         for (const line of lines) {
           // 1. TANGKAP SESSION ID DARI SERVER (Event Init)
+          // Backend akan meneruskan event init dari Thirdweb
           if (line.includes(`"type":"init"`)) {
              try {
                 const json = JSON.parse(line.replace("data: ", ""));
-                if (json.session_id && !hasUpdatedId) {
-                    setCurrentSessionId(json.session_id); // Update State ID
+                // Jika ID baru diterima & belum diupdate di state
+                if (json.session_id && (!currentSessionId || !hasUpdatedId)) {
+                    setCurrentSessionId(json.session_id); 
                     hasUpdatedId = true;
-                    refreshSidebar(); // Refresh sidebar agar history baru muncul
+                    // Beri jeda sedikit agar backend selesai simpan ke Redis sebelum kita fetch sidebar
+                    setTimeout(refreshSidebar, 500); 
                 }
              } catch(e) {}
           }
@@ -162,9 +169,8 @@ export default function ChatPageV2() {
   };
 
   return (
-    // ... UI Tetap Sama, Copy bagian Return dari sebelumnya ...
-    // Pastikan tombol New Chat memanggil createNewSession()
     <div className="flex h-screen bg-[#111] text-gray-100 font-sans overflow-hidden">
+      {/* Sidebar */}
       <div className={`${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} fixed md:relative z-20 w-64 h-full bg-[#1a1a1a] border-r border-gray-800 transition-transform duration-300 md:translate-x-0 flex flex-col`}>
         <div className="p-4">
           <button onClick={createNewSession} className="flex items-center gap-2 w-full px-4 py-3 bg-[#262626] hover:bg-[#333] rounded-md border border-gray-700 text-sm font-medium transition-all group">
@@ -183,6 +189,7 @@ export default function ChatPageV2() {
           ))}
         </div>
       </div>
+      {/* Chat Area */}
       <div className="flex-1 flex flex-col relative w-full">
         <div className="md:hidden p-4 border-b border-gray-800 flex justify-between bg-[#111]">
           <button onClick={() => setSidebarOpen(!isSidebarOpen)}>{isSidebarOpen ? <Xmark /> : <Menu />}</button>
