@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 
-// --- HELPER SAMA DENGAN ROUTE UTAMA ---
+// Helper sama
 function safeParse(data: any) {
   if (typeof data === 'string') {
     try { return JSON.parse(data); } catch (e) { return null; }
@@ -12,11 +12,11 @@ function safeParse(data: any) {
 let cachedClientId: string | null = null;
 let lastScrapeTime = 0;
 
+// Kita butuh Client ID untuk tahu key mana yang harus dibaca (chat:sessions:{clientId})
 async function getClientId() {
   const now = Date.now();
   if (cachedClientId && (now - lastScrapeTime < 3600000)) return cachedClientId;
   try {
-    // Logic scraping standar
     const pageRes = await fetch("https://playground.thirdweb.com/ai/chat", { headers: { "User-Agent": "Mozilla/5.0" } });
     const html = await pageRes.text();
     const match = html.match(/\/_next\/static\/chunks\/app\/ai\/chat\/page-[^"']+\.js/);
@@ -34,30 +34,30 @@ async function getClientId() {
   } catch (e) { return null; }
 }
 
-// --- HANDLERS ---
-
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
 
   try {
-    // 1. AMBIL DETAIL PESAN (chat:msg:{id})
+    // 1. DETAIL CHAT (Isi Pesan)
+    // Key harus konsisten dengan route.ts -> chat:msg:{id}
     if (id) {
       const rawMessages = await redis.lrange(`chat:msg:${id}`, 0, -1);
       const messages = rawMessages.map(safeParse).filter(Boolean);
       return NextResponse.json({ messages });
     }
 
-    // 2. AMBIL LIST SIDEBAR (chat:sessions:{clientId})
-    // Kita butuh ClientID dulu untuk tahu Key Redis-nya
+    // 2. LIST SIDEBAR
+    // Key harus konsisten dengan route.ts -> chat:sessions:{clientId}
     const clientId = await getClientId();
-    if (!clientId) return NextResponse.json([], { status: 500 }); // Fail safe
+    if (!clientId) return NextResponse.json([], { status: 500 }); 
 
     const sessionsKey = `chat:sessions:${clientId}`;
     const rawSessions = await redis.zrange(sessionsKey, 0, -1, { rev: true });
     
     const sessions = rawSessions.map((s: any) => {
         const obj = safeParse(s);
+        // Frontend mengharapkan { id, title, timestamp }
         return obj ? { id: obj.id, title: obj.title, timestamp: obj.timestamp } : null;
     }).filter(Boolean);
 
