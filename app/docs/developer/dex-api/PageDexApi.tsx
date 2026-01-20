@@ -8,8 +8,8 @@ const PageDexApi = (): JSX.Element => {
       <AR.Header>DEX API</AR.Header>
 
       <AR.P>
-        DEX API berguna untuk mendapatkan data trending token dari chain dan DEX yang didukung melalui
-        backend XGATE. Backend route-nya adalah <code>/api/v1/dex</code>.
+        The DEX API is used to fetch trending token data from supported chains and DEXs through the
+        XGATE backend. The backend route is <code>/api/v1/dex</code>.
       </AR.P>
 
       <AR.H2>Endpoint</AR.H2>
@@ -35,17 +35,17 @@ const PageDexApi = (): JSX.Element => {
           {
             parameter: 'chainId',
             type: 'string',
-            description: 'Filter network (harus termasuk di daftar chain yang didukung).'
+            description: 'Network filter (must be included in the supported chains list).'
           },
           {
             parameter: 'dexId',
             type: 'string',
-            description: 'Filter DEX (tergantung chainId).'
+            description: 'DEX filter (depends on chainId).'
           },
           {
             parameter: 'trendingscore',
             type: 'string',
-            description: 'Trending window. Valid: m5, h1, h6, h24 (default biasanya h6).'
+            description: 'Trending window. Valid: m5, h1, h6, h24 (default is typically h6).'
           }
         ].map(({ parameter, type, description }) => (
           <AR.Row key={parameter} className="grid grid-cols-[8rem_6rem_1fr] lg:grid-cols-[12rem_8rem_1fr]">

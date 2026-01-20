@@ -9,9 +9,9 @@ export default function Page(): JSX.Element {
       <AR.Header>Overview</AR.Header>
 
       <AR.P>
-        Dokumentasi ini berisi informasi dasar untuk menggunakan API XGATE, termasuk hal-hal penting
-        terkait penggunaan layanan, privasi, dan pertanyaan umum sebelum kamu mulai mengintegrasikan
-        endpoint yang tersedia.
+        This documentation provides the essentials for using XGATE APIs, including key notes about
+        service usage, privacy, and common questions before you start integrating the available
+        endpoints.
       </AR.P>
 
       <AR.Links links={[{ href: '/docs/developer/dex-api', text: 'DEX API', icon: <IconCode /> }]} />
@@ -19,19 +19,19 @@ export default function Page(): JSX.Element {
       <AR.H2>Disclaimer</AR.H2>
 
       <AR.P>
-        Informasi dan data yang disediakan oleh XGATE ditujukan untuk kebutuhan riset, komunitas, dan
-        pengembangan. XGATE bukan penasihat keuangan, dan penggunaan data sepenuhnya menjadi
-        tanggung jawab pengguna. Data dapat berubah, tertunda, atau tidak akurat tergantung kondisi
-        jaringan dan penyedia sumber data.
+        The information and data provided by XGATE are intended for research, community, and
+        development purposes. XGATE is not a financial advisor, and any usage of the data is entirely
+        the user's responsibility. Data may change, be delayed, or be inaccurate depending on network
+        conditions and upstream data providers.
       </AR.P>
 
       <AR.H2>Privacy Policy</AR.H2>
 
       <AR.P>
-        XGATE tidak meminta ataupun menyimpan private key, seed phrase, atau kredensial sensitif.
-        Permintaan API dapat tercatat dalam bentuk log teknis (misalnya IP, user-agent, waktu akses)
-        untuk kebutuhan keamanan dan pemeliharaan layanan. Jika kamu memanggil API dari aplikasi kamu
-        sendiri, pastikan kamu tidak mengirimkan data sensitif melalui query/body.
+        XGATE does not request or store private keys, seed phrases, or other sensitive credentials. API
+        requests may be recorded as technical logs (e.g., IP address, user-agent, access time) for
+        security and service maintenance. If you call the API from your own application, make sure you
+        never send sensitive data through query parameters or request bodies.
       </AR.P>
 
       <AR.H2>FAQ</AR.H2>
@@ -39,18 +39,18 @@ export default function Page(): JSX.Element {
       <AR.H3>Does XGATE have a token?</AR.H3>
 
       <AR.P>
-        Ya, XGATE memiliki token. Informasi resmi terkait jaringan, kontrak, utilitas, dan rencana
-        pengembangan token akan diumumkan melalui kanal resmi. Mohon selalu verifikasi sumber sebelum
-        berinteraksi dengan kontrak/token apa pun.
+        Yes, XGATE has a token. Official details such as network, contract address, utility, and the
+        roadmap will be announced through official channels. Always verify sources before interacting
+        with any contract or token.
       </AR.P>
 
       <AR.H3>Where does XGATE get data from?</AR.H3>
 
       <AR.P>
-        Data XGATE berasal dari data on-chain (langsung dari blockchain) dan beberapa penyedia API/data
-        blockchain (misalnya RPC provider, explorer/indexer, dan layanan agregasi pasar). Untuk bagian
-        tertentu seperti DEX trending, backend dapat mengambil data dari penyedia data DEX publik dan
-        kemudian memprosesnya agar lebih mudah dipakai.
+        XGATE data comes from on-chain sources (directly from blockchains) as well as several blockchain
+        API/data providers (such as RPC providers, explorers/indexers, and market data aggregation
+        services). For specific features like DEX trending, the backend can fetch data from public DEX
+        data providers and then process it to make it easier to consume.
       </AR.P>
 
       <AR.Navigation prevHref="/docs" prev="Index" nextHref="/docs/developer/dex-api" next="DEX API" />
