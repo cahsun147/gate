@@ -1,42 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 
-// GET Handler: Menangani 2 skenario
-// 1. /api/chat-v2/sessions          -> Return List Sesi (untuk Sidebar)
-// 2. /api/chat-v2/sessions?id=123   -> Return Detail Chat (untuk Main Chat)
+// GET Handler
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
 
   try {
-    // SKENARIO 1: Ambil Detail Pesan (Load Isi Chat)
+    // A. SKENARIO DETAIL PESAN (Load Chat)
     if (id) {
-      // Ambil semua pesan dari List Redis
       const rawMessages = await redis.lrange(`chat:messages:${id}`, 0, -1);
-      
-      // Redis menyimpan data sebagai String JSON. 
-      // Kita perlu parse kembali menjadi Object agar bisa dibaca Frontend.
       const messages = rawMessages.map((msg: any) => {
          return typeof msg === 'string' ? JSON.parse(msg) : msg;
       });
-
       return NextResponse.json({ messages });
     }
 
-    // SKENARIO 2: Ambil Daftar Sesi (Sidebar History)
-    // Mengambil dari ZSET "chat:sessions", urut dari timestamp terbaru (rev: true)
-    const sessions = await redis.zrange("chat:sessions", 0, -1, { rev: true });
+    // B. SKENARIO SIDEBAR (List Sessions)
+    const rawSessions = await redis.zrange("chat:sessions", 0, -1, { rev: true });
+    
+    // Safety Parsing: Pastikan data yang dikirim ke frontend adalah Object, bukan String
+    const sessions = rawSessions.map((s: any) => {
+        return typeof s === 'string' ? JSON.parse(s) : s;
+    });
     
     return NextResponse.json(sessions);
 
   } catch (error) {
     console.error("Redis Error:", error);
-    // Return array kosong jika error agar frontend tidak crash
     return NextResponse.json([], { status: 500 });
   }
 }
 
-// DELETE Handler: Menghapus Sesi
+// DELETE Handler
 export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
@@ -44,27 +40,23 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
 
   try {
-    // 1. Hapus isi pesan chat (LIST)
     await redis.del(`chat:messages:${id}`);
     
-    // 2. Hapus dari daftar sesi (ZSET)
-    // Karena ZREM membutuhkan "member" yang persis sama (termasuk title & timestamp),
-    // kita harus mencari object member-nya dulu berdasarkan ID.
-    
-    // Ambil semua sesi
+    // Cari member spesifik untuk dihapus dari ZSET
     const allSessions: any[] = await redis.zrange("chat:sessions", 0, -1);
+    // Parse dulu jika string, untuk pencarian
+    const sessionToDelete = allSessions.find((s) => {
+        const obj = typeof s === 'string' ? JSON.parse(s) : s;
+        return obj.id === id;
+    });
     
-    // Cari sesi yang ID-nya cocok
-    const sessionToDelete = allSessions.find((s) => s.id === id);
-    
-    // Jika ketemu, hapus member tersebut dari ZSET
     if (sessionToDelete) {
+        // Hapus member asli (raw) dari Redis
         await redis.zrem("chat:sessions", sessionToDelete);
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete Error:", error);
     return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
   }
 }

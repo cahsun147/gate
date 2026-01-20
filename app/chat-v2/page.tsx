@@ -28,28 +28,43 @@ export default function ChatPageV2() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // --- 1. LOAD SESSION LIST DARI SERVER (Bukan LocalStorage) ---
+  // --- 1. INIT LOAD (Hanya jalan sekali saat buka web) ---
   useEffect(() => {
-    fetchSessions();
+    const initSessions = async () => {
+      try {
+        const res = await fetch("/api/chat-v2/sessions"); 
+        if (res.ok) {
+          const data = await res.json();
+          setSessions(data);
+          
+          // Logika Otomatis: Load sesi terakhir jika ada, atau buat baru
+          if (data.length > 0) {
+             loadSession(data[0].id);
+          } else {
+             createNewSession();
+          }
+        }
+      } catch (error) {
+        console.error("Gagal init:", error);
+      }
+    };
+    initSessions();
   }, []);
 
-  const fetchSessions = async () => {
+  // Scroll otomatis ke bawah
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // --- HELPER: Refresh Sidebar Tanpa Mengganggu Chat Aktif ---
+  const refreshSidebar = async () => {
     try {
-      // Panggil API untuk ambil daftar history
-      const res = await fetch("/api/chat-v2/sessions"); 
+      const res = await fetch("/api/chat-v2/sessions");
       if (res.ok) {
         const data = await res.json();
         setSessions(data);
-        // Jika ada sesi, load yang paling baru
-        if (data.length > 0) {
-           loadSession(data[0].id);
-        } else {
-           createNewSession();
-        }
       }
-    } catch (error) {
-      console.error("Gagal memuat sesi:", error);
-    }
+    } catch (error) { console.error(error); }
   };
 
   const createNewSession = () => {
@@ -59,10 +74,9 @@ export default function ChatPageV2() {
     setSelectedImage(null);
   };
 
-  // --- 2. LOAD MESSAGE HISTORY DARI SERVER ---
   const loadSession = async (id: string) => {
     setCurrentSessionId(id);
-    setSidebarOpen(false);
+    setSidebarOpen(false); // Tutup sidebar di mobile
     setIsLoading(true);
     
     try {
@@ -80,15 +94,16 @@ export default function ChatPageV2() {
 
   const deleteSession = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    // Optimistic Update (Hapus di UI dulu biar cepat)
+    // Optimistic Update
     const updated = sessions.filter((s) => s.id !== id);
     setSessions(updated);
 
     if (id === currentSessionId) {
-       createNewSession();
+       // Jika sesi aktif dihapus, pindah ke sesi lain atau buat baru
+       if (updated.length > 0) loadSession(updated[0].id);
+       else createNewSession();
     }
 
-    // Panggil API Delete
     await fetch(`/api/chat-v2/sessions?id=${id}`, { method: "DELETE" });
   };
 
@@ -111,7 +126,7 @@ export default function ChatPageV2() {
       type: selectedImage ? "image" : "text"
     };
 
-    // Update UI Langsung (Optimistic)
+    // Update UI Langsung
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     
@@ -125,9 +140,9 @@ export default function ChatPageV2() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: userMsg.content, // Kita kirim pesan baru saja, bukan full history!
+          message: userMsg.content,
           image: imageToSend,
-          session_id: currentSessionId, // Server yang akan urus history berdasarkan ID ini
+          session_id: currentSessionId,
         }),
       });
 
@@ -140,7 +155,7 @@ export default function ChatPageV2() {
       const decoder = new TextDecoder();
       let done = false;
       let fullResponse = "";
-      let detectedSessionId = currentSessionId;
+      let detectedSessionId = currentSessionId; // Track ID untuk update state nanti
 
       while (!done) {
         const { value, done: doneReading } = await reader.read();
@@ -155,14 +170,14 @@ export default function ChatPageV2() {
               if (!jsonStr) continue;
               const parsed = JSON.parse(jsonStr);
 
-              // Tangkap Session ID baru dari server (jika chat baru)
+              // 1. Tangkap Session ID Baru (Hanya sekali di awal chat baru)
               if (parsed.session_id && !detectedSessionId) {
                 detectedSessionId = parsed.session_id;
-                setCurrentSessionId(parsed.session_id);
-                // Refresh list session di sidebar
-                fetchSessions(); 
+                setCurrentSessionId(parsed.session_id); // Set State ID
+                refreshSidebar(); // Update Sidebar agar muncul history baru
               }
 
+              // 2. Tangkap Teks Jawaban
               if (parsed.v) {
                 fullResponse += parsed.v;
                 setMessages((prev) => {
@@ -186,6 +201,8 @@ export default function ChatPageV2() {
 
   return (
     <div className="flex h-screen bg-[#111] text-gray-100 font-sans overflow-hidden">
+      
+      {/* SIDEBAR HISTORY */}
       <div className={`${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} fixed md:relative z-20 w-64 h-full bg-[#1a1a1a] border-r border-gray-800 transition-transform duration-300 md:translate-x-0 flex flex-col`}>
         <div className="p-4">
           <button onClick={createNewSession} className="flex items-center gap-2 w-full px-4 py-3 bg-[#262626] hover:bg-[#333] rounded-md border border-gray-700 text-sm font-medium transition-all group">
@@ -208,7 +225,9 @@ export default function ChatPageV2() {
         </div>
       </div>
 
+      {/* MAIN CHAT */}
       <div className="flex-1 flex flex-col relative w-full">
+        {/* Mobile Header */}
         <div className="md:hidden p-4 border-b border-gray-800 flex justify-between bg-[#111]">
           <button onClick={() => setSidebarOpen(!isSidebarOpen)}>
             {isSidebarOpen ? <Xmark /> : <Menu />}
@@ -216,6 +235,7 @@ export default function ChatPageV2() {
           <span className="font-bold">XGate AI</span>
         </div>
 
+        {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-500">
@@ -244,6 +264,7 @@ export default function ChatPageV2() {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Input Area */}
         <div className="p-4 bg-[#111] border-t border-gray-800">
           <div className="max-w-3xl mx-auto relative">
             {selectedImage && (
