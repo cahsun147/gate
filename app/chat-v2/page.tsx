@@ -17,9 +17,13 @@ type ChatSession = {
   timestamp: number;
 };
 
+// Helper: Generator ID Sederhana di Frontend
+const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
+
 export default function ChatPageV2() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  // Default langsung buat ID baru jika belum ada
+  const [currentSessionId, setCurrentSessionId] = useState<string>(generateId());
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +32,7 @@ export default function ChatPageV2() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // --- 1. INIT LOAD (Hanya jalan sekali saat buka web) ---
+  // --- 1. INIT LOAD ---
   useEffect(() => {
     const initSessions = async () => {
       try {
@@ -37,11 +41,9 @@ export default function ChatPageV2() {
           const data = await res.json();
           setSessions(data);
           
-          // Logika Otomatis: Load sesi terakhir jika ada, atau buat baru
+          // Jika ada history, load yang terakhir. Jika tidak, biarkan ID baru default.
           if (data.length > 0) {
              loadSession(data[0].id);
-          } else {
-             createNewSession();
           }
         }
       } catch (error) {
@@ -51,12 +53,11 @@ export default function ChatPageV2() {
     initSessions();
   }, []);
 
-  // Scroll otomatis ke bawah
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // --- HELPER: Refresh Sidebar Tanpa Mengganggu Chat Aktif ---
+  // --- HELPER: Refresh Sidebar ---
   const refreshSidebar = async () => {
     try {
       const res = await fetch("/api/chat-v2/sessions");
@@ -68,7 +69,8 @@ export default function ChatPageV2() {
   };
 
   const createNewSession = () => {
-    setCurrentSessionId(null);
+    const newId = generateId(); // Frontend yang generate ID
+    setCurrentSessionId(newId);
     setMessages([]);
     setSidebarOpen(false);
     setSelectedImage(null);
@@ -76,7 +78,7 @@ export default function ChatPageV2() {
 
   const loadSession = async (id: string) => {
     setCurrentSessionId(id);
-    setSidebarOpen(false); // Tutup sidebar di mobile
+    setSidebarOpen(false);
     setIsLoading(true);
     
     try {
@@ -94,12 +96,10 @@ export default function ChatPageV2() {
 
   const deleteSession = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    // Optimistic Update
     const updated = sessions.filter((s) => s.id !== id);
     setSessions(updated);
 
     if (id === currentSessionId) {
-       // Jika sesi aktif dihapus, pindah ke sesi lain atau buat baru
        if (updated.length > 0) loadSession(updated[0].id);
        else createNewSession();
     }
@@ -142,20 +142,27 @@ export default function ChatPageV2() {
         body: JSON.stringify({
           message: userMsg.content,
           image: imageToSend,
-          session_id: currentSessionId,
+          session_id: currentSessionId, // PASTI KIRIM ID (Tidak pernah null)
         }),
       });
 
-      if (!response.ok) throw new Error("Network error");
+      if (!response.ok) {
+         // Coba baca pesan error dari backend jika ada
+         const errData = await response.json().catch(() => ({}));
+         throw new Error(errData.error || "Gagal terhubung ke server");
+      }
 
       const assistantMsg: Message = { role: "assistant", content: "" };
       setMessages((prev) => [...prev, assistantMsg]);
+
+      // Trigger refresh sidebar agar judul chat muncul (Optimistic update title nanti bisa ditambahkan)
+      // Kita panggil ini 'fire and forget' agar tidak blocking
+      refreshSidebar(); 
 
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
       let done = false;
       let fullResponse = "";
-      let detectedSessionId = currentSessionId; // Track ID untuk update state nanti
 
       while (!done) {
         const { value, done: doneReading } = await reader.read();
@@ -170,14 +177,9 @@ export default function ChatPageV2() {
               if (!jsonStr) continue;
               const parsed = JSON.parse(jsonStr);
 
-              // 1. Tangkap Session ID Baru (Hanya sekali di awal chat baru)
-              if (parsed.session_id && !detectedSessionId) {
-                detectedSessionId = parsed.session_id;
-                setCurrentSessionId(parsed.session_id); // Set State ID
-                refreshSidebar(); // Update Sidebar agar muncul history baru
-              }
+              // Kita tidak perlu lagi menunggu session_id dari server
+              // karena ID sudah kita pegang sejak awal.
 
-              // 2. Tangkap Teks Jawaban
               if (parsed.v) {
                 fullResponse += parsed.v;
                 setMessages((prev) => {
@@ -191,9 +193,9 @@ export default function ChatPageV2() {
         }
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      setMessages((prev) => [...prev, { role: "assistant", content: "Error: Gagal terhubung." }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: `Error: ${error.message}` }]);
     } finally {
       setIsLoading(false);
     }
@@ -202,7 +204,7 @@ export default function ChatPageV2() {
   return (
     <div className="flex h-screen bg-[#111] text-gray-100 font-sans overflow-hidden">
       
-      {/* SIDEBAR HISTORY */}
+      {/* SIDEBAR */}
       <div className={`${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} fixed md:relative z-20 w-64 h-full bg-[#1a1a1a] border-r border-gray-800 transition-transform duration-300 md:translate-x-0 flex flex-col`}>
         <div className="p-4">
           <button onClick={createNewSession} className="flex items-center gap-2 w-full px-4 py-3 bg-[#262626] hover:bg-[#333] rounded-md border border-gray-700 text-sm font-medium transition-all group">
@@ -227,7 +229,6 @@ export default function ChatPageV2() {
 
       {/* MAIN CHAT */}
       <div className="flex-1 flex flex-col relative w-full">
-        {/* Mobile Header */}
         <div className="md:hidden p-4 border-b border-gray-800 flex justify-between bg-[#111]">
           <button onClick={() => setSidebarOpen(!isSidebarOpen)}>
             {isSidebarOpen ? <Xmark /> : <Menu />}
@@ -235,7 +236,7 @@ export default function ChatPageV2() {
           <span className="font-bold">XGate AI</span>
         </div>
 
-        {/* Messages Area */}
+        {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-500">
@@ -264,7 +265,7 @@ export default function ChatPageV2() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
+        {/* Input */}
         <div className="p-4 bg-[#111] border-t border-gray-800">
           <div className="max-w-3xl mx-auto relative">
             {selectedImage && (
