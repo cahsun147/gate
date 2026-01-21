@@ -35,10 +35,10 @@ const PageHome = (): JSX.Element => {
             )}
             animated={['flicker']}
           >
-            <Animator duration={{ enter: 5 }}>
-              <Text.Decipher as="span" fixed>
-                Don't Trade Blind — Illuminate the Dark Forest
-              </Text.Decipher>
+            <Animator duration={{ enter: 3 }}>
+              <Text.Blink as="span" fixed>
+                AI optimized for Blockchains 
+              </Text.Blink>
             </Animator>
           </Animated>
         </Animator>
