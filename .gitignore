@@ -45,7 +45,9 @@ app/api/test-api/
 *.py
 *.txt
 *.json
-test/aichat.go
+/test/
+go.mod
+go.sum
 
 # docs folder - only for reference/examples
 /docs/
