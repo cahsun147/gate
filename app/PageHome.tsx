@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Page, Codepen, Brain, Coins } from 'iconoir-react'
 
 import { type BleepNames, settings, theme } from '@/config'
-import { XgateLogoType, ButtonSimple } from '@/components'
+import { XgateLogoType, ButtonSimple, Text } from '@/components'
 
 const PageHome = (): JSX.Element => {
   return (
@@ -35,7 +35,9 @@ const PageHome = (): JSX.Element => {
             )}
             animated={['flicker']}
           >
-            Don't Trade Blind — Illuminate the Dark Forest
+            <Text.Decipher as="span" fixed>
+              Don't Trade Blind — Illuminate the Dark Forest
+            </Text.Decipher>
           </Animated>
         </Animator>
 
@@ -52,7 +54,9 @@ const PageHome = (): JSX.Element => {
                 animated={[['x', theme.spacen(-3), 0, 0]]}
               >
                 <Brain className="text-size-[1.5em] xhidden x2sm:block" />
-                <span>AI Chat</span>
+                <Text.Decipher as="span" fixed>
+                  AI Chat
+                </Text.Decipher>
               </ButtonSimple>
             </Link>
 
@@ -63,7 +67,9 @@ const PageHome = (): JSX.Element => {
                 animated={[['x', theme.spacen(3), 0, 0]]}
               >
                 <Codepen className="text-size-[1.5em] xhidden x2sm:block" />
-                <span>Play</span>
+                <Text.Decipher as="span" fixed>
+                  Play
+                </Text.Decipher>
               </ButtonSimple>
             </a>
 
@@ -74,7 +80,9 @@ const PageHome = (): JSX.Element => {
                 animated={[['x', theme.spacen(6), 0, 0]]}
               >
                 <Coins className="text-size-[1.5em] xhidden x2sm:block" />
-                <span>Tokenomic</span>
+                <Text.Decipher as="span" fixed>
+                  Tokenomic
+                </Text.Decipher>
               </ButtonSimple>
             </Link>
 
@@ -85,7 +93,9 @@ const PageHome = (): JSX.Element => {
                 animated={[['x', theme.spacen(-6), 0, 0]]}
               >
                 <Page className="text-size-[1.5em] xhidden x2sm:block" />
-                <span>Docs</span>
+                <Text.Decipher as="span" fixed>
+                  Docs
+                </Text.Decipher>
               </ButtonSimple>
             </Link>            
           </Animated>
