@@ -3,6 +3,7 @@
 
 import { type ReactNode } from 'react'
 import { AnimatorGeneralProvider, BleepsProvider, Animator } from '@arwes/react'
+import { Titillium_Web, Source_Code_Pro } from 'next/font/google'
 import { IconoirProvider } from 'iconoir-react'
 import { useAtom } from 'jotai'
 
@@ -16,6 +17,18 @@ import {
 } from '@/config'
 import { Background, Header} from '@/components'
 
+const fontTitilliumWeb = Titillium_Web({
+  subsets: ['latin'],
+  weight: ['300', '600'],
+  preload: false
+})
+
+const fontSourceCodePro = Source_Code_Pro({
+  subsets: ['latin'],
+  weight: ['400'],
+  preload: false
+})
+
 const LayoutRoot = (props: { children: ReactNode }): JSX.Element => {
   const [isMotionEnabled] = useAtom(atomMotionEnabled)
   const [isAudioEnabled] = useAtom(atomAudioEnabled)
@@ -28,7 +41,7 @@ const LayoutRoot = (props: { children: ReactNode }): JSX.Element => {
           common={{ disabled: !isAudioEnabled }}
         >
           <div
-            className="absolute inset-0 overflow-hidden flex flex-col"
+            className="absolute inset-0 overflow-hidden flex flex-col font-body"
             style={{
               // @ts-expect-error ARWES variables.
               '--arwes-frames-bg-color': theme.colors.primary.main(9, { alpha: 0.15 }),
@@ -36,14 +49,10 @@ const LayoutRoot = (props: { children: ReactNode }): JSX.Element => {
               '--arwes-frames-deco-color': theme.colors.primary.main(7, { alpha: 0.8 }),
 
               // Link `next/font` font families to TailwindCSS
-              '--app-font-family-header':
-                'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"',
-              '--app-font-family-body':
-                'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"',
-              '--app-font-family-cta':
-                'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"',
-              '--app-font-family-code':
-                'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+              '--app-font-family-header': fontTitilliumWeb.style.fontFamily,
+              '--app-font-family-body': fontTitilliumWeb.style.fontFamily,
+              '--app-font-family-cta': fontTitilliumWeb.style.fontFamily,
+              '--app-font-family-code': fontSourceCodePro.style.fontFamily,
 
               scrollbarWidth: 'thin',
               scrollbarColor: `${theme.colors.secondary.main(7)} transparent`
