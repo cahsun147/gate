@@ -6,7 +6,7 @@ import { Code as IconCode } from 'iconoir-react'
 export default function Page(): JSX.Element {
   return (
     <>
-      <AR.Header>Overview</AR.Header>
+      <AR.Header>Text Fundamentals</AR.Header>
 
       <AR.P>
         This documentation provides the essentials for using XGATE APIs, including key notes about
