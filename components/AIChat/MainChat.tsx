@@ -43,49 +43,53 @@ export function MainChat(props: MainChatProps): JSX.Element {
 
   return (
     <div className="flex flex-col min-w-0 min-h-0">
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-6">
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-primary-main-4">
-            <div className="w-16 h-16 bg-primary-main-3/[0.05] border border-primary-main-9/40 rounded-2xl mb-4 flex items-center justify-center text-3xl">
-              🤖
-            </div>
-            <h2 className="text-xl font-semibold text-primary-high-2">{title}</h2>
-          </div>
-        ) : (
-          messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`flex gap-4 max-w-3xl mx-auto ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`px-4 py-3 rounded-2xl max-w-[85%] text-sm md:text-base leading-relaxed border ${
-                  msg.role === 'user'
-                    ? 'bg-primary-main-3/[0.05] border-primary-main-9/40 text-primary-high-2'
-                    : 'bg-black/30 border-primary-main-9/30 text-primary-high-2'
-                }`}
-              >
-                {msg.type === 'image' && msg.role === 'user' && (
-                  <div className="mb-2 text-xs text-primary-main-4 flex items-center gap-1">
-                    <MediaImage width={12} height={12} /> [Image Attached]
-                  </div>
-                )}
-                <div className="whitespace-pre-wrap">{msg.content}</div>
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="min-h-full flex flex-col justify-end gap-6">
+          {messages.length === 0 ? (
+            <div className="max-w-4xl mx-auto w-full px-2 text-primary-main-4">
+              <div className="flex flex-col items-center justify-center py-10">
+                <div className="w-16 h-16 bg-primary-main-3/[0.05] border border-primary-main-9/40 rounded-2xl mb-4 flex items-center justify-center text-3xl">
+                  🤖
+                </div>
+                <h2 className="text-xl font-semibold text-primary-high-2">{title}</h2>
               </div>
             </div>
-          ))
-        )}
+          ) : (
+            messages.map((msg, i) => (
+              <div
+                key={i}
+                className={`flex gap-4 max-w-4xl mx-auto w-full px-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`px-4 py-3 rounded-2xl max-w-[85%] text-sm md:text-base leading-relaxed border ${
+                    msg.role === 'user'
+                      ? 'bg-primary-main-3/[0.05] border-primary-main-9/40 text-primary-high-2'
+                      : 'bg-black/30 border-primary-main-9/30 text-primary-high-2'
+                  }`}
+                >
+                  {msg.type === 'image' && msg.role === 'user' && (
+                    <div className="mb-2 text-xs text-primary-main-4 flex items-center gap-1">
+                      <MediaImage width={12} height={12} /> [Image Attached]
+                    </div>
+                  )}
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                </div>
+              </div>
+            ))
+          )}
 
-        {isLoading && !messages[messages.length - 1]?.content && (
-          <div className="max-w-3xl mx-auto flex gap-4">
-            <span className="animate-pulse text-primary-main-4">Thinking...</span>
-          </div>
-        )}
+          {isLoading && !messages[messages.length - 1]?.content && (
+            <div className="max-w-4xl mx-auto w-full px-2 flex gap-4">
+              <span className="animate-pulse text-primary-main-4">Thinking...</span>
+            </div>
+          )}
 
-        <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       <div className="pt-6">
-        <div className="max-w-3xl mx-auto relative">
+        <div className="max-w-4xl mx-auto relative px-2">
           {selectedImage && (
             <div className="absolute -top-16 left-0 bg-black/70 p-2 rounded border border-primary-main-9/40 flex items-center gap-2">
               <img src={selectedImage} alt="Preview" className="h-10 w-10 object-cover rounded" />
@@ -95,9 +99,10 @@ export function MainChat(props: MainChatProps): JSX.Element {
             </div>
           )}
 
-          <form onSubmit={onSubmit} className="relative flex gap-2">
-            <label className="p-3 text-primary-main-4 hover:text-primary-high-2 cursor-pointer hover:bg-primary-main-3/[0.05] rounded-xl transition-colors border border-primary-main-9/40">
-              <MediaImage width={20} height={20} />
+
+          <form onSubmit={onSubmit} className="relative flex items-stretch gap-2">
+            <label className="w-12 h-12 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 cursor-pointer hover:bg-primary-main-3/[0.05] rounded-xl transition-colors border border-primary-main-9/40">
+              <MediaImage width={18} height={18} />
               <input type="file" accept="image/*" className="hidden" onChange={onImageUpload} disabled={isLoading} />
             </label>
 
@@ -106,14 +111,14 @@ export function MainChat(props: MainChatProps): JSX.Element {
               value={input}
               onChange={(e) => onInputChange(e.target.value)}
               placeholder="Message XGate AI..."
-              className="w-full bg-black/30 text-primary-high-2 border border-primary-main-9/40 rounded-xl pl-4 pr-12 py-3 focus:outline-none focus:border-primary-high-2"
+              className="w-full h-12 bg-black/30 text-primary-high-2 border border-primary-main-9/40 rounded-xl pl-4 pr-14 py-3 focus:outline-none focus:border-primary-high-2"
               disabled={isLoading}
             />
 
             <button
               type="submit"
               disabled={isLoading || (!input.trim() && !selectedImage)}
-              className="absolute right-2 top-2 p-1.5 bg-primary-high-2 text-black rounded-lg hover:bg-primary-high-1 disabled:opacity-50"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center bg-primary-high-2 text-black rounded-lg hover:bg-primary-high-1 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send width={18} height={18} />
             </button>
