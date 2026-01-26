@@ -25,7 +25,7 @@ const NavChat = memo((props: NavChatProps): JSX.Element => {
   const { className, sessions, currentSessionId, onNewChat, onSelectSession, onDeleteSession } = props
 
   return (
-    <div className={cx('flex flex-col w-full min-w-0 min-h-0', className)}>
+    <div className={cx('flex flex-1 flex-col w-full min-w-0 min-h-0', className)}>
       <div className="flex">
         <button
           type="button"
@@ -59,9 +59,13 @@ const NavChat = memo((props: NavChatProps): JSX.Element => {
                 <li key={s.id} className="flex flex-col">
                   <Animator>
                     <Animated animated={flicker()}>
-                      <button
-                        type="button"
+                      <div
+                        role="button"
+                        tabIndex={0}
                         onClick={() => onSelectSession(s.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') onSelectSession(s.id)
+                        }}
                         className={cx(
                           'group flex items-center justify-between w-full',
                           'transition-colors',
@@ -102,7 +106,7 @@ const NavChat = memo((props: NavChatProps): JSX.Element => {
                             <Trash width={14} height={14} />
                           </button>
                         </span>
-                      </button>
+                      </div>
                     </Animated>
                   </Animator>
                 </li>

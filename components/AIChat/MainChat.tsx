@@ -42,7 +42,7 @@ export function MainChat(props: MainChatProps): JSX.Element {
   }, [messages])
 
   return (
-    <div className="flex flex-col min-w-0 min-h-0">
+    <div className="flex flex-1 flex-col min-w-0 min-h-0">
       <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="min-h-full flex flex-col justify-end gap-6">
           {messages.length === 0 ? (
