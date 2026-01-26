@@ -1,7 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { Animated, Animator, BleepsOnAnimator, cx, FrameOctagon, Illuminator } from '@arwes/react'
+import {
+  Animated,
+  Animator,
+  BleepsOnAnimator,
+  cx,
+  FrameOctagon,
+  Illuminator,
+  styleFrameClipOctagon
+} from '@arwes/react'
 import { Menu, Xmark } from 'iconoir-react'
 
 import { type BleepNames, theme } from '@/config'
@@ -71,7 +79,7 @@ export function ChatLayout(props: ChatLayoutProps): JSX.Element {
           )}
 
           <div className="flex flex-col flex-1 min-h-0 w-full">
-            <div className="flex flex-col flex-1 w-full min-w-0 min-h-0 px-2 md:px-4">
+            <div className="flex flex-col flex-1 w-full min-w-0 min-h-0 px-2 py-2 md:px-4 md:py-4">
               <div className="flex flex-1 w-full min-w-0 min-h-0 gap-4">
                 {isLG && (
                   <aside className="sticky top-0 flex w-full min-w-0 max-w-[16rem] min-h-0 h-full">
@@ -107,7 +115,35 @@ export function ChatLayout(props: ChatLayoutProps): JSX.Element {
                     'flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden pl-2 pr-6 md:pl-4 md:pr-10'
                   }
                 >
-                  {children}
+                  <Animator>
+                    <Animated
+                      className="relative flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden"
+                      style={{
+                        clipPath: styleFrameClipOctagon({ squareSize: theme.space(isLG ? 4 : 2) })
+                      }}
+                      animated={['flicker']}
+                    >
+                      <FrameOctagon
+                        style={{
+                          // @ts-expect-error css variables
+                          '--arwes-frames-bg-color': theme.colors.primary.main(9, { alpha: 0.1 }),
+                          '--arwes-frames-line-color': theme.colors.primary.main(9, { alpha: 0.5 })
+                        }}
+                        squareSize={theme.spacen(isLG ? 4 : 2)}
+                      />
+                      {isXL && (
+                        <div className="absolute inset-0 overflow-hidden">
+                          <Illuminator
+                            color={theme.colors.primary.main(7, { alpha: 0.1 })}
+                            size={theme.spacen(100)}
+                          />
+                        </div>
+                      )}
+                      <div className="relative flex flex-col flex-1 min-w-0 min-h-0 p-4 md:p-6 overflow-hidden">
+                        {children}
+                      </div>
+                    </Animated>
+                  </Animator>
                 </main>
               </div>
             </div>
