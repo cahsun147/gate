@@ -46,7 +46,7 @@ export function MainChat(props: MainChatProps): JSX.Element {
       <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="min-h-full flex flex-col justify-end gap-6">
           {messages.length === 0 ? (
-            <div className="max-w-4xl mx-auto w-full px-2 text-primary-main-4">
+            <div className="w-full text-primary-main-4">
               <div className="flex flex-col items-center justify-center py-10">
                 <div className="w-16 h-16 bg-primary-main-3/[0.05] border border-primary-main-9/40 rounded-2xl mb-4 flex items-center justify-center text-3xl">
                   🤖
@@ -58,7 +58,7 @@ export function MainChat(props: MainChatProps): JSX.Element {
             messages.map((msg, i) => (
               <div
                 key={i}
-                className={`flex gap-4 max-w-4xl mx-auto w-full px-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-4 w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
                   className={`px-4 py-3 rounded-2xl max-w-[85%] text-sm md:text-base leading-relaxed border ${
@@ -79,7 +79,7 @@ export function MainChat(props: MainChatProps): JSX.Element {
           )}
 
           {isLoading && !messages[messages.length - 1]?.content && (
-            <div className="max-w-4xl mx-auto w-full px-2 flex gap-4">
+            <div className="w-full flex gap-4">
               <span className="animate-pulse text-primary-main-4">Thinking...</span>
             </div>
           )}
@@ -89,7 +89,7 @@ export function MainChat(props: MainChatProps): JSX.Element {
       </div>
 
       <div className="pt-6">
-        <div className="max-w-4xl mx-auto relative px-2">
+        <div className="w-full relative">
           {selectedImage && (
             <div className="absolute -top-16 left-0 bg-black/70 p-2 rounded border border-primary-main-9/40 flex items-center gap-2">
               <img src={selectedImage} alt="Preview" className="h-10 w-10 object-cover rounded" />
