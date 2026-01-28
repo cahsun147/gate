@@ -28,16 +28,22 @@ export default function ChatPageV3(): JSX.Element {
   return (
     <ChatLayout
       title="XGate AI"
-      sidebar={
-          <NavChat
-            className="mb-auto"
-            sessions={navSessions}
-            currentSessionId={currentSessionId}
-            onNewChat={createNewSession}
-            onSelectSession={loadSession}
-            onDeleteSession={deleteSessionById}
-          />
-        }
+      sidebar={({ closeSidebar, isMobile }) => (
+        <NavChat
+          className="mb-auto"
+          sessions={navSessions}
+          currentSessionId={currentSessionId}
+          onNewChat={() => {
+            createNewSession()
+            if (isMobile) closeSidebar()
+          }}
+          onSelectSession={async (id) => {
+            await loadSession(id)
+            if (isMobile) closeSidebar()
+          }}
+          onDeleteSession={deleteSessionById}
+        />
+      )}
     >
       <MainChat
         title="XGate AI Assistant"

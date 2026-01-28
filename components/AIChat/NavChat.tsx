@@ -60,12 +60,6 @@ const NavChat = memo((props: NavChatProps): JSX.Element => {
                   <Animator>
                     <Animated animated={flicker()}>
                       <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => onSelectSession(s.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') onSelectSession(s.id)
-                        }}
                         className={cx(
                           'group flex items-center justify-between w-full',
                           'transition-colors',
@@ -73,7 +67,9 @@ const NavChat = memo((props: NavChatProps): JSX.Element => {
                           active && 'text-secondary-main-4 hover:text-secondary-high-2'
                         )}
                       >
-                        <div
+                        <button
+                          type="button"
+                          onClick={() => onSelectSession(s.id)}
                           className={cx(
                             'flex-1 flex flex-row items-center gap-2 px-4 py-2',
                             active && 'bg-secondary-main-3/[0.05]'
@@ -88,15 +84,12 @@ const NavChat = memo((props: NavChatProps): JSX.Element => {
                         >
                           <ChatBubble width={14} height={14} />
                           <span className="truncate font-cta text-size-9">{s.title}</span>
-                        </div>
+                        </button>
 
-                        <span className="pr-2">
+                        <div className="pr-2 flex-shrink-0">
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onDeleteSession(s.id)
-                            }}
+                            onClick={() => onDeleteSession(s.id)}
                             className={cx(
                               'opacity-0 group-hover:opacity-100 transition-opacity',
                               'text-primary-main-4 hover:text-error-main-4'
@@ -105,7 +98,7 @@ const NavChat = memo((props: NavChatProps): JSX.Element => {
                           >
                             <Trash width={14} height={14} />
                           </button>
-                        </span>
+                        </div>
                       </div>
                     </Animated>
                   </Animator>

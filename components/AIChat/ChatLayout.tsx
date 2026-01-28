@@ -16,7 +16,9 @@ import { type BleepNames, theme } from '@/config'
 import { useAppBreakpoint } from '../tools/useAppBreakpoint'
 
 type ChatLayoutProps = {
-  sidebar: React.ReactNode
+  sidebar:
+    | React.ReactNode
+    | ((ctx: { closeSidebar: () => void; isMobile: boolean }) => React.ReactNode)
   children: React.ReactNode
   title?: string
   className?: string
@@ -37,6 +39,13 @@ export function ChatLayout(props: ChatLayoutProps): JSX.Element {
   const [isSidebarOpen, setSidebarOpen] = useState(false)
   const isLG = useAppBreakpoint('lg')
   const isXL = useAppBreakpoint('xl')
+
+  const closeSidebar = (): void => setSidebarOpen(false)
+  const isMobile = !isLG
+  const sidebarNode =
+    typeof sidebar === 'function'
+      ? sidebar({ closeSidebar, isMobile })
+      : sidebar
 
   return (
     <div className={cx('flex flex-1 flex-col w-full min-w-0 min-h-0', className)}>
@@ -71,9 +80,7 @@ export function ChatLayout(props: ChatLayoutProps): JSX.Element {
                     <Xmark />
                   </button>
                 </div>
-                <div className="p-2" onClickCapture={() => setSidebarOpen(false)}>
-                  {sidebar}
-                </div>
+                <div className="p-2">{sidebarNode}</div>
               </div>
             </div>
           )}
@@ -102,7 +109,7 @@ export function ChatLayout(props: ChatLayoutProps): JSX.Element {
                           </div>
                         )}
                         <div className="relative flex flex-col p-4 w-full min-h-0 h-full overflow-hidden">
-                          {sidebar}
+                          {sidebarNode}
                         </div>
                       </Animated>
                     </Animator>
