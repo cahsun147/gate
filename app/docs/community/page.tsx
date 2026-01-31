@@ -8,4 +8,6 @@ export const metadata: Metadata = {
   description: settings.description
 }
 
-export default (): JSX.Element => <PageCommunity />
+export default function Page(): JSX.Element {
+  return <PageCommunity />
+}

@@ -112,4 +112,6 @@ const NavChat = memo((props: NavChatProps): JSX.Element => {
   )
 })
 
+NavChat.displayName = 'NavChat'
+
 export { NavChat }

@@ -28,3 +28,5 @@ export const IconSolid = memo((props: IconProps): JSX.Element => {
     </Icon>
   )
 })
+
+IconSolid.displayName = 'IconSolid'

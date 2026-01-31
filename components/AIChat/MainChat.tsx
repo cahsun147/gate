@@ -3,6 +3,8 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useEffect, useRef } from 'react'
 import { Send, MediaImage, Xmark } from 'iconoir-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 export type ChatMessage = {
   role: 'user' | 'assistant'
@@ -14,6 +16,7 @@ type MainChatProps = {
   messages: ChatMessage[]
   input: string
   isLoading: boolean
+  presence?: string | null
   selectedImage: string | null
   onInputChange: (value: string) => void
   onSubmit: (e: FormEvent) => void
@@ -22,11 +25,78 @@ type MainChatProps = {
   title?: string
 }
 
+function MarkdownMessage(props: { content: string }): JSX.Element {
+  const { content } = props
+
+  return (
+    <div className="flex flex-col gap-3">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          a: ({ href, children }) => (
+            <a
+              href={href ?? '#'}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="underline underline-offset-2 text-secondary-high-2 break-all hover:text-secondary-high-1"
+            >
+              {children}
+            </a>
+          ),
+          p: ({ children }) => <p className="whitespace-pre-wrap break-words">{children}</p>,
+          h1: ({ children }) => <h2 className="font-semibold text-primary-high-2 text-base sm:text-lg">{children}</h2>,
+          h2: ({ children }) => <h3 className="font-semibold text-primary-high-2 text-sm sm:text-base">{children}</h3>,
+          h3: ({ children }) => <h4 className="font-semibold text-primary-high-2 text-sm">{children}</h4>,
+          ul: ({ children }) => <ul className="list-disc pl-5 space-y-1">{children}</ul>,
+          ol: ({ children }) => <ol className="list-decimal pl-5 space-y-1">{children}</ol>,
+          li: ({ children }) => <li className="whitespace-pre-wrap break-words">{children}</li>,
+          blockquote: ({ children }) => (
+            <blockquote className="border-l-2 border-primary-main-9/40 pl-3 text-primary-main-4">
+              {children}
+            </blockquote>
+          ),
+          pre: ({ children }) => (
+            <pre className="w-full overflow-x-auto rounded-xl bg-black/40 border border-primary-main-9/30 p-3 text-xs sm:text-sm">
+              {children}
+            </pre>
+          ),
+          code: ({ children, className }) => {
+            const isBlock = Boolean(className)
+            return (
+              <code
+                className={
+                  isBlock
+                    ? 'font-mono whitespace-pre'
+                    : 'px-1 py-0.5 rounded bg-black/40 border border-primary-main-9/30 font-mono text-[0.85em]'
+                }
+              >
+                {children}
+              </code>
+            )
+          },
+          table: ({ children }) => (
+            <div className="w-full overflow-x-auto">
+              <table className="w-full border-collapse text-xs sm:text-sm">{children}</table>
+            </div>
+          ),
+          th: ({ children }) => (
+            <th className="text-left font-semibold p-2 border border-primary-main-9/30 bg-black/30">{children}</th>
+          ),
+          td: ({ children }) => <td className="p-2 border border-primary-main-9/20">{children}</td>
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  )
+}
+
 export function MainChat(props: MainChatProps): JSX.Element {
   const {
     messages,
     input,
     isLoading,
+    presence,
     selectedImage,
     onInputChange,
     onSubmit,
@@ -61,7 +131,7 @@ export function MainChat(props: MainChatProps): JSX.Element {
                 className={`flex gap-4 w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`px-4 py-3 rounded-2xl max-w-[85%] text-sm md:text-base leading-relaxed border ${
+                  className={`px-4 py-3 rounded-2xl max-w-[85%] text-xs sm:text-sm md:text-base leading-relaxed border ${
                     msg.role === 'user'
                       ? 'bg-primary-main-3/[0.05] border-primary-main-9/40 text-primary-high-2'
                       : 'bg-black/30 border-primary-main-9/30 text-primary-high-2'
@@ -72,15 +142,25 @@ export function MainChat(props: MainChatProps): JSX.Element {
                       <MediaImage width={12} height={12} /> [Image Attached]
                     </div>
                   )}
-                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                  {msg.role === 'assistant' ? (
+                    <MarkdownMessage content={msg.content} />
+                  ) : (
+                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                  )}
                 </div>
               </div>
             ))
           )}
 
-          {isLoading && !messages[messages.length - 1]?.content && (
+          {isLoading && presence && (
             <div className="w-full flex gap-4">
-              <span className="animate-pulse text-primary-main-4">Thinking...</span>
+              <span className="animate-pulse text-primary-main-4 text-xs sm:text-sm">{presence}</span>
+            </div>
+          )}
+
+          {isLoading && !presence && !messages[messages.length - 1]?.content && (
+            <div className="w-full flex gap-4">
+              <span className="animate-pulse text-primary-main-4 text-xs sm:text-sm">Thinking...</span>
             </div>
           )}
 

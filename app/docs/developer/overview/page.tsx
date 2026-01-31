@@ -21,7 +21,7 @@ export default function Page(): JSX.Element {
       <AR.P>
         The information and data provided by XGATE are intended for research, community, and
         development purposes. XGATE is not a financial advisor, and any usage of the data is entirely
-        the user's responsibility. Data may change, be delayed, or be inaccurate depending on network
+        the user&apos;s responsibility. Data may change, be delayed, or be inaccurate depending on network
         conditions and upstream data providers.
       </AR.P>
 

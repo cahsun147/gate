@@ -8,4 +8,6 @@ export const metadata: Metadata = {
   description: settings.description
 }
 
-export default (): JSX.Element => <PageTokenomic />
+export default function Page(): JSX.Element {
+  return <PageTokenomic />
+}

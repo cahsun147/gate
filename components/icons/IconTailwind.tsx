@@ -11,3 +11,5 @@ export const IconTailwind = memo((props: IconProps): JSX.Element => {
     </Icon>
   )
 })
+
+IconTailwind.displayName = 'IconTailwind'

@@ -23,6 +23,7 @@ export function useAIChat(options: UseAIChatOptions = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [presence, setPresence] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
   const refreshSidebar = useCallback(async () => {
@@ -87,6 +88,8 @@ export function useAIChat(options: UseAIChatOptions = {}) {
       if (e) e.preventDefault()
       if ((!input.trim() && !selectedImage) || isLoading) return
 
+      setPresence(null)
+
       const userMsg: ChatMessage = {
         role: 'user',
         content: input,
@@ -123,47 +126,56 @@ export function useAIChat(options: UseAIChatOptions = {}) {
         let done = false
         let fullResponse = ''
         let hasUpdatedId = false
+        let buffer = ''
 
         while (!done) {
           const { value, done: doneReading } = await reader.read()
           done = doneReading
-          const chunkValue = decoder.decode(value, { stream: !done })
+          buffer += decoder.decode(value, { stream: !done })
 
-          const lines = chunkValue.split('\n')
+          const lines = buffer.split('\n')
+          buffer = lines.pop() ?? ''
+
           for (const line of lines) {
-            if (!line) continue
+            const trimmed = line.trim()
+            if (!trimmed.startsWith('data:')) continue
 
-            if (line.includes('"type":"init"')) {
-              try {
-                const json = JSON.parse(line.replace(/^data:\s*/, ''))
+            const payload = trimmed.replace(/^data:\s*/, '')
+            try {
+              const json = JSON.parse(payload)
+
+              if (json.type === 'init') {
                 if (json.session_id && (!currentSessionId || !hasUpdatedId)) {
                   setCurrentSessionId(json.session_id)
                   hasUpdatedId = true
                   setTimeout(refreshSidebar, 500)
                 }
-              } catch (e) {}
-            }
+                continue
+              }
 
-            if (line.startsWith('data:')) {
-              try {
-                const json = JSON.parse(line.replace(/^data:\s*/, ''))
-                if (json.v) {
-                  fullResponse += json.v
-                  setMessages((prev) => {
-                    const updated = [...prev]
-                    const last = updated[updated.length - 1]
-                    if (last && last.role === 'assistant') last.content = fullResponse
-                    return updated
-                  })
-                }
-              } catch (e) {}
-            }
+              if (json.type === 'presence') {
+                if (typeof json.data === 'string') setPresence(json.data)
+                continue
+              }
+
+              if (json.v) {
+                setPresence(null)
+                fullResponse += json.v
+                setMessages((prev) => {
+                  const updated = [...prev]
+                  const last = updated[updated.length - 1]
+                  if (last && last.role === 'assistant') last.content = fullResponse
+                  return updated
+                })
+              }
+            } catch (e) {}
           }
         }
       } catch (error) {
         setMessages((prev) => [...prev, { role: 'assistant', content: 'Error...' }])
       } finally {
         setIsLoading(false)
+        setPresence(null)
       }
     },
     [apiBasePath, currentSessionId, input, isLoading, refreshSidebar, selectedImage]
@@ -175,6 +187,7 @@ export function useAIChat(options: UseAIChatOptions = {}) {
     messages,
     input,
     isLoading,
+    presence,
     selectedImage,
     setInput,
     refreshSidebar,

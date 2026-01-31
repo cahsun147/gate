@@ -11,3 +11,5 @@ export const IconSvelte = memo((props: IconProps): JSX.Element => {
     </Icon>
   )
 })
+
+IconSvelte.displayName = 'IconSvelte'

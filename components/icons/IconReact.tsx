@@ -11,3 +11,5 @@ export const IconReact = memo((props: IconProps): JSX.Element => {
     </Icon>
   )
 })
+
+IconReact.displayName = 'IconReact'

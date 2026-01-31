@@ -9,6 +9,7 @@ export default function ChatPageV3(): JSX.Element {
     messages,
     input,
     isLoading,
+    presence,
     selectedImage,
     setInput,
     createNewSession,
@@ -50,6 +51,7 @@ export default function ChatPageV3(): JSX.Element {
         messages={messages}
         input={input}
         isLoading={isLoading}
+        presence={presence}
         selectedImage={selectedImage}
         onInputChange={setInput}
         onSubmit={(e) => submit(e)}

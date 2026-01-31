@@ -52,5 +52,7 @@ const Hr = memo((props: HrProps): JSX.Element => {
   )
 })
 
+Hr.displayName = 'Hr'
+
 export type { HrProps }
 export { Hr }
