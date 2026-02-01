@@ -8,7 +8,7 @@ import {
   Code as IconDocsDevelop,
   Book as IconDocsTutorial,
   Community as IconDocsCommunity,
-  CollageFrame as IconDemos,
+  CollageFrame as IconTerminal,
   Codepen as IconPlay,
   DashboardSpeed as IconPerf
 } from 'iconoir-react'
@@ -128,7 +128,7 @@ const NavRoot = (props: NavSectionProps): JSX.Element => {
       <Item href="/docs" icon={<IconDocs />} text="Docs" onLink={onLink}>
         <NavDocs onLink={onLink} />
       </Item>
-      <Item href="/demos" icon={<IconDemos />} text="Demos" onLink={onLink} />
+      <Item href="/terminal" icon={<IconTerminal />} text="Terminal" onLink={onLink} />
       <Item href={settings.apps.play.url} icon={<IconPlay />} text="Play" onLink={onLink} />
       <Item href={settings.apps.perf.url} icon={<IconPerf />} text="Perf" onLink={onLink} />
     </Item>

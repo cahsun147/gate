@@ -143,7 +143,7 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                   <Menu className={HEIGHT_CLASS}>         
                     <Animator>
                       <MenuItem active={pathname.startsWith('/terminal')} animated={['flicker']}>
-                        <Link href="/demos" title="Go to Terminal">
+                        <Link href="/terminal" title="Go to Terminal">
                           <CollageFrame /> <span className="hidden md:block">Terminal</span>
                         </Link>
                       </MenuItem>
