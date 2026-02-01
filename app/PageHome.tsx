@@ -49,7 +49,7 @@ const PageHome = (): JSX.Element => {
             className="flex flex-row justify-center items-center gap-2 md:gap-4"
             animated={['flicker']}
           >
-            <Link href="/chat">
+            <a href={settings.apps.chat.url}>
               <ButtonSimple
                 tabIndex={-1}
                 title="Go to Blokchain AI Chat"
@@ -58,20 +58,20 @@ const PageHome = (): JSX.Element => {
                 <Brain className="text-size-[1.5em] xhidden x2sm:block" />
                 <span>AI Chat</span>
               </ButtonSimple>
-            </Link>
+            </a>
 
-            <a href={settings.apps.play.url}>
+            <a href={settings.apps.terminal.url}>
               <ButtonSimple
                 tabIndex={-1}
-                title="Go to Playground"
+                title="Go to Terminal"
                 animated={[['x', theme.spacen(3), 0, 0]]}
               >
                 <Codepen className="text-size-[1.5em] xhidden x2sm:block" />
-                <span>Play</span>
+                <span>Terminal</span>
               </ButtonSimple>
             </a>
 
-            <Link href="/tokenomic">
+            <a href={settings.apps.tokenomic.url}>
               <ButtonSimple
                 tabIndex={-1}
                 title="Go to Tokenomic"
@@ -80,7 +80,7 @@ const PageHome = (): JSX.Element => {
                 <Coins className="text-size-[1.5em] xhidden x2sm:block" />
                 <span>Tokenomic</span>
               </ButtonSimple>
-            </Link>
+            </a>
 
             <Link href="/docs">
               <ButtonSimple
