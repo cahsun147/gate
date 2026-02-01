@@ -13,14 +13,9 @@ const paths: Record<string, string> = {
   '/docs/developer': 'Developer',
   '/docs/developer/dex-api': 'DEX API',
   '/docs/xgate-tutorial': 'XGATE Tutorial',
-  '/docs/develop/fundamentals': 'Fundamentals',
-  '/docs/develop/vanilla': 'Vanilla',
-  '/docs/develop/tailwind': 'Tailwind',
-  '/docs/develop/react': 'React',
-  '/docs/develop/solid': 'Solid',
-  '/docs/develop/svelte': 'Svelte',
   '/docs/community': 'Community',
-  '/demos': 'Demos'
+  '/terminal': 'Terminal',
+  '/tokenomic': 'Tokenomic'
 }
 
 const NavPath = memo((props: NavPathProps): JSX.Element => {

@@ -143,14 +143,14 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                   <Menu className={HEIGHT_CLASS}>         
                     <Animator>
                       <MenuItem active={pathname.startsWith('/terminal')} animated={['flicker']}>
-                        <Link href="/terminal" title="Go to Terminal">
+                        <a href={settings.apps.terminal.url} title="Go to Terminal">
                           <CollageFrame /> <span className="hidden md:block">Terminal</span>
-                        </Link>
+                        </a>
                       </MenuItem>
                     </Animator>
                     <Animator>
                       <MenuItem active={pathname.startsWith('/chat')} animated={['flicker']}>
-                        <a href={settings.apps.play.url} title="Go to Chat">
+                        <a href={settings.apps.chat.url} title="Go to Chat">
                           <Atom /> <span className="hidden md:block">AI Chat</span>
                         </a>
                       </MenuItem>
@@ -164,9 +164,9 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                     </Animator>
                     <Animator>
                       <MenuItem active={pathname.startsWith('/docs')} animated={['flicker']}>
-                        <Link href="/docs" title="Go to Documentation">
+                        <a href={settings.apps.tokenomic.url} title="Go to Tokenomic">
                           <Page /> <span className="hidden md:block">Docs</span>
-                        </Link>
+                        </a>
                       </MenuItem>
                     </Animator>
                   </Menu>

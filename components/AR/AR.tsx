@@ -259,7 +259,7 @@ const AR = {
         as="iframe"
         data-name="playground"
         className={cx('block w-full', props.className)}
-        src={`${settings.apps.play.url}${props.url}`}
+        src={`${settings.apps.perf.url}${props.url}`}
         animated={['flicker']}
       />
     </Animator>

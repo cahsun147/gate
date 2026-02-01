@@ -1,15 +1,21 @@
 export const settings = Object.freeze({
   title: 'XGATE',
-  description: 'Blokchain AI',
+  description: 'XGATE Ai For Blokchain',
   background: 'hsl(180, 20%, 4%)',
   version: '1.0.0-xgate',
   deployTime: new Date().toISOString(),
   apps: {
-    play: {
-      url: 'https://www.google.com'
+    terminal: {
+      url: '/terminal'
+    },
+    chat: {
+      url: '/chat-v3'
+    },
+    tokenomic: {
+      url: '/tokenomic'
     },
     perf: {
-      url: 'https://www.google.com'
+      url: '/'
     }
   }
 } as const)
