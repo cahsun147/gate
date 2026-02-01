@@ -9,7 +9,7 @@ import {
   Book as IconDocsTutorial,
   Community as IconDocsCommunity,
   CollageFrame as IconTerminal,
-  Codepen as IconPlay,
+  Atom as IconChat,
   DashboardSpeed as IconPerf
 } from 'iconoir-react'
 
@@ -110,9 +110,9 @@ const NavDocs = (props: NavSectionProps): JSX.Element => {
     <>
       <Item href="/docs/developer" icon={<IconDocsDevelop />} text="Developer" onLink={onLink}>
         <Item href="/docs/developer/overview" text="Overview" onLink={onLink} />
-        <Item href="/docs/developer/dex-api" text="DEX API" onLink={onLink}>
+        <Item href="" text="DEX API" onLink={onLink}>
           <Item href="/docs/developer/dex-api/supported" text="Supported" onLink={onLink} />
-          <Item href="/docs/developer/dex-api/example-request" text="Example Request" onLink={onLink} />
+          <Item href="" text="Example Request" onLink={onLink} />
         </Item>
       </Item>
       <Item href="/docs/xgate-tutorial" icon={<IconDocsTutorial />} text="XGATE Tutorial" onLink={onLink} />
@@ -128,8 +128,8 @@ const NavRoot = (props: NavSectionProps): JSX.Element => {
       <Item href="/docs" icon={<IconDocs />} text="Docs" onLink={onLink}>
         <NavDocs onLink={onLink} />
       </Item>
-      <Item href="/terminal" icon={<IconTerminal />} text="Terminal" onLink={onLink} />
-      <Item href={settings.apps.play.url} icon={<IconPlay />} text="Play" onLink={onLink} />
+      <Item href={settings.apps.terminal.url} icon={<IconTerminal />} text="Terminal" onLink={onLink} />
+      <Item href={settings.apps.chat.url} icon={<IconChat />} text="GATE AI" onLink={onLink} />
       <Item href={settings.apps.perf.url} icon={<IconPerf />} text="Perf" onLink={onLink} />
     </Item>
   )
