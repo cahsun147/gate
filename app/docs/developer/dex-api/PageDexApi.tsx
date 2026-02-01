@@ -64,7 +64,7 @@ const PageDexApi = (): JSX.Element => {
         compact
         links={[
           { href: '/docs/developer/dex-api/supported', text: 'Chains & DEXs' },
-          { href: '/docs/developer/dex-api/example-request', text: 'Example Request' }
+          { href: '#', text: 'Example Request' }
         ]}
       />
 

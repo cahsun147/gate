@@ -10,7 +10,7 @@ import { Button, FrameAlert } from '@/components'
 const PageXgateTutorial = (): JSX.Element => {
   return (
     <Animator combine>
-      <BleepsOnAnimator<BleepNames> transitions={{ entering: 'intro' }} continuous />
+      <BleepsOnAnimator<BleepNames> transitions={{ entering: 'error' }} continuous />
 
       <div className="flex-1 flex justify-center items-center p-4">
         <div className="relative flex px-6 py-12 md:p-12 xl:p-20">

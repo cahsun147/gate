@@ -523,7 +523,7 @@ const PageDexApiSupported = (): JSX.Element => {
       <AR.Navigation
         prevHref="/docs/developer/dex-api"
         prev="DEX API"
-        nextHref="/docs/developer/dex-api/example-request"
+        nextHref="#"
         next="Example Request"
       />
     </>
