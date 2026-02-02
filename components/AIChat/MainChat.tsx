@@ -252,7 +252,11 @@ export function MainChat(props: MainChatProps): JSX.Element {
               onChange={(e) => onInputChange(e.target.value)}
               onKeyDown={onInputKeyDown}
               placeholder="Message XGate AI..."
-              className="w-full min-h-12 bg-black/30 text-primary-high-2 border border-primary-main-9/40 rounded-xl pl-4 pr-24 py-3 focus:outline-none focus:border-primary-high-2 resize-none"
+              className={
+                `w-full min-h-12 bg-black/30 text-primary-high-2 border border-primary-main-9/40 rounded-xl pl-4 ` +
+                `${showInputResizeToggle ? 'pr-24' : 'pr-14'} ` +
+                `py-3 focus:outline-none focus:border-primary-high-2 resize-none`
+              }
               disabled={isLoading}
             />
 
@@ -260,7 +264,7 @@ export function MainChat(props: MainChatProps): JSX.Element {
               <button
                 type="button"
                 onClick={() => setIsInputExpanded((v) => !v)}
-                className="absolute right-14 top-1 bottom-1 w-9 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 hover:bg-primary-main-3/[0.05] rounded-lg transition-colors"
+                className="absolute right-14 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 hover:bg-primary-main-3/[0.05] rounded-lg transition-colors"
                 aria-label={isInputExpanded ? 'Collapse input' : 'Expand input'}
               >
                 {isInputExpanded ? <NavArrowUp width={18} height={18} /> : <NavArrowDown width={18} height={18} />}
@@ -270,7 +274,7 @@ export function MainChat(props: MainChatProps): JSX.Element {
             <button
               type="submit"
               disabled={isLoading || (!input.trim() && !selectedImage)}
-              className="absolute right-3 top-1 bottom-1 w-9 flex items-center justify-center bg-primary-high-2 text-black rounded-lg hover:bg-primary-high-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center bg-primary-high-2 text-black rounded-lg hover:bg-primary-high-1 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send width={18} height={18} />
             </button>
