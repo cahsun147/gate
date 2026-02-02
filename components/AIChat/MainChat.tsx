@@ -239,45 +239,49 @@ export function MainChat(props: MainChatProps): JSX.Element {
           )}
 
 
-          <form ref={formRef} onSubmit={onSubmit} className="relative flex items-stretch gap-2">
-            <label className="w-12 h-12 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 cursor-pointer hover:bg-primary-main-3/[0.05] rounded-xl transition-colors border border-primary-main-9/40">
-              <MediaImage width={18} height={18} />
-              <input type="file" accept="image/*" className="hidden" onChange={onImageUpload} disabled={isLoading} />
-            </label>
+          <form ref={formRef} onSubmit={onSubmit} className="relative flex flex-col gap-2">
+            <div className="relative w-full">
+              <textarea
+                ref={textareaRef}
+                rows={1}
+                value={input}
+                onChange={(e) => onInputChange(e.target.value)}
+                onKeyDown={onInputKeyDown}
+                placeholder="Message XGate AI..."
+                className={
+                  `w-full min-h-12 bg-black/30 text-primary-high-2 border border-primary-main-9/40 rounded-xl p-3 ` +
+                  `${showInputResizeToggle ? 'pr-12' : 'pr-3'} ` +
+                  `focus:outline-none focus:border-primary-high-2 resize-none`
+                }
+                disabled={isLoading}
+              />
 
-            <textarea
-              ref={textareaRef}
-              rows={1}
-              value={input}
-              onChange={(e) => onInputChange(e.target.value)}
-              onKeyDown={onInputKeyDown}
-              placeholder="Message XGate AI..."
-              className={
-                `w-full min-h-12 bg-black/30 text-primary-high-2 border border-primary-main-9/40 rounded-xl pl-4 ` +
-                `${showInputResizeToggle ? 'pr-24' : 'pr-14'} ` +
-                `py-3 focus:outline-none focus:border-primary-high-2 resize-none`
-              }
-              disabled={isLoading}
-            />
+              {showInputResizeToggle && (
+                <button
+                  type="button"
+                  onClick={() => setIsInputExpanded((v) => !v)}
+                  className="absolute right-2 top-2 w-9 h-9 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 hover:bg-primary-main-3/[0.05] rounded-lg transition-colors"
+                  aria-label={isInputExpanded ? 'Collapse input' : 'Expand input'}
+                >
+                  {isInputExpanded ? <NavArrowUp width={18} height={18} /> : <NavArrowDown width={18} height={18} />}
+                </button>
+              )}
+            </div>
 
-            {showInputResizeToggle && (
+            <div className="flex items-center justify-between gap-2">
+              <label className="w-12 h-12 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 cursor-pointer hover:bg-primary-main-3/[0.05] rounded-xl transition-colors border border-primary-main-9/40">
+                <MediaImage width={18} height={18} />
+                <input type="file" accept="image/*" className="hidden" onChange={onImageUpload} disabled={isLoading} />
+              </label>
+
               <button
-                type="button"
-                onClick={() => setIsInputExpanded((v) => !v)}
-                className="absolute right-14 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 hover:bg-primary-main-3/[0.05] rounded-lg transition-colors"
-                aria-label={isInputExpanded ? 'Collapse input' : 'Expand input'}
+                type="submit"
+                disabled={isLoading || (!input.trim() && !selectedImage)}
+                className="w-12 h-12 flex items-center justify-center bg-primary-high-2 text-black rounded-xl hover:bg-primary-high-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isInputExpanded ? <NavArrowUp width={18} height={18} /> : <NavArrowDown width={18} height={18} />}
+                <Send width={18} height={18} />
               </button>
-            )}
-
-            <button
-              type="submit"
-              disabled={isLoading || (!input.trim() && !selectedImage)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center bg-primary-high-2 text-black rounded-lg hover:bg-primary-high-1 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Send width={18} height={18} />
-            </button>
+            </div>
           </form>
         </div>
       </div>
