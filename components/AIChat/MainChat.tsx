@@ -1,8 +1,8 @@
 'use client'
 
 import type { ChangeEvent, FormEvent, KeyboardEvent } from 'react'
-import { useEffect, useRef } from 'react'
-import { Send, MediaImage, Xmark } from 'iconoir-react'
+import { useEffect, useRef, useState } from 'react'
+import { Send, MediaImage, Xmark, NavArrowDown, NavArrowUp } from 'iconoir-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -107,7 +107,13 @@ export function MainChat(props: MainChatProps): JSX.Element {
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isDesktopBehaviorRef = useRef(false)
+  const [isInputExpanded, setIsInputExpanded] = useState(false)
+  const [showInputResizeToggle, setShowInputResizeToggle] = useState(false)
+
+  const INPUT_MAX_HEIGHT_PX = 128
+  const INPUT_EXPANDED_MAX_HEIGHT_PX = 320
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -120,6 +126,23 @@ export function MainChat(props: MainChatProps): JSX.Element {
 
     isDesktopBehaviorRef.current = hasFinePointer && canHover && !hasTouch
   }, [])
+
+  useEffect(() => {
+    const el = textareaRef.current
+    if (!el) {
+      return
+    }
+
+    const heightLimit = isInputExpanded ? INPUT_EXPANDED_MAX_HEIGHT_PX : INPUT_MAX_HEIGHT_PX
+
+    el.style.height = '0px'
+    const nextHeight = Math.min(el.scrollHeight, heightLimit)
+    el.style.height = `${Math.max(48, nextHeight)}px`
+    el.style.overflowY = el.scrollHeight > heightLimit ? 'auto' : 'hidden'
+
+    const shouldShowToggle = isInputExpanded || el.scrollHeight >= INPUT_MAX_HEIGHT_PX
+    setShowInputResizeToggle(shouldShowToggle)
+  }, [input, isInputExpanded])
 
   const onInputKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>): void => {
     if (!isDesktopBehaviorRef.current) {
@@ -223,19 +246,31 @@ export function MainChat(props: MainChatProps): JSX.Element {
             </label>
 
             <textarea
+              ref={textareaRef}
               rows={1}
               value={input}
               onChange={(e) => onInputChange(e.target.value)}
               onKeyDown={onInputKeyDown}
               placeholder="Message XGate AI..."
-              className="w-full min-h-12 max-h-32 bg-black/30 text-primary-high-2 border border-primary-main-9/40 rounded-xl pl-4 pr-14 py-3 focus:outline-none focus:border-primary-high-2 resize-none overflow-y-auto"
+              className="w-full min-h-12 bg-black/30 text-primary-high-2 border border-primary-main-9/40 rounded-xl pl-4 pr-24 py-3 focus:outline-none focus:border-primary-high-2 resize-none"
               disabled={isLoading}
             />
+
+            {showInputResizeToggle && (
+              <button
+                type="button"
+                onClick={() => setIsInputExpanded((v) => !v)}
+                className="absolute right-14 top-1 bottom-1 w-9 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 hover:bg-primary-main-3/[0.05] rounded-lg transition-colors"
+                aria-label={isInputExpanded ? 'Collapse input' : 'Expand input'}
+              >
+                {isInputExpanded ? <NavArrowUp width={18} height={18} /> : <NavArrowDown width={18} height={18} />}
+              </button>
+            )}
 
             <button
               type="submit"
               disabled={isLoading || (!input.trim() && !selectedImage)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center bg-primary-high-2 text-black rounded-lg hover:bg-primary-high-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute right-3 top-1 bottom-1 w-9 flex items-center justify-center bg-primary-high-2 text-black rounded-lg hover:bg-primary-high-1 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send width={18} height={18} />
             </button>
