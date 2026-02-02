@@ -1,6 +1,6 @@
 'use client'
 
-import type { ChangeEvent, FormEvent } from 'react'
+import type { ChangeEvent, FormEvent, KeyboardEvent } from 'react'
 import { useEffect, useRef } from 'react'
 import { Send, MediaImage, Xmark } from 'iconoir-react'
 import ReactMarkdown from 'react-markdown'
@@ -106,10 +106,46 @@ export function MainChat(props: MainChatProps): JSX.Element {
   } = props
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  const isDesktopBehaviorRef = useRef(false)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  useEffect(() => {
+    const hasFinePointer = window.matchMedia?.('(pointer: fine)')?.matches ?? false
+    const canHover = window.matchMedia?.('(hover: hover)')?.matches ?? false
+    const hasTouch = (navigator.maxTouchPoints ?? 0) > 0
+
+    isDesktopBehaviorRef.current = hasFinePointer && canHover && !hasTouch
+  }, [])
+
+  const onInputKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>): void => {
+    if (!isDesktopBehaviorRef.current) {
+      return
+    }
+
+    if (e.key !== 'Enter') {
+      return
+    }
+
+    if (e.shiftKey) {
+      return
+    }
+
+    e.preventDefault()
+
+    if (isLoading) {
+      return
+    }
+
+    if (!input.trim() && !selectedImage) {
+      return
+    }
+
+    formRef.current?.requestSubmit()
+  }
 
   return (
     <div className="flex flex-1 flex-col min-w-0 min-h-0">
@@ -180,18 +216,19 @@ export function MainChat(props: MainChatProps): JSX.Element {
           )}
 
 
-          <form onSubmit={onSubmit} className="relative flex items-stretch gap-2">
+          <form ref={formRef} onSubmit={onSubmit} className="relative flex items-stretch gap-2">
             <label className="w-12 h-12 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 cursor-pointer hover:bg-primary-main-3/[0.05] rounded-xl transition-colors border border-primary-main-9/40">
               <MediaImage width={18} height={18} />
               <input type="file" accept="image/*" className="hidden" onChange={onImageUpload} disabled={isLoading} />
             </label>
 
-            <input
-              type="text"
+            <textarea
+              rows={1}
               value={input}
               onChange={(e) => onInputChange(e.target.value)}
+              onKeyDown={onInputKeyDown}
               placeholder="Message XGate AI..."
-              className="w-full h-12 bg-black/30 text-primary-high-2 border border-primary-main-9/40 rounded-xl pl-4 pr-14 py-3 focus:outline-none focus:border-primary-high-2"
+              className="w-full min-h-12 max-h-32 bg-black/30 text-primary-high-2 border border-primary-main-9/40 rounded-xl pl-4 pr-14 py-3 focus:outline-none focus:border-primary-high-2 resize-none overflow-y-auto"
               disabled={isLoading}
             />
 
