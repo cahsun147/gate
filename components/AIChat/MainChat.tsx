@@ -240,7 +240,7 @@ export function MainChat(props: MainChatProps): JSX.Element {
 
 
           <form ref={formRef} onSubmit={onSubmit} className="relative flex flex-col gap-2">
-            <div className="relative w-full">
+            <div className="relative w-full bg-black/30 border border-primary-main-9/40 rounded-2xl overflow-hidden">
               <textarea
                 ref={textareaRef}
                 rows={1}
@@ -249,9 +249,9 @@ export function MainChat(props: MainChatProps): JSX.Element {
                 onKeyDown={onInputKeyDown}
                 placeholder="Message XGate AI..."
                 className={
-                  `w-full min-h-12 bg-black/30 text-primary-high-2 border border-primary-main-9/40 rounded-xl p-3 ` +
+                  `w-full min-h-12 bg-transparent text-primary-high-2 p-3 ` +
                   `${showInputResizeToggle ? 'pr-12' : 'pr-3'} ` +
-                  `focus:outline-none focus:border-primary-high-2 resize-none`
+                  `focus:outline-none resize-none`
                 }
                 disabled={isLoading}
               />
@@ -266,21 +266,21 @@ export function MainChat(props: MainChatProps): JSX.Element {
                   {isInputExpanded ? <NavArrowUp width={18} height={18} /> : <NavArrowDown width={18} height={18} />}
                 </button>
               )}
-            </div>
 
-            <div className="flex items-center justify-between gap-2">
-              <label className="w-12 h-12 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 cursor-pointer hover:bg-primary-main-3/[0.05] rounded-xl transition-colors border border-primary-main-9/40">
-                <MediaImage width={18} height={18} />
-                <input type="file" accept="image/*" className="hidden" onChange={onImageUpload} disabled={isLoading} />
-              </label>
+              <div className="flex items-center justify-between gap-2 px-2 pb-2 border-t border-primary-main-9/30">
+                <label className="w-12 h-12 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 cursor-pointer hover:bg-primary-main-3/[0.05] rounded-xl transition-colors">
+                  <MediaImage width={18} height={18} />
+                  <input type="file" accept="image/*" className="hidden" onChange={onImageUpload} disabled={isLoading} />
+                </label>
 
-              <button
-                type="submit"
-                disabled={isLoading || (!input.trim() && !selectedImage)}
-                className="w-12 h-12 flex items-center justify-center bg-primary-high-2 text-black rounded-xl hover:bg-primary-high-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send width={18} height={18} />
-              </button>
+                <button
+                  type="submit"
+                  disabled={isLoading || (!input.trim() && !selectedImage)}
+                  className="w-12 h-12 flex items-center justify-center bg-primary-high-2 text-black rounded-xl hover:bg-primary-high-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Send width={18} height={18} />
+                </button>
+              </div>
             </div>
           </form>
         </div>
