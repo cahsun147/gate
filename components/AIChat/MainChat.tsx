@@ -240,7 +240,7 @@ export function MainChat(props: MainChatProps): JSX.Element {
 
 
           <form ref={formRef} onSubmit={onSubmit} className="relative flex flex-col gap-2">
-            <div className="relative w-full bg-black/30 border border-primary-main-9/30 rounded-2xl overflow-hidden transition-colors focus-within:border-primary-high-2">
+            <div className="relative w-full bg-black/30 border border-primary-main-9/25 rounded-2xl overflow-hidden transition-colors focus-within:border-primary-high-2">
               <textarea
                 ref={textareaRef}
                 rows={1}
@@ -267,13 +267,13 @@ export function MainChat(props: MainChatProps): JSX.Element {
                 </button>
               )}
 
-              <div className="flex items-center justify-between gap-2 px-2 py-2 border-t border-primary-main-9/15">
+              <div className="flex items-center justify-between px-1 pb-1">
                 <label
                   title="Upload Image"
                   aria-label="Upload Image"
-                  className="w-12 h-12 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 cursor-pointer hover:bg-primary-main-3/[0.06] rounded-xl transition-colors"
+                  className="w-10 h-10 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 cursor-pointer hover:bg-primary-main-3/[0.06] rounded-lg transition-colors"
                 >
-                  <MediaImage width={18} height={18} />
+                  <MediaImage width={16} height={16} />
                   <input type="file" accept="image/*" className="hidden" onChange={onImageUpload} disabled={isLoading} />
                 </label>
 
@@ -282,9 +282,9 @@ export function MainChat(props: MainChatProps): JSX.Element {
                   disabled={isLoading || (!input.trim() && !selectedImage)}
                   title="Submit"
                   aria-label="Submit"
-                  className="w-12 h-12 flex items-center justify-center bg-primary-high-2 text-black rounded-xl hover:bg-primary-high-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-10 h-10 flex items-center justify-center bg-primary-high-2 text-black rounded-lg hover:bg-primary-high-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Send width={18} height={18} />
+                  <Send width={16} height={16} />
                 </button>
               </div>
             </div>
