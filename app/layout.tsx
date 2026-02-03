@@ -1,6 +1,6 @@
 import { settings } from '@/config/settings'
 import { LayoutRoot } from './LayoutRoot'
-
+import Providers from '@/providers/providers'
 import '@/components/globals.css'
 
 const RootLayout = ({ children }: { children: React.ReactNode }): JSX.Element => {
@@ -26,7 +26,9 @@ const RootLayout = ({ children }: { children: React.ReactNode }): JSX.Element =>
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
       </head>
       <body>
+        <Providers>
         <LayoutRoot>{children}</LayoutRoot>
+        </Providers>
       </body>
     </html>
   )

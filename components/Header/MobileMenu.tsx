@@ -3,6 +3,7 @@ import { Animator, Animated } from '@arwes/react'
 import { settings } from '@/config'
 import { Modal } from '../Modal'
 import { Nav } from '../Nav'
+import { LoginButton } from '../LoginButton'
 import { MobileLinks } from './MobileLinks'
 
 type MobileMenuProps = {
@@ -28,6 +29,7 @@ const MobileMenu = (props: MobileMenuProps): JSX.Element => {
           </div>
 
           <div className="flex flex-col gap-2">
+            <LoginButton className="w-full" />
             <MobileLinks />
 
             <Animator>

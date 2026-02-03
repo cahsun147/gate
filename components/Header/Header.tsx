@@ -33,6 +33,7 @@ import { atomAudioEnabled, atomMotionEnabled, settings, theme } from '@/config'
 import { useAppBleeps, useAppBreakpoint } from '@/components/tools'
 import { ArwesLogoIcon } from '../ArwesLogoIcon'
 import { XgateLogoType } from '../XgateLogoType'
+import { LoginButton } from '../LoginButton'
 import { Menu } from '../Menu'
 import { MenuItem } from '../MenuItem'
 import { MobileMenu } from './MobileMenu'
@@ -188,6 +189,7 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                   className="flex flex-row gap-4"
                   animated={[['x', theme.spacen(-2), 0, 0]]}
                 >
+                  <LoginButton className="hidden md:flex" />
                   <Menu className={HEIGHT_CLASS}>
                     <Animator>
                       <MenuItem animated={['flicker']}>
@@ -219,6 +221,7 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                   className="flex flex-row gap-4"
                   animated={[['x', theme.spacen(-4), 0, 0]]}
                 >
+                  <LoginButton className="hidden md:flex" />
                   <Menu className={HEIGHT_CLASS}>
                     <Animator>
                       <MenuItem animated={['flicker']}>
