@@ -23,7 +23,7 @@ export default function PrivyWrapper({ children }: { children: React.ReactNode }
           theme: 'dark',               // Paksa tema gelap
           accentColor: '#676FFF',      // Warna tombol (bisa diganti sesuai selera)
           showWalletLoginFirst: false, // Opsional
-        }
+        },
         // 3. Embedded Wallets: Wajib ada agar user login Email otomatis punya wallet
         embeddedWallets: {
           ethereum: {
