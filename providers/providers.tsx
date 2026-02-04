@@ -19,19 +19,21 @@ export default function PrivyWrapper({ children }: { children: React.ReactNode }
     <PrivyProvider
       appId={appId}
       config={{
+        // Konfigurasi Tamilan Login web3
         appearance: {
-          theme: 'dark',               // Paksa tema gelap
-          accentColor: '#676FFF',      // Warna tombol (bisa diganti sesuai selera)
-          showWalletLoginFirst: false, // Opsional
+          theme: 'dark',               
+          accentColor: '#676FFF',     
+          showWalletLoginFirst: false, 
         },
-        // 3. Embedded Wallets: Wajib ada agar user login Email otomatis punya wallet
+
+        // Embedded Wallets: Wajib ada agar user login Email otomatis punya wallet
         embeddedWallets: {
           ethereum: {
             createOnLogin: "users-without-wallets",
           },
         },
 
-        // 4. Konfigurasi Jaringan (EVM Networks)
+        // Konfigurasi Jaringan (EVM Networks)
         // Array ini menentukan jaringan apa saja yang didukung aplikasi Anda
         supportedChains: [mainnet, base, bsc],
         

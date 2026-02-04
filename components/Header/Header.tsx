@@ -16,7 +16,6 @@ import {
   X,
   Page,
   Atom,
-  Settings,
   CollageFrame,
   DashboardSpeed,
   Telegram,
@@ -189,15 +188,8 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                   className="flex flex-row gap-4"
                   animated={[['x', theme.spacen(-2), 0, 0]]}
                 >
-                  <LoginButton className="hidden md:flex" />
+                  <LoginButton className="px-3 md:px-4" />
                   <Menu className={HEIGHT_CLASS}>
-                    <Animator>
-                      <MenuItem animated={['flicker']}>
-                        <button>
-                          <Settings />
-                        </button>
-                      </MenuItem>
-                    </Animator>
                     <Animator>
                       <MenuItem animated={['flicker']}>
                         <button onClick={openMenu}>
@@ -221,7 +213,7 @@ const Header = memo((props: HeaderProps): JSX.Element => {
                   className="flex flex-row gap-4"
                   animated={[['x', theme.spacen(-4), 0, 0]]}
                 >
-                  <LoginButton className="hidden md:flex" />
+                  <LoginButton className="px-3 md:px-4" />
                   <Menu className={HEIGHT_CLASS}>
                     <Animator>
                       <MenuItem animated={['flicker']}>
