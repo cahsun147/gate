@@ -2,6 +2,7 @@
 
 import type { ChangeEvent, FormEvent } from 'react'
 import { useCallback, useEffect, useState } from 'react'
+import { usePrivy } from '@privy-io/react-auth'
 
 import type { ChatMessage } from './MainChat'
 
@@ -17,6 +18,7 @@ type UseAIChatOptions = {
 
 export function useAIChat(options: UseAIChatOptions = {}) {
   const { apiBasePath = '/api/chat-v2' } = options
+  const { getAccessToken } = usePrivy()
 
   const [sessions, setSessions] = useState<AIChatSession[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
@@ -104,9 +106,18 @@ export function useAIChat(options: UseAIChatOptions = {}) {
       setIsLoading(true)
 
       try {
+        // Dapatkan access token dari Privy
+        const authToken = await getAccessToken()
+        if (!authToken) {
+          throw new Error('Authentication required')
+        }
+
         const response = await fetch(apiBasePath, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
           body: JSON.stringify({
             message: userMsg.content,
             image: imageToSend,

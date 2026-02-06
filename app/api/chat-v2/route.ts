@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
+import { PrivyClient } from '@privy-io/server-auth';
+
+// Inisialisasi Privy Client
+const privy = new PrivyClient(
+  process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+  process.env.PRIVY_APP_SECRET!
+);
 
 // --- CONFIG ---
 const SYSTEM_PROMPT = `
@@ -102,6 +109,25 @@ async function saveUserMessageToRedis(sessionId: string, clientId: string, messa
 // --- MAIN HANDLER ---
 export async function POST(req: NextRequest) {
   try {
+    // 1. VERIFIKASI AUTH TOKEN
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized: No token provided' }, { status: 401 });
+    }
+
+    const token = authHeader.split(' ')[1];
+    let verifiedClaims;
+    
+    try {
+      verifiedClaims = await privy.verifyAuthToken(token);
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
+    }
+
+    // Log user ID untuk tracking (opsional)
+    console.log('✅ Authenticated user:', verifiedClaims.userId);
+
     const body = await req.json();
     let { message, image, session_id } = body;
 
