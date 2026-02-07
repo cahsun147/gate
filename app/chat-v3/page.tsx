@@ -14,10 +14,10 @@ export default function ChatPageV3(): JSX.Element {
     setInput,
     createNewSession,
     loadSession,
-    deleteSessionById,
-    handleImageUpload,
+    deleteSession,
+    handleImageSelect,
     clearImage,
-    submit
+    sendMessage
   } = useAIChat({ apiBasePath: '/api/chat-v2' })
 
   const navSessions: NavChatSession[] = sessions.map((s) => ({
@@ -42,7 +42,7 @@ export default function ChatPageV3(): JSX.Element {
             await loadSession(id)
             if (isMobile) closeSidebar()
           }}
-          onDeleteSession={deleteSessionById}
+          onDeleteSession={deleteSession}
         />
       )}
     >
@@ -54,8 +54,8 @@ export default function ChatPageV3(): JSX.Element {
         presence={presence}
         selectedImage={selectedImage}
         onInputChange={setInput}
-        onSubmit={(e) => submit(e)}
-        onImageUpload={handleImageUpload}
+        onSubmit={(e) => sendMessage(e)}
+        onImageUpload={handleImageSelect}
         onClearImage={clearImage}
       />
     </ChatLayout>
