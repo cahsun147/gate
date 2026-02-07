@@ -10,6 +10,7 @@ export type AIChatSession = {
   id: string
   title: string
   timestamp: number
+  clientId?: string // Opsional: Untuk keperluan gambar IPFS
 }
 
 type UseAIChatOptions = {
@@ -18,7 +19,9 @@ type UseAIChatOptions = {
 
 export function useAIChat(options: UseAIChatOptions = {}) {
   const { apiBasePath = '/api/chat-v2' } = options
-  const { getAccessToken } = usePrivy()
+  
+  // 1. Ambil Auth Token dari Privy
+  const { getAccessToken, authenticated } = usePrivy()
 
   const [sessions, setSessions] = useState<AIChatSession[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
@@ -28,167 +31,169 @@ export function useAIChat(options: UseAIChatOptions = {}) {
   const [presence, setPresence] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
-// 👇 PERBAIKI FUNGSI INI
+  // --- 2. FUNGSI FETCH DENGAN AUTH ---
+  
+  // A. Load Daftar Session (Sidebar)
   const refreshSidebar = useCallback(async () => {
+    // Jika belum login, jangan fetch (atau kosongkan)
+    // if (!authenticated) return; 
+    
     try {
-      // 1. Ambil Token
-      const token = await getAccessToken();       
-      if (!token) return; // Jika tidak login, stop (atau kosongkan session)
+      const token = await getAccessToken(); // Ambil Token Terbaru
+      const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-      // 2. Kirim Request dengan Header Authorization
-      const res = await fetch(`${apiBasePath}/sessions`, {
-        headers: {
-            'Authorization': `Bearer ${token}`
+      const res = await fetch(`${apiBasePath}/sessions`, { headers })
+      if (res.ok) {
+        setSessions(await res.json())
+      }
+    } catch (e) {
+      console.error("Failed to load sidebar", e)
+    }
+  }, [apiBasePath, getAccessToken, authenticated])
+
+  // B. Load Detail Chat (MainChat History) -> INI YANG MEMPERBAIKI HISTORY KOSONG
+  const loadSession = useCallback(async (id: string) => {
+    setCurrentSessionId(id)
+    setIsLoading(true)
+    try {
+      const token = await getAccessToken();
+      const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+      const res = await fetch(`${apiBasePath}/sessions?id=${id}`, { headers })
+      
+      if (res.ok) {
+        const data = await res.json()
+        // Pastikan format data sesuai dengan yang dikirim backend ({ messages: [] })
+        if (data.messages) {
+            setMessages(data.messages)
+        } else {
+            setMessages([])
         }
+      }
+    } catch (error) {
+      console.error('Failed to load session:', error)
+      setMessages([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [apiBasePath, getAccessToken])
+
+  // C. Delete Session -> INI YANG MEMPERBAIKI ERROR 401
+  const deleteSession = useCallback(async (id: string) => {
+    // Optimistic Update: Hapus dari UI dulu biar cepat
+    setSessions((prev) => prev.filter((s) => s.id !== id))
+    if (currentSessionId === id) {
+      setCurrentSessionId(null)
+      setMessages([])
+    }
+
+    try {
+      const token = await getAccessToken();
+      if (!token) {
+          console.error("Cannot delete: No token");
+          return;
+      }
+
+      await fetch(`${apiBasePath}/sessions?id=${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` } // Wajib Header Ini
       })
       
-      if (res.ok) setSessions(await res.json())
-    } catch (e) {
-        console.error("Gagal load history", e)
+      // Refresh sidebar lagi untuk memastikan sinkronisasi (opsional)
+      // refreshSidebar() 
+    } catch (error) {
+      console.error('Failed to delete session:', error)
+      refreshSidebar() // Revert jika gagal (kembalikan sidebar)
     }
-  }, [apiBasePath, getAccessToken]) // Tambahkan getAccessToken ke dependency
+  }, [apiBasePath, currentSessionId, getAccessToken, refreshSidebar])
 
-  useEffect(() => {
-    refreshSidebar()
-  }, [refreshSidebar])
-
+  // D. Create New Chat
   const createNewSession = useCallback(() => {
     setCurrentSessionId(null)
     setMessages([])
-    setSelectedImage(null)
+    setInput('')
   }, [])
 
-  const loadSession = useCallback(
-    async (id: string) => {
-      setCurrentSessionId(id)
-      setIsLoading(true)
-
-      try {
-        const res = await fetch(`${apiBasePath}/sessions?id=${encodeURIComponent(id)}`)
-        if (res.ok) {
-          const data = await res.json()
-          setMessages(data.messages || [])
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    [apiBasePath]
-  )
-
-  const deleteSessionById = useCallback(
-    async (id: string) => {
-      setSessions((prev) => prev.filter((s) => s.id !== id))
-      if (id === currentSessionId) createNewSession()
-      await fetch(`${apiBasePath}/sessions?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
-    },
-    [apiBasePath, createNewSession, currentSessionId]
-  )
-
-  const handleImageUpload = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onloadend = () => setSelectedImage(reader.result as string)
-    reader.readAsDataURL(file)
-  }, [])
-
-  const clearImage = useCallback(() => {
-    setSelectedImage(null)
-  }, [])
-
-  const submit = useCallback(
+  // E. Send Message (Chatting)
+  const sendMessage = useCallback(
     async (e?: FormEvent) => {
-      if (e) e.preventDefault()
-      if ((!input.trim() && !selectedImage) || isLoading) return
+      e?.preventDefault()
+      if (!input.trim() && !selectedImage) return
 
-      setPresence(null)
+      // Cek Login
+      const token = await getAccessToken();
+      if (!token) {
+          alert("Please login first!"); // Atau handle UI login
+          return;
+      }
 
-      const userMsg: ChatMessage = {
-        role: 'user',
-        content: input,
-        type: selectedImage ? 'image' : 'text'
+      const userMsg: ChatMessage = { role: 'user', content: input, type: 'text' }
+      if (selectedImage) {
+        // Logic image handling (sesuaikan jika backend support image content array)
+        // userMsg.content = ... 
       }
 
       setMessages((prev) => [...prev, userMsg])
-
-      const imageToSend = selectedImage
       setInput('')
       setSelectedImage(null)
       setIsLoading(true)
 
       try {
-        // Dapatkan access token dari Privy
-        const authToken = await getAccessToken()
-        if (!authToken) {
-          throw new Error('Authentication required')
-        }
-
-        const response = await fetch(apiBasePath, {
+        const res = await fetch(apiBasePath, {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
+            'Authorization': `Bearer ${token}` // Wajib Header Ini
           },
           body: JSON.stringify({
-            message: userMsg.content,
-            image: imageToSend,
-            session_id: currentSessionId
-          })
+            messages: [...messages, userMsg],
+            sessionId: currentSessionId,
+            image: selectedImage
+          }),
         })
 
-        if (!response.ok) throw new Error('Network error')
+        if (!res.ok || !res.body) throw new Error(res.statusText)
 
-        const assistantMsg: ChatMessage = { role: 'assistant', content: '' }
-        setMessages((prev) => [...prev, assistantMsg])
-
-        const reader = response.body?.getReader()
-        if (!reader) throw new Error('No response body')
-
+        // Streaming Response Handler
+        const reader = res.body.getReader()
         const decoder = new TextDecoder()
-        let done = false
         let fullResponse = ''
         let hasUpdatedId = false
-        let buffer = ''
 
-        while (!done) {
-          const { value, done: doneReading } = await reader.read()
-          done = doneReading
-          buffer += decoder.decode(value, { stream: !done })
+        setMessages((prev) => [...prev, { role: 'assistant', content: '', type: 'text' }])
 
-          const lines = buffer.split('\n')
-          buffer = lines.pop() ?? ''
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          
+          const chunk = decoder.decode(value, { stream: true })
+          const lines = chunk.split('\n')
 
           for (const line of lines) {
-            const trimmed = line.trim()
-            if (!trimmed.startsWith('data:')) continue
-
-            const payload = trimmed.replace(/^data:\s*/, '')
+            if (!line.startsWith('data: ')) continue
             try {
-              const json = JSON.parse(payload)
+              const jsonStr = line.slice(6) // Remove "data: "
+              if (jsonStr === '[DONE]') continue
+              
+              const json = JSON.parse(jsonStr)
 
-              if (json.type === 'init') {
-                if (json.session_id && (!currentSessionId || !hasUpdatedId)) {
-                  setCurrentSessionId(json.session_id)
-                  hasUpdatedId = true
-                  setTimeout(refreshSidebar, 500)
-                }
-                continue
+              // Handle Session ID Update (untuk chat baru)
+              if (json.session_id && (!currentSessionId || !hasUpdatedId)) {
+                setCurrentSessionId(json.session_id)
+                hasUpdatedId = true
+                setTimeout(refreshSidebar, 1000) // Delay dikit biar Redis sempat update
               }
 
-              if (json.type === 'presence') {
-                if (typeof json.data === 'string') setPresence(json.data)
-                continue
-              }
-
+              // Handle Token/Text
               if (json.v) {
                 setPresence(null)
                 fullResponse += json.v
                 setMessages((prev) => {
                   const updated = [...prev]
                   const last = updated[updated.length - 1]
-                  if (last && last.role === 'assistant') last.content = fullResponse
+                  if (last && last.role === 'assistant') {
+                      last.content = fullResponse
+                  }
                   return updated
                 })
               }
@@ -196,14 +201,20 @@ export function useAIChat(options: UseAIChatOptions = {}) {
           }
         }
       } catch (error) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: 'Error...' }])
+        console.error("Chat error:", error)
+        setMessages((prev) => [...prev, { role: 'assistant', content: 'Error: Failed to connect.', type: 'text' }])
       } finally {
         setIsLoading(false)
         setPresence(null)
       }
     },
-    [apiBasePath, currentSessionId, input, isLoading, refreshSidebar, selectedImage]
+    [apiBasePath, currentSessionId, input, messages, selectedImage, getAccessToken, refreshSidebar]
   )
+
+  // Load sidebar on mount (and on auth change)
+  useEffect(() => {
+    refreshSidebar()
+  }, [refreshSidebar])
 
   return {
     sessions,
@@ -217,9 +228,16 @@ export function useAIChat(options: UseAIChatOptions = {}) {
     refreshSidebar,
     createNewSession,
     loadSession,
-    deleteSessionById,
-    handleImageUpload,
-    clearImage,
-    submit
+    deleteSession, // Pastikan ini di-export
+    sendMessage,
+    handleImageSelect: (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (file) {
+        const reader = new FileReader()
+        reader.onloadend = () => setSelectedImage(reader.result as string)
+        reader.readAsDataURL(file)
+      }
+    },
+    clearImage: () => setSelectedImage(null),
   }
 }
