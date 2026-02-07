@@ -28,12 +28,25 @@ export function useAIChat(options: UseAIChatOptions = {}) {
   const [presence, setPresence] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
+// 👇 PERBAIKI FUNGSI INI
   const refreshSidebar = useCallback(async () => {
     try {
-      const res = await fetch(`${apiBasePath}/sessions`)
+      // 1. Ambil Token
+      const token = await getAccessToken();       
+      if (!token) return; // Jika tidak login, stop (atau kosongkan session)
+
+      // 2. Kirim Request dengan Header Authorization
+      const res = await fetch(`${apiBasePath}/sessions`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+      })
+      
       if (res.ok) setSessions(await res.json())
-    } catch (e) {}
-  }, [apiBasePath])
+    } catch (e) {
+        console.error("Gagal load history", e)
+    }
+  }, [apiBasePath, getAccessToken]) // Tambahkan getAccessToken ke dependency
 
   useEffect(() => {
     refreshSidebar()

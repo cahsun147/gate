@@ -8,7 +8,7 @@ const privy = new PrivyClient(
   process.env.PRIVY_APP_SECRET!
 );
 
-// 2. Helper Safe Parse (Wajib untuk parsing data Redis)
+// 2. Helper Safe Parse
 function safeParse(data: any) {
   if (typeof data === 'string') {
     try { return JSON.parse(data); } catch (e) { return null; }
@@ -16,7 +16,7 @@ function safeParse(data: any) {
   return data;
 }
 
-// 3. Helper Client ID (Opsional: Jika kita ingin kirim ID terbaru di header sebagai cadangan)
+// 3. Helper Client ID (Tetap ada untuk keperluan gambar di Frontend)
 let cachedClientId: string | null = null;
 let lastScrapeTime = 0;
 
@@ -41,17 +41,17 @@ async function getClientId() {
   } catch (e) { return null; }
 }
 
-// --- GET HANDLER (Ambil List Sesi & Detail Chat) ---
+// --- GET HANDLER (Load History) ---
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
 
   try {
-    // A. VERIFIKASI USER (Wajib Login)
+    // A. CEK TOKEN (Wajib Login)
     const authHeader = req.headers.get('authorization');
     const token = authHeader?.replace('Bearer ', '');
     
-    // Jika tidak ada token, kembalikan list kosong (jangan error 500, biar UI tetap render)
+    // Jika tidak ada token, kembalikan kosong (Bukan error, biar UI aman)
     if (!token) {
         return NextResponse.json([], { status: 200 });
     }
@@ -59,39 +59,34 @@ export async function GET(req: NextRequest) {
     const claims = await privy.verifyAuthToken(token);
     const userId = claims.userId;
 
-    // B. DEFINISI KEY (Sesuai route.ts)
-    const sessionsKey = `user:${userId}:sessions`;
-
-    // SKENARIO 1: DETAIL CHAT (Jika ada ?id=...)
+    // B. LOGIKA PENGAMBILAN DATA (User Scope)
+    
+    // SKENARIO 1: DETAIL CHAT (Klik salah satu history)
     if (id) {
-        // Ambil isi pesan dari LIST user
+        // Ambil dari LIST user
         const chatKey = `user:${userId}:chat:${id}`;
         const rawMessages = await redis.lrange(chatKey, 0, -1);
-        
-        // Parse setiap pesan
         const messages = rawMessages.map(safeParse).filter(Boolean);
-        
         return NextResponse.json({ messages });
     }
 
-    // SKENARIO 2: SIDEBAR LIST (Jika tidak ada ?id=)
-    // Ambil daftar sesi dari ZSET user (Sorted Set)
+    // SKENARIO 2: SIDEBAR LIST (Load awal)
+    // Ambil dari ZSET user
+    const sessionsKey = `user:${userId}:sessions`;
     const rawSessions = await redis.zrange(sessionsKey, 0, -1, { rev: true });
     
-    // Parse dan format data untuk frontend
     const sessions = rawSessions.map((s: any) => {
         const obj = safeParse(s);
-        if (!obj) return null;
-
-        return { 
+        // Pastikan return object memiliki clientId untuk gambar IPFS
+        return obj ? { 
             id: obj.id, 
             title: obj.title, 
             timestamp: obj.timestamp,
-            clientId: obj.clientId // <-- PENTING: Frontend butuh ini untuk gambar IPFS
-        };
+            clientId: obj.clientId // Frontend butuh ini
+        } : null;
     }).filter(Boolean);
 
-    // Ambil ClientID global (opsional, buat header)
+    // Ambil ClientID global buat jaga-jaga (dikirim di header)
     const globalClientId = await getClientId();
     
     const response = NextResponse.json(sessions);
@@ -103,20 +98,18 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     console.error("Session Error:", error);
-    // Return empty array on error to prevent frontend crash
     return NextResponse.json([], { status: 500 });
   }
 }
 
-// --- DELETE HANDLER (Hapus Sesi) ---
+// --- DELETE HANDLER (Hapus History) ---
 export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
-  
   if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
 
   try {
-    // A. VERIFIKASI USER
+    // A. CEK TOKEN
     const authHeader = req.headers.get('authorization');
     const token = authHeader?.replace('Bearer ', '');
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -124,11 +117,11 @@ export async function DELETE(req: NextRequest) {
     const claims = await privy.verifyAuthToken(token);
     const userId = claims.userId;
 
+    // B. HAPUS DATA (Hanya jika milik user tersebut)
     const sessionsKey = `user:${userId}:sessions`;
     const chatKey = `user:${userId}:chat:${id}`;
 
-    // B. LOGIKA HAPUS (ZSET & LIST)
-    // 1. Cari member spesifik di ZSET untuk dihapus (karena butuh string match exact)
+    // Cari member spesifik di ZSET untuk dihapus (butuh string exact)
     const allSessions = await redis.zrange(sessionsKey, 0, -1);
     const sessionToDelete = allSessions.find((s: any) => {
         const obj = safeParse(s);
@@ -136,19 +129,14 @@ export async function DELETE(req: NextRequest) {
     });
 
     if (sessionToDelete) {
-        // Hapus metadata dari Sidebar (ZSET)
-        await redis.zrem(sessionsKey, sessionToDelete as string);
-        
-        // Hapus isi pesan Chat (LIST)
-        await redis.del(chatKey);
-        
+        await redis.zrem(sessionsKey, sessionToDelete as string); // Hapus dari sidebar
+        await redis.del(chatKey); // Hapus isi chat
         return NextResponse.json({ success: true });
     } else {
         return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
   } catch (error) {
-    console.error("Delete Error:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
