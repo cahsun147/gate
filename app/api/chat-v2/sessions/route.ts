@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
+import { PrivyClient } from '@privy-io/server-auth';
 
-// Helper sama
+// 1. Setup Privy Client
+const privy = new PrivyClient(
+  process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
+  process.env.PRIVY_APP_SECRET!
+);
+
+// 2. Helper Safe Parse (Wajib untuk parsing data Redis)
 function safeParse(data: any) {
   if (typeof data === 'string') {
     try { return JSON.parse(data); } catch (e) { return null; }
@@ -9,10 +16,10 @@ function safeParse(data: any) {
   return data;
 }
 
+// 3. Helper Client ID (Opsional: Jika kita ingin kirim ID terbaru di header sebagai cadangan)
 let cachedClientId: string | null = null;
 let lastScrapeTime = 0;
 
-// Kita butuh Client ID untuk tahu key mana yang harus dibaca (chat:sessions:{clientId})
 async function getClientId() {
   const now = Date.now();
   if (cachedClientId && (now - lastScrapeTime < 3600000)) return cachedClientId;
@@ -34,63 +41,114 @@ async function getClientId() {
   } catch (e) { return null; }
 }
 
+// --- GET HANDLER (Ambil List Sesi & Detail Chat) ---
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
 
   try {
-    // 1. DETAIL CHAT (Isi Pesan)
-    // Key harus konsisten dengan route.ts -> chat:msg:{id}
-    if (id) {
-      const rawMessages = await redis.lrange(`chat:msg:${id}`, 0, -1);
-      const messages = rawMessages.map(safeParse).filter(Boolean);
-      return NextResponse.json({ messages });
+    // A. VERIFIKASI USER (Wajib Login)
+    const authHeader = req.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    
+    // Jika tidak ada token, kembalikan list kosong (jangan error 500, biar UI tetap render)
+    if (!token) {
+        return NextResponse.json([], { status: 200 });
     }
 
-    // 2. LIST SIDEBAR
-    // Key harus konsisten dengan route.ts -> chat:sessions:{clientId}
-    const clientId = await getClientId();
-    if (!clientId) return NextResponse.json([], { status: 500 }); 
+    const claims = await privy.verifyAuthToken(token);
+    const userId = claims.userId;
 
-    const sessionsKey = `chat:sessions:${clientId}`;
+    // B. DEFINISI KEY (Sesuai route.ts)
+    const sessionsKey = `user:${userId}:sessions`;
+
+    // SKENARIO 1: DETAIL CHAT (Jika ada ?id=...)
+    if (id) {
+        // Ambil isi pesan dari LIST user
+        const chatKey = `user:${userId}:chat:${id}`;
+        const rawMessages = await redis.lrange(chatKey, 0, -1);
+        
+        // Parse setiap pesan
+        const messages = rawMessages.map(safeParse).filter(Boolean);
+        
+        return NextResponse.json({ messages });
+    }
+
+    // SKENARIO 2: SIDEBAR LIST (Jika tidak ada ?id=)
+    // Ambil daftar sesi dari ZSET user (Sorted Set)
     const rawSessions = await redis.zrange(sessionsKey, 0, -1, { rev: true });
     
+    // Parse dan format data untuk frontend
     const sessions = rawSessions.map((s: any) => {
         const obj = safeParse(s);
-        // Frontend mengharapkan { id, title, timestamp }
-        return obj ? { id: obj.id, title: obj.title, timestamp: obj.timestamp } : null;
+        if (!obj) return null;
+
+        return { 
+            id: obj.id, 
+            title: obj.title, 
+            timestamp: obj.timestamp,
+            clientId: obj.clientId // <-- PENTING: Frontend butuh ini untuk gambar IPFS
+        };
     }).filter(Boolean);
 
-    return NextResponse.json(sessions);
+    // Ambil ClientID global (opsional, buat header)
+    const globalClientId = await getClientId();
+    
+    const response = NextResponse.json(sessions);
+    if (globalClientId) {
+        response.headers.set('x-thirdweb-client-id', globalClientId);
+    }
+    
+    return response;
 
   } catch (error) {
+    console.error("Session Error:", error);
+    // Return empty array on error to prevent frontend crash
     return NextResponse.json([], { status: 500 });
   }
 }
 
+// --- DELETE HANDLER (Hapus Sesi) ---
 export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
+  
   if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
 
   try {
-    // Hapus Isi Pesan
-    await redis.del(`chat:msg:${id}`);
-    
-    // Hapus dari List Sidebar
-    const clientId = await getClientId();
-    if (clientId) {
-        const sessionsKey = `chat:sessions:${clientId}`;
-        const allSessions = await redis.zrange(sessionsKey, 0, -1);
-        const sessionToDelete = allSessions.find((s: any) => {
-            const obj = safeParse(s);
-            return obj && obj.id === id;
-        });
-        if (sessionToDelete) await redis.zrem(sessionsKey, sessionToDelete);
+    // A. VERIFIKASI USER
+    const authHeader = req.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const claims = await privy.verifyAuthToken(token);
+    const userId = claims.userId;
+
+    const sessionsKey = `user:${userId}:sessions`;
+    const chatKey = `user:${userId}:chat:${id}`;
+
+    // B. LOGIKA HAPUS (ZSET & LIST)
+    // 1. Cari member spesifik di ZSET untuk dihapus (karena butuh string match exact)
+    const allSessions = await redis.zrange(sessionsKey, 0, -1);
+    const sessionToDelete = allSessions.find((s: any) => {
+        const obj = safeParse(s);
+        return obj && obj.id === id;
+    });
+
+    if (sessionToDelete) {
+        // Hapus metadata dari Sidebar (ZSET)
+        await redis.zrem(sessionsKey, sessionToDelete as string);
+        
+        // Hapus isi pesan Chat (LIST)
+        await redis.del(chatKey);
+        
+        return NextResponse.json({ success: true });
+    } else {
+        return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Delete Error:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
