@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 import { PrivyClient } from '@privy-io/server-auth';
 
-// 1. Inisialisasi Privy
+// Inisialisasi Privy Client
 const privy = new PrivyClient(
   process.env.NEXT_PUBLIC_PRIVY_APP_ID!,
   process.env.PRIVY_APP_SECRET!
@@ -123,34 +123,53 @@ export async function POST(req: NextRequest) {
     const userId = verifiedClaims.userId;
     console.log('✅ Authenticated user:', userId);
 
+    // --- PERBAIKAN DI SINI: PARSING BODY YANG BENAR ---
     const body = await req.json();
-    let { message, image, session_id } = body;
+    
+    // Ambil data sesuai format Frontend (useAIChat.ts)
+    const messages = body.messages || []; // Array pesan
+    const sessionId = body.sessionId;     // camelCase
+    const image = body.image || null;
+
+    // Ambil pesan terakhir user dari array messages
+    let messageText = "";
+    if (messages.length > 0) {
+        const lastMsg = messages[messages.length - 1];
+        messageText = lastMsg.content || ""; // Ini string "halo"
+    } else if (body.message) {
+        // Fallback jika dikirim format lama
+        messageText = body.message;
+    }
+
+    // Validasi input kosong
+    if (!messageText && !image) {
+        return NextResponse.json({ error: "Message content is required" }, { status: 400 });
+    }
 
     // A. DAPATKAN CLIENT ID
     const clientId = await getClientId();
     if (!clientId) return NextResponse.json({ error: "Init Failed (Client ID)" }, { status: 500 });
 
-    // B. LOGIKA SIMPAN
+    // B. LOGIKA SIMPAN (Jika session ID sudah ada)
     let isUserMessageSaved = false;
-    if (session_id) {
-        await saveUserMessageToRedis(userId, session_id, clientId, message, image);
+    if (sessionId) {
+        await saveUserMessageToRedis(userId, sessionId, clientId, messageText, image);
         isUserMessageSaved = true;
     } 
 
-    // C. SIAPKAN HISTORY (PERBAIKAN UTAMA DISINI)
+    // C. SIAPKAN HISTORY UNTUK AI
     const formattedMessages: any[] = [];
     
-    // 1. System Prompt -> STRING (Bukan Array)
+    // 1. System Prompt
     formattedMessages.push({ role: "system", content: SYSTEM_PROMPT });
 
     // 2. History dari Redis
-    if (session_id) {
-        const rawHistory = await redis.lrange(`user:${userId}:chat:${session_id}`, -6, -1);
+    if (sessionId) {
+        const rawHistory = await redis.lrange(`user:${userId}:chat:${sessionId}`, -6, -1);
         rawHistory.forEach((item: any) => {
             const msg = safeParse(item);
             if (msg) {
                 // Pastikan content selalu String jika text, Array hanya jika image
-                // Helper safe untuk baca dari format lama/baru
                 const contentStr = Array.isArray(msg.content) ? msg.content[0].text : msg.content;
                 formattedMessages.push({ 
                     role: msg.role, 
@@ -161,28 +180,28 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Pesan User Saat Ini (Inject jika belum ada di history)
-    const lastMsg = formattedMessages[formattedMessages.length - 1];
+    const lastHistoryMsg = formattedMessages[formattedMessages.length - 1];
     
-    // Cek duplikat aman (handle string vs array)
-    const lastContentStr = lastMsg && Array.isArray(lastMsg.content) 
-        ? lastMsg.content.find((c: any) => c.type === 'text')?.text 
-        : lastMsg?.content;
+    // Cek duplikat aman
+    const lastContentStr = lastHistoryMsg && Array.isArray(lastHistoryMsg.content) 
+        ? lastHistoryMsg.content.find((c: any) => c.type === 'text')?.text 
+        : lastHistoryMsg?.content;
         
-    const isUserLast = lastMsg && lastMsg.role === 'user' && lastContentStr === message;
-
-    if (!isUserLast) {
+    // Jika pesan terakhir di history BUKAN pesan user yg sekarang -> Tambahkan
+    if (!lastHistoryMsg || lastHistoryMsg.role !== 'user' || lastContentStr !== messageText) {
        if (image) {
-           // Jika ada gambar, gunakan format Array
+           // Jika ada gambar, gunakan format Array (Multimodal)
            formattedMessages.push({ 
                role: "user", 
                content: [
-                   { type: "text", text: message },
-                   { type: "image", b64: image } // Sesuaikan field image jika Thirdweb butuh 'image_url'
+                   { type: "text", text: messageText },
+                   { type: "image", b64: image } 
                ] 
            });
        } else {
-           // JIKA TEKS SAJA -> GUNAKAN STRING BIASA (SOLUSI ERROR 503)
-           formattedMessages.push({ role: "user", content: message });
+           // JIKA TEKS SAJA -> GUNAKAN STRING BIASA (PENTING!)
+           // Ini yang mencegah error ZodError "Expected string, received undefined/array"
+           formattedMessages.push({ role: "user", content: messageText });
        }
     }
 
@@ -192,7 +211,7 @@ export async function POST(req: NextRequest) {
       stream: true,
       context: { chain_ids: [], auto_execute_transactions: false }
     };
-    if (session_id) payload.context.session_id = session_id;
+    if (sessionId) payload.context.session_id = sessionId;
 
     const upstreamRes = await fetch("https://api.thirdweb.com/ai/chat", {
       method: "POST",
@@ -219,7 +238,7 @@ export async function POST(req: NextRequest) {
         const reader = upstreamRes.body!.getReader();
         const decoder = new TextDecoder();
         let fullAiText = "";
-        let activeSessionId = session_id;
+        let activeSessionId = sessionId;
 
         try {
           while (true) {
@@ -230,15 +249,16 @@ export async function POST(req: NextRequest) {
             const lines = chunk.split("\n");
 
             for (const line of lines) {
-                // 1. Event INIT
+                // 1. Event INIT (Dapat ID baru dari Thirdweb)
                 if (line.includes(`"type":"init"`)) {
                     try {
                         const jsonStr = line.replace("data: ", "").trim();
                         const data = JSON.parse(jsonStr);
                         if (data.session_id) {
                             activeSessionId = data.session_id;
+                            // Simpan pesan user jika ini chat pertama
                             if (!isUserMessageSaved && activeSessionId) {
-                                await saveUserMessageToRedis(userId, activeSessionId, clientId, message, image);
+                                await saveUserMessageToRedis(userId, activeSessionId, clientId, messageText, image);
                                 isUserMessageSaved = true;
                             }
                         }
@@ -278,6 +298,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error: any) {
+    console.error("Route Error:", error);
     return NextResponse.json({ error: "Server Error", details: error.message }, { status: 500 });
   }
 }
