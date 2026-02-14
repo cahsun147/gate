@@ -1,11 +1,13 @@
 package ai
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"gateway/types"
 
@@ -27,7 +29,7 @@ You will receive market insights in the form of an image. In this order you must
    d) entry, stop-loss, take-profit
 3. Finally, rate your confidence (%) for each scenario separately.
 
-Format everything as a Telegram message using Markdown.`
+When you reply, **format everything as a Telegram message** using _Markdown_`
 
 func HandleChat(c *gin.Context) {
 	var req ChatRequest
@@ -48,44 +50,44 @@ func HandleChat(c *gin.Context) {
 	// 2. Susun Pesan (Messages Array)
 	var twMessages []TwMessage
 
-	// Logic: Jika ini chat pertama (SessionID kosong), kita suntikkan System Prompt
-	// Jika chat kedua (SessionID ada), Thirdweb sudah ingat konteksnya,
-	// tapi aman juga untuk selalu mengirim System Prompt atau digabung dengan user message.
-	// Disini kita prepend system prompt ke user message agar hemat token & konteks terjaga.
-
-	finalText := req.Message
-	if req.SessionID == "" {
-		// Inject Persona di awal percakapan
-		finalText = SystemPrompt + "\n\n" + req.Message
+	// A. System Message - SELALUS DI AWAL
+	systemMessage := TwMessage{
+		Role: "system",
+		Content: []TwContent{
+			{Type: "text", Text: SystemPrompt},
+		},
 	}
+	twMessages = append(twMessages, systemMessage)
 
+	// B. User Message
 	userContent := []TwContent{
-		{Text: finalText, Type: "text"},
+		{Type: "text", Text: req.Message},
 	}
 
 	// Handle Image (jika ada)
 	if req.Image != "" {
 		userContent = append(userContent, TwContent{
-			Type:     "image_url",
-			ImageURL: &TwImageURL{URL: req.Image},
+			Type: "image",
+			B64:  req.Image,
 		})
 	}
 
-	twMessages = append(twMessages, TwMessage{
+	userMessage := TwMessage{
 		Role:    "user",
 		Content: userContent,
-	})
+	}
+	twMessages = append(twMessages, userMessage)
 
 	// 3. Susun Context (Session ID Logic)
 	// Jika req.SessionID kosong (""), maka field session_id akan hilang dari JSON (omitempty)
 	// Ini sesuai dengan payload Chat 1 Anda.
 	payload := ThirdwebPayload{
 		Messages: twMessages,
-		Stream:   false,
+		Stream:   true,
 		Context: TwContext{
 			ChainIDs:                []string{},
 			AutoExecuteTransactions: false,
-			SessionID:               req.SessionID,
+			SessionID:               req.SessionID, 
 		},
 	}
 
@@ -96,7 +98,7 @@ func HandleChat(c *gin.Context) {
 	}
 
 	// 4. Request ke API Thirdweb yang BENAR
-	targetURL := "https://api.thirdweb.com/ai/chat"
+	targetURL := "https://api.thirdweb.com/ai/chat" 
 	reqPost, err := http.NewRequest("POST", targetURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to create request"})
@@ -109,6 +111,7 @@ func HandleChat(c *gin.Context) {
 	reqPost.Header.Set("Origin", "https://playground.thirdweb.com")
 	reqPost.Header.Set("Referer", "https://playground.thirdweb.com/")
 	reqPost.Header.Set("User-Agent", "Mozilla/5.0")
+	reqPost.Header.Set("Accept", "text/event-stream")
 
 	client := &http.Client{}
 	resp, err := client.Do(reqPost)
@@ -116,32 +119,55 @@ func HandleChat(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "AI Service Unreachable"})
 		return
 	}
-	defer resp.Body.Close()
+	// Jangan close body disini, kita stream di bawah
 
 	if resp.StatusCode != http.StatusOK {
-		respBody, _ := io.ReadAll(resp.Body)
-		fmt.Printf("AI Error %d: %s\n", resp.StatusCode, string(respBody))
+		resp.Body.Close()
 		c.JSON(http.StatusServiceUnavailable, types.ErrorResponse{Error: "AI Service Busy"})
 		return
 	}
 
-	// 5. Non-Streaming Response
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to read response"})
-		return
-	}
+	// 5. Streaming Proxy (SSE)
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	c.Header("Transfer-Encoding", "chunked")
 
-	// Parse response untuk session ID
-	var responseMap map[string]interface{}
-	if err := json.Unmarshal(respBody, &responseMap); err == nil {
-		if sessionID, exists := responseMap["session_id"]; exists {
-			if sid, ok := sessionID.(string); ok && sid != "" {
-				fmt.Printf("Session ID: %s\n", sid)
+	c.Stream(func(w io.Writer) bool {
+		scanner := bufio.NewScanner(resp.Body)
+		buf := make([]byte, 0, 64*1024)
+		scanner.Buffer(buf, 1024*1024)
+
+		var currentEvent string
+
+		for scanner.Scan() {
+			line := scanner.Text()
+
+			// Parse Event Name (init, presence, delta)
+			if strings.HasPrefix(line, "event:") {
+				currentEvent = strings.TrimSpace(strings.TrimPrefix(line, "event:"))
+				continue
+			}
+
+			// Parse Data Payload
+			if strings.HasPrefix(line, "data:") {
+				dataStr := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+				if dataStr == "" {
+					continue
+				}
+
+				// Kita forward MENTAH-MENTAH ke Frontend
+				// Supaya frontend bisa baca event: "init" -> ambil session_id
+				// dan event: "delta" -> ambil teks jawaban
+				fmt.Fprintf(w, "event: %s\n", currentEvent)
+				fmt.Fprintf(w, "data: %s\n\n", dataStr)
+				
+				if f, ok := w.(http.Flusher); ok {
+					f.Flush()
+				}
 			}
 		}
-	}
-
-	// Kirim response langsung ke client
-	c.Data(http.StatusOK, "application/json", respBody)
+		resp.Body.Close()
+		return false
+	})
 }

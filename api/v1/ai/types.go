@@ -20,9 +20,9 @@ type TwMessage struct {
 }
 
 type TwContent struct {
-	Text     string      `json:"text,omitempty"`
-	Type     string      `json:"type"` // "text" atau "image_url"
-	ImageURL *TwImageURL `json:"image_url,omitempty"`
+	Text string `json:"text,omitempty"`
+	Type string `json:"type"` // "text" atau "image"
+	B64  string `json:"b64,omitempty"`  // Jika type="image"
 }
 
 type TwImageURL struct {
