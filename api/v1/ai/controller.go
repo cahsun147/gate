@@ -1,13 +1,11 @@
 package ai
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	"gateway/types"
 
@@ -83,11 +81,11 @@ func HandleChat(c *gin.Context) {
 	// Ini sesuai dengan payload Chat 1 Anda.
 	payload := ThirdwebPayload{
 		Messages: twMessages,
-		Stream:   true,
+		Stream:   false, // NON-STREAMING untuk menghindari 503
 		Context: TwContext{
 			ChainIDs:                []string{},
 			AutoExecuteTransactions: false,
-			SessionID:               req.SessionID, 
+			SessionID:               req.SessionID,
 		},
 	}
 
@@ -98,7 +96,7 @@ func HandleChat(c *gin.Context) {
 	}
 
 	// 4. Request ke API Thirdweb yang BENAR
-	targetURL := "https://api.thirdweb.com/ai/chat" 
+	targetURL := "https://api.thirdweb.com/ai/chat"
 	reqPost, err := http.NewRequest("POST", targetURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to create request"})
@@ -111,7 +109,6 @@ func HandleChat(c *gin.Context) {
 	reqPost.Header.Set("Origin", "https://playground.thirdweb.com")
 	reqPost.Header.Set("Referer", "https://playground.thirdweb.com/")
 	reqPost.Header.Set("User-Agent", "Mozilla/5.0")
-	reqPost.Header.Set("Accept", "text/event-stream")
 
 	client := &http.Client{}
 	resp, err := client.Do(reqPost)
@@ -119,55 +116,32 @@ func HandleChat(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "AI Service Unreachable"})
 		return
 	}
-	// Jangan close body disini, kita stream di bawah
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		resp.Body.Close()
+		respBody, _ := io.ReadAll(resp.Body)
+		fmt.Printf("AI Error %d: %s\n", resp.StatusCode, string(respBody))
 		c.JSON(http.StatusServiceUnavailable, types.ErrorResponse{Error: "AI Service Busy"})
 		return
 	}
 
-	// 5. Streaming Proxy (SSE)
-	c.Header("Content-Type", "text/event-stream")
-	c.Header("Cache-Control", "no-cache")
-	c.Header("Connection", "keep-alive")
-	c.Header("Transfer-Encoding", "chunked")
+	// 5. Non-Streaming Response
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to read response"})
+		return
+	}
 
-	c.Stream(func(w io.Writer) bool {
-		scanner := bufio.NewScanner(resp.Body)
-		buf := make([]byte, 0, 64*1024)
-		scanner.Buffer(buf, 1024*1024)
-
-		var currentEvent string
-
-		for scanner.Scan() {
-			line := scanner.Text()
-
-			// Parse Event Name (init, presence, delta)
-			if strings.HasPrefix(line, "event:") {
-				currentEvent = strings.TrimSpace(strings.TrimPrefix(line, "event:"))
-				continue
-			}
-
-			// Parse Data Payload
-			if strings.HasPrefix(line, "data:") {
-				dataStr := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
-				if dataStr == "" {
-					continue
-				}
-
-				// Kita forward MENTAH-MENTAH ke Frontend
-				// Supaya frontend bisa baca event: "init" -> ambil session_id
-				// dan event: "delta" -> ambil teks jawaban
-				fmt.Fprintf(w, "event: %s\n", currentEvent)
-				fmt.Fprintf(w, "data: %s\n\n", dataStr)
-				
-				if f, ok := w.(http.Flusher); ok {
-					f.Flush()
-				}
+	// Parse response untuk session ID
+	var responseMap map[string]interface{}
+	if err := json.Unmarshal(respBody, &responseMap); err == nil {
+		if sessionID, exists := responseMap["session_id"]; exists {
+			if sid, ok := sessionID.(string); ok && sid != "" {
+				fmt.Printf("Session ID: %s\n", sid)
 			}
 		}
-		resp.Body.Close()
-		return false
-	})
+	}
+
+	// Kirim response langsung ke client
+	c.Data(http.StatusOK, "application/json", respBody)
 }
