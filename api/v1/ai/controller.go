@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// System Prompt disuntikkan sebagai pesan pertama
 const SystemPrompt = `You are XMODBlockchain AI, an expert options trader. You trade according to the following guidelines:
 - Can only trade these credit spreads: iron condor, butterfly, bear call/put vertical, bull call/put vertical.
 - Legs must be at least 30 days out and strikes should be at least 1 standard deviation away from the current price.
@@ -26,15 +27,17 @@ You will receive market insights in the form of an image. In this order you must
    d) entry, stop-loss, take-profit
 3. Finally, rate your confidence (%) for each scenario separately.
 
-When you reply, **format everything as a Telegram message** using _Markdown_`
+Format everything as a Telegram message using Markdown.`
 
 func HandleChat(c *gin.Context) {
 	var req ChatRequest
+	// Bind JSON body dari frontend
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{Error: "Invalid JSON format"})
 		return
 	}
 
+	// 1. Ambil Client ID (dari service.go / Cache)
 	clientID, err := GetClientID()
 	if err != nil {
 		fmt.Printf("Error getting client ID: %v\n", err)
@@ -42,33 +45,42 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// --- 1. MENYUSUN PESAN ---
-	var finalMessages []TwMessage
+	// 2. Susun Pesan (Messages Array)
+	var twMessages []TwMessage
 
-	// A. Pesan System
-	systemMessage := TwMessage{
-		Role:    "system",
-		Content: SystemPrompt,
+	// Logic: Jika ini chat pertama (SessionID kosong), kita suntikkan System Prompt
+	// Jika chat kedua (SessionID ada), Thirdweb sudah ingat konteksnya,
+	// tapi aman juga untuk selalu mengirim System Prompt atau digabung dengan user message.
+	// Disini kita prepend system prompt ke user message agar hemat token & konteks terjaga.
+
+	finalText := req.Message
+	if req.SessionID == "" {
+		// Inject Persona di awal percakapan
+		finalText = SystemPrompt + "\n\n" + req.Message
 	}
-	finalMessages = append(finalMessages, systemMessage)
 
-	// B. Pesan User (gabungkan teks dan gambar jika ada)
-	userContent := "User Query: " + req.Message
+	userContent := []TwContent{
+		{Text: finalText, Type: "text"},
+	}
 
-	// Jika ada gambar, tambahkan ke content
+	// Handle Image (jika ada)
 	if req.Image != "" {
-		userContent += "\n\n[Image attached: " + req.Image[:50] + "...]"
+		userContent = append(userContent, TwContent{
+			Type:     "image_url",
+			ImageURL: &TwImageURL{URL: req.Image},
+		})
 	}
 
-	userMessage := TwMessage{
+	twMessages = append(twMessages, TwMessage{
 		Role:    "user",
 		Content: userContent,
-	}
-	finalMessages = append(finalMessages, userMessage)
+	})
 
-	// --- 2. MEMBUAT PAYLOAD ---
+	// 3. Susun Context (Session ID Logic)
+	// Jika req.SessionID kosong (""), maka field session_id akan hilang dari JSON (omitempty)
+	// Ini sesuai dengan payload Chat 1 Anda.
 	payload := ThirdwebPayload{
-		Messages: finalMessages,
+		Messages: twMessages,
 		Stream:   false,
 		Context: TwContext{
 			ChainIDs:                []string{},
@@ -83,7 +95,7 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// --- 3. REQUEST KE THIRDWEB ---
+	// 4. Request ke API Thirdweb yang BENAR
 	targetURL := "https://api.thirdweb.com/ai/chat"
 	reqPost, err := http.NewRequest("POST", targetURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
@@ -91,6 +103,7 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
+	// Headers
 	reqPost.Header.Set("Content-Type", "application/json")
 	reqPost.Header.Set("x-client-id", clientID)
 	reqPost.Header.Set("Origin", "https://playground.thirdweb.com")
@@ -112,7 +125,7 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// --- 4. NON-STREAMING RESPONSE ---
+	// 5. Non-Streaming Response
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to read response"})

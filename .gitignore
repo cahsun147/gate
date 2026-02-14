@@ -45,6 +45,8 @@ app/api/test-api/
 *.py
 *.txt
 *.json
+!package.json
+!package-lock.json
 /test/
 go.mod
 go.sum
