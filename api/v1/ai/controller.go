@@ -1,13 +1,11 @@
 package ai
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	"gateway/types"
 
@@ -49,28 +47,17 @@ func HandleChat(c *gin.Context) {
 
 	// A. Pesan System
 	systemMessage := TwMessage{
-		Role: "system",
-		Content: []TwContentItem{
-			{Type: "text", Text: SystemPrompt},
-		},
+		Role:    "system",
+		Content: SystemPrompt,
 	}
 	finalMessages = append(finalMessages, systemMessage)
 
-	// B. Pesan User
-	var userContent []TwContentItem
+	// B. Pesan User (gabungkan teks dan gambar jika ada)
+	userContent := "User Query: " + req.Message
 
-	// 1. Tambahkan Teks
-	userContent = append(userContent, TwContentItem{
-		Type: "text",
-		Text: "User Query: " + req.Message,
-	})
-
-	// 2. Tambahkan Gambar (Jika ada)
+	// Jika ada gambar, tambahkan ke content
 	if req.Image != "" {
-		userContent = append(userContent, TwContentItem{
-			Type: "image",
-			B64:  req.Image, // Field ini sekarang dikenali dari types.go
-		})
+		userContent += "\n\n[Image attached: " + req.Image[:50] + "...]"
 	}
 
 	userMessage := TwMessage{
@@ -82,7 +69,7 @@ func HandleChat(c *gin.Context) {
 	// --- 2. MEMBUAT PAYLOAD ---
 	payload := ThirdwebPayload{
 		Messages: finalMessages,
-		Stream:   true,
+		Stream:   false,
 		Context: TwContext{
 			ChainIDs:                []string{},
 			AutoExecuteTransactions: false,
@@ -109,7 +96,6 @@ func HandleChat(c *gin.Context) {
 	reqPost.Header.Set("Origin", "https://playground.thirdweb.com")
 	reqPost.Header.Set("Referer", "https://playground.thirdweb.com/")
 	reqPost.Header.Set("User-Agent", "Mozilla/5.0")
-	reqPost.Header.Set("Accept", "text/event-stream")
 
 	client := &http.Client{}
 	resp, err := client.Do(reqPost)
@@ -126,33 +112,23 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// --- 4. MANUAL STREAMING ---
-	c.Writer.Header().Set("Content-Type", "text/event-stream")
-	c.Writer.Header().Set("Cache-Control", "no-cache")
-	c.Writer.Header().Set("Connection", "keep-alive")
+	// --- 4. NON-STREAMING RESPONSE ---
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to read response"})
+		return
+	}
 
-	scanner := bufio.NewScanner(resp.Body)
-	buf := make([]byte, 0, 128*1024)
-	scanner.Buffer(buf, 1024*1024)
-
-	var currentEvent string
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if strings.HasPrefix(line, "event:") {
-			currentEvent = strings.TrimSpace(strings.TrimPrefix(line, "event:"))
-			continue
-		}
-
-		if strings.HasPrefix(line, "data:") {
-			dataStr := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
-			if dataStr == "" {
-				continue
+	// Parse response untuk session ID
+	var responseMap map[string]interface{}
+	if err := json.Unmarshal(respBody, &responseMap); err == nil {
+		if sessionID, exists := responseMap["session_id"]; exists {
+			if sid, ok := sessionID.(string); ok && sid != "" {
+				fmt.Printf("Session ID: %s\n", sid)
 			}
-
-			fmt.Fprintf(c.Writer, "event: %s\n", currentEvent)
-			fmt.Fprintf(c.Writer, "data: %s\n\n", dataStr)
 		}
 	}
+
+	// Kirim response langsung ke client
+	c.Data(http.StatusOK, "application/json", respBody)
 }

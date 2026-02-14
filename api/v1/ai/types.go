@@ -15,8 +15,8 @@ type ThirdwebPayload struct {
 }
 
 type TwMessage struct {
-	Role    string          `json:"role"`    // "system" atau "user"
-	Content []TwContentItem `json:"content"` // Wajib Array
+	Role    string `json:"role"`    // "system" atau "user"
+	Content string `json:"content"` // Thirdweb butuh string, bukan array
 }
 
 type TwContentItem struct {
