@@ -1,103 +1,123 @@
 package ai
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"regexp"
 	"time"
 
-	"gateway/cache" // Pastikan import ini sesuai module Anda
+	"github.com/patrickmn/go-cache"
 )
 
-const (
-	PlaygroundURL = "https://playground.thirdweb.com/ai/chat"
-	BaseURL       = "https://playground.thirdweb.com"
-	CacheKey      = "thirdweb:client_id"
-)
+var clientIdCache = cache.New(1*time.Hour, 2*time.Hour)
 
-// GetClientID mengambil Client ID dari Cache atau Scrape ulang dari web
-func GetClientID() (string, error) {
-	// 1. Cek Redis Cache dulu
-	if cachedID, err := cache.GetCache(CacheKey); err == nil && cachedID != nil {
-		if idStr, ok := cachedID.(string); ok && idStr != "" {
-			return idStr, nil
-		}
+// getClientId melakukan scraping untuk mendapatkan ID Thirdweb (PENTING)
+func getClientId() (string, error) {
+	if id, found := clientIdCache.Get("thirdweb_client_id"); found {
+		return id.(string), nil
 	}
 
-	fmt.Println("🔄 Client ID not in cache, scraping...")
-
-	// 2. Buat HTTP client standar
-	client := &http.Client{Timeout: 10 * time.Second}
-
-	// 3. Fetch Halaman Utama untuk cari file JS
-	req, err := http.NewRequest("GET", PlaygroundURL, nil)
+	resp, err := http.Get("https://playground.thirdweb.com/ai/chat")
 	if err != nil {
-		return "", fmt.Errorf("failed to create request for playground: %v", err)
-	}
-	req.Header.Set("User-Agent", "Mozilla/5.0")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to fetch playground: %v", err)
+		return "", err
 	}
 	defer resp.Body.Close()
 
-	bodyBytes, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read playground body: %v", err)
-	}
-	htmlContent := string(bodyBytes)
-
-	// 4. Cari Path File JS (Regex)
-	// Python: r"/_next/static/chunks/app/ai/chat/page-[^\"']+\.js"
-	jsFileRegex := regexp.MustCompile(`/_next/static/chunks/app/ai/chat/page-[^"']+\.js`)
-	jsPath := jsFileRegex.FindString(htmlContent)
-
-	if jsPath == "" {
-		return "", fmt.Errorf("failed to find JS file path in HTML")
+		return "", err
 	}
 
-	// 5. Fetch File JS tersebut
-	jsURL := BaseURL + jsPath
-	reqJS, err := http.NewRequest("GET", jsURL, nil)
+	reJS := regexp.MustCompile(`/_next/static/chunks/app/ai/chat/page-[^"']+\.js`)
+	jsFile := reJS.FindString(string(body))
+	if jsFile == "" {
+		return "", fmt.Errorf("JS file not found")
+	}
+
+	jsResp, err := http.Get("https://playground.thirdweb.com" + jsFile)
 	if err != nil {
-		return "", fmt.Errorf("failed to create request for JS file: %v", err)
+		return "", err
 	}
-	reqJS.Header.Set("User-Agent", "Mozilla/5.0")
+	defer jsResp.Body.Close()
 
-	respJS, err := client.Do(reqJS)
+	jsBody, err := io.ReadAll(jsResp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch JS file: %v", err)
+		return "", err
 	}
-	defer respJS.Body.Close()
 
-	jsBodyBytes, err := io.ReadAll(respJS.Body)
+	reID := regexp.MustCompile(`clientId\s*:\s*"([a-f0-9]{32})"`)
+	match := reID.FindStringSubmatch(string(jsBody))
+	
+	if len(match) < 2 {
+		reIDAlt := regexp.MustCompile(`"x-client-id"\s*:\s*"([a-f0-9]{32})"`)
+		match = reIDAlt.FindStringSubmatch(string(jsBody))
+	}
+
+	if len(match) >= 2 {
+		clientId := match[1]
+		clientIdCache.Set("thirdweb_client_id", clientId, cache.DefaultExpiration)
+		return clientId, nil
+	}
+
+	return "", fmt.Errorf("Client ID not found")
+}
+
+// SendChatToAI mengirim pesan ke Thirdweb TANPA Streaming
+func SendChatToAI(messages []Message) (*ChatResponse, error) {
+	clientID, err := getClientId()
 	if err != nil {
-		return "", fmt.Errorf("failed to read JS body: %v", err)
-	}
-	jsContent := string(jsBodyBytes)
-
-	// 6. Extract Client ID dari konten JS
-	// Pattern 1: "x-client-id":"..."
-	idRegex := regexp.MustCompile(`"x-client-id"\s*:\s*"([a-f0-9]{32})"`)
-	matches := idRegex.FindStringSubmatch(jsContent)
-
-	if len(matches) < 2 {
-		// Pattern 2 (Fallback): clientId:"..."
-		idRegex2 := regexp.MustCompile(`clientId\s*:\s*"([a-f0-9]{32})"`)
-		matches = idRegex2.FindStringSubmatch(jsContent)
-		if len(matches) < 2 {
-			return "", fmt.Errorf("failed to regex match client ID in JS file")
-		}
+		fmt.Println("Warning: Could not scrape Client ID:", err)
 	}
 
-	clientID := matches[1]
-	fmt.Printf("✅ Found Client ID: %s\n", clientID)
+	contextData := map[string]interface{}{
+		"chain_ids":                 []string{},
+		"auto_execute_transactions": false,
+	}
 
-	// 7. Simpan ke Redis (Cache selama 1 Jam)
-	// Pastikan fungsi cache.SetCache di project Anda mendukung parameter ini
-	_ = cache.SetCache(CacheKey, clientID, 1*time.Hour)
+	payload := map[string]interface{}{
+		"messages": messages,
+		"stream":   false, // <--- DIUBAH JADI FALSE
+		"context":  contextData,
+	}
 
-	return clientID, nil
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", "https://playground.thirdweb.com/api/chat", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "Mozilla/5.0")
+	req.Header.Set("Origin", "https://playground.thirdweb.com")
+	req.Header.Set("Referer", "https://playground.thirdweb.com/")
+	
+	if clientID != "" {
+		req.Header.Set("x-client-id", clientID)
+	}
+
+	client := &http.Client{Timeout: 60 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("AI Provider error status: %d", resp.StatusCode)
+	}
+
+	// Decode langsung ke struct ChatResponse
+	var chatResp ChatResponse
+	if err := json.NewDecoder(resp.Body).Decode(&chatResp); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %v", err)
+	}
+
+	return &chatResp, nil
 }

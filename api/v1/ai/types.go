@@ -1,37 +1,25 @@
 package ai
 
-// Input dari Frontend
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
 type ChatRequest struct {
-	Message   string `json:"message"`
-	Image     string `json:"image,omitempty"`      // Base64
-	SessionID string `json:"session_id,omitempty"` // Opsional (kosong saat chat pertama)
+	Messages []Message `json:"messages"`
+	Stream   bool      `json:"stream"`
 }
 
-// Payload ke Thirdweb (Sesuai Log Asli)
-type ThirdwebPayload struct {
-	Messages []TwMessage `json:"messages"`
-	Stream   bool        `json:"stream"`
-	Context  TwContext   `json:"context"`
+// Struktur Response JSON dari Thirdweb (Non-Stream)
+type ChatResponse struct {
+	ID      string   `json:"id"`
+	Object  string   `json:"object"`
+	Created int64    `json:"created"`
+	Choices []Choice `json:"choices"`
 }
 
-type TwMessage struct {
-	Content []TwContent `json:"content"`
-	Role    string      `json:"role"`
-}
-
-type TwContent struct {
-	Text string `json:"text,omitempty"`
-	Type string `json:"type"` // "text" atau "image"
-	B64  string `json:"b64,omitempty"`  // Jika type="image"
-}
-
-type TwImageURL struct {
-	URL string `json:"url"`
-}
-
-type TwContext struct {
-	ChainIDs                []string `json:"chain_ids"`
-	AutoExecuteTransactions bool     `json:"auto_execute_transactions"`
-	// PENTING: omitempty agar field ini HILANG jika string kosong ""
-	SessionID string `json:"session_id,omitempty"`
+type Choice struct {
+	Index        int     `json:"index"`
+	Message      Message `json:"message"` // Perhatikan ini 'Message', bukan 'Delta'
+	FinishReason string  `json:"finish_reason"`
 }
