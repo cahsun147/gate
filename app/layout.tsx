@@ -14,8 +14,8 @@ const RootLayout = ({ children }: { children: React.ReactNode }): JSX.Element =>
         <meta property="og:title" content={settings.title} />
         <meta property="og:site_name" content={settings.title} />
         <meta property="og:description" content={settings.description} />
-        <meta property="og:image" content="https://next.arwes.dev/arwes.jpg" />
-        <meta property="og:url" content="https://next.arwes.dev" />
+        <meta property="og:image" content="https://gate-ashy-iota.vercel.app/xgate.jpg" />
+        <meta property="og:url" content="https://gate-ashy-iota.vercel.app/" />
         <meta property="og:type" content="website" />
         <meta name="twitter:image:alt" content={settings.title} />
         <meta name="twitter:card" content="summary_large_image" />
