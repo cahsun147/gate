@@ -1,12 +1,14 @@
 package ai
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/patrickmn/go-cache"
@@ -14,43 +16,42 @@ import (
 
 var clientIdCache = cache.New(1*time.Hour, 2*time.Hour)
 
-// getClientId melakukan scraping untuk mendapatkan ID Thirdweb (PENTING)
 func getClientId() (string, error) {
 	if id, found := clientIdCache.Get("thirdweb_client_id"); found {
 		return id.(string), nil
 	}
 
-	resp, err := http.Get("https://playground.thirdweb.com/ai/chat")
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+
+	// 1. Scraping Page
+	reqPage, _ := http.NewRequest("GET", "https://playground.thirdweb.com/ai/chat", nil)
+	reqPage.Header.Set("User-Agent", "Mozilla/5.0")
+	respPage, err := httpClient.Do(reqPage)
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer respPage.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
+	body, _ := io.ReadAll(respPage.Body)
 	reJS := regexp.MustCompile(`/_next/static/chunks/app/ai/chat/page-[^"']+\.js`)
 	jsFile := reJS.FindString(string(body))
 	if jsFile == "" {
 		return "", fmt.Errorf("JS file not found")
 	}
 
-	jsResp, err := http.Get("https://playground.thirdweb.com" + jsFile)
+	// 2. Scraping JS
+	reqJS, _ := http.NewRequest("GET", "https://playground.thirdweb.com"+jsFile, nil)
+	reqJS.Header.Set("User-Agent", "Mozilla/5.0")
+	respJS, err := httpClient.Do(reqJS)
 	if err != nil {
 		return "", err
 	}
-	defer jsResp.Body.Close()
+	defer respJS.Body.Close()
 
-	jsBody, err := io.ReadAll(jsResp.Body)
-	if err != nil {
-		return "", err
-	}
-
+	jsBody, _ := io.ReadAll(respJS.Body)
 	reID := regexp.MustCompile(`clientId\s*:\s*"([a-f0-9]{32})"`)
 	match := reID.FindStringSubmatch(string(jsBody))
-	
+
 	if len(match) < 2 {
 		reIDAlt := regexp.MustCompile(`"x-client-id"\s*:\s*"([a-f0-9]{32})"`)
 		match = reIDAlt.FindStringSubmatch(string(jsBody))
@@ -65,39 +66,27 @@ func getClientId() (string, error) {
 	return "", fmt.Errorf("Client ID not found")
 }
 
-// SendChatToAI mengirim pesan ke Thirdweb TANPA Streaming
-func SendChatToAI(messages []Message) (*ChatResponse, error) {
+// Berubah mengembalikan string, BUKAN *ChatResponse
+func SendChatToAI(messages []Message) (string, error) {
 	clientID, err := getClientId()
 	if err != nil {
 		fmt.Println("Warning: Could not scrape Client ID:", err)
-	}
-
-	contextData := map[string]interface{}{
-		"chain_ids":                 []string{},
-		"auto_execute_transactions": false,
+		return "", err
 	}
 
 	payload := map[string]interface{}{
 		"messages": messages,
-		"stream":   false, // <--- DIUBAH JADI FALSE
-		"context":  contextData,
+		"stream":   true, // <-- WAJIB TRUE AGAR THIRDWEB TIDAK ERROR 500
+		"context":  map[string]interface{}{"chain_ids": []string{}, "auto_execute_transactions": false},
 	}
 
-	jsonData, err := json.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", "https://playground.thirdweb.com/api/chat", bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, err
-	}
+	jsonData, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("POST", "https://playground.thirdweb.com/api/chat", bytes.NewBuffer(jsonData))
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "Mozilla/5.0")
 	req.Header.Set("Origin", "https://playground.thirdweb.com")
 	req.Header.Set("Referer", "https://playground.thirdweb.com/")
-	
 	if clientID != "" {
 		req.Header.Set("x-client-id", clientID)
 	}
@@ -105,19 +94,34 @@ func SendChatToAI(messages []Message) (*ChatResponse, error) {
 	client := &http.Client{Timeout: 60 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("AI Provider error status: %d", resp.StatusCode)
+		return "", fmt.Errorf("AI Provider error status: %d", resp.StatusCode)
 	}
 
-	// Decode langsung ke struct ChatResponse
-	var chatResp ChatResponse
-	if err := json.NewDecoder(resp.Body).Decode(&chatResp); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %v", err)
+	// BUFFERING: Mengumpulkan potongan Stream menjadi satu text utuh
+	var fullResponse strings.Builder
+	scanner := bufio.NewScanner(resp.Body)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "data:") {
+			jsonStr := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+			if jsonStr == "" || jsonStr == "[DONE]" {
+				continue
+			}
+
+			var data struct {
+				V string `json:"v"`
+			}
+			if err := json.Unmarshal([]byte(jsonStr), &data); err == nil {
+				fullResponse.WriteString(data.V)
+			}
+		}
 	}
 
-	return &chatResp, nil
+	return fullResponse.String(), nil
 }

@@ -30,8 +30,7 @@ func init() {
 		// Setup /api/v1 group
 		v1Group := apiGroup.Group("/v1")
 		{
-			// AI Route (UBAH DISINI: dari "/ai/chat" menjadi "/chat")
-			// Hasil akhir: /api/v1/chat
+
 			v1Group.POST("/chat", ai.HandleChat)
 
 			// Token Routes
