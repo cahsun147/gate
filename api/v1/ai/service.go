@@ -62,17 +62,31 @@ func getClientId() (string, error) {
 	return "", fmt.Errorf("Client ID not found")
 }
 
-// Kita kembalikan map interface{} agar struktur JSON "ASLI" dari Thirdweb tidak hilang
 func SendChatToAI(messages []Message) (map[string]interface{}, error) {
 	clientID, err := getClientId()
 	if err != nil {
 		fmt.Println("Warning: Could not scrape Client ID:", err)
 	}
 
-	// Payload mirip dengan yang di ainostream.py
+	// 1. AUTO-CONVERTER MULTIMODAL
+	// Mengubah "content": "teks" menjadi "content": [{"type":"text", "text":"teks"}]
+	// agar Thirdweb tidak menolak (Error 400).
+	formattedMessages := make([]Message, len(messages))
+	copy(formattedMessages, messages)
+
+	for i, msg := range formattedMessages {
+		// Jika content masih string biasa (seperti dari test_api.py), kita bungkus!
+		if strContent, ok := msg.Content.(string); ok {
+			formattedMessages[i].Content = []map[string]string{
+				{"type": "text", "text": strContent},
+			}
+		}
+	}
+
+	// 2. PAYLOAD UNTUK THIRDWEB
 	payload := map[string]interface{}{
-		"messages": messages,
-		"stream":   false, // Gunakan FALSE karena API Asli mendukungnya jika format benar
+		"messages": formattedMessages,
+		"stream":   false,
 		"context": map[string]interface{}{
 			"chain_ids":                 []string{},
 			"auto_execute_transactions": false,
@@ -97,14 +111,24 @@ func SendChatToAI(messages []Message) (map[string]interface{}, error) {
 	}
 	defer resp.Body.Close()
 
-	// Parse secara dinamis respons ASLI (message, session_id, dll)
-	var rawResponse map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&rawResponse); err != nil {
-		return nil, fmt.Errorf("failed to read response: %v", err)
+	// 3. BACA BODY DULU SEBELUM PARSING JSON (Mencegah Crash EOF)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("gagal membaca response body: %v", err)
 	}
 
-	if resp.StatusCode != 200 {
-		return rawResponse, fmt.Errorf("API Error %d", resp.StatusCode)
+	// Jika ada error (misal 400/401/500), tangkap pesan ASLI dari Thirdweb
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Thirdweb API Error %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var rawResponse map[string]interface{}
+	if len(bodyBytes) > 0 {
+		if err := json.Unmarshal(bodyBytes, &rawResponse); err != nil {
+			return nil, fmt.Errorf("gagal parse JSON: %v | Body: %s", err, string(bodyBytes))
+		}
+	} else {
+		return nil, fmt.Errorf("Thirdweb mengembalikan response kosong (0 bytes)")
 	}
 
 	return rawResponse, nil
