@@ -83,7 +83,7 @@ func SendChatToAI(messages []Message) (map[string]interface{}, error) {
 	req, _ := http.NewRequest("POST", "https://playground.thirdweb.com/api/chat", bytes.NewBuffer(jsonData))
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "Mozilla/5.0")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36")
 	req.Header.Set("Origin", "https://playground.thirdweb.com")
 	req.Header.Set("Referer", "https://playground.thirdweb.com/")
 	if clientID != "" {
