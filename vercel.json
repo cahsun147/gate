@@ -24,7 +24,7 @@
       "dest": "api/index.go"
     },
     {
-      "src": "/api/v1/ai/(.*)", 
+      "src": "/api/v1/chat(.*)", 
       "dest": "api/index.go"
     },
     {
