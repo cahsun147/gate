@@ -1,14 +1,12 @@
 package ai
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/patrickmn/go-cache"
@@ -23,7 +21,6 @@ func getClientId() (string, error) {
 
 	httpClient := &http.Client{Timeout: 10 * time.Second}
 
-	// 1. Scraping Page
 	reqPage, _ := http.NewRequest("GET", "https://playground.thirdweb.com/ai/chat", nil)
 	reqPage.Header.Set("User-Agent", "Mozilla/5.0")
 	respPage, err := httpClient.Do(reqPage)
@@ -39,7 +36,6 @@ func getClientId() (string, error) {
 		return "", fmt.Errorf("JS file not found")
 	}
 
-	// 2. Scraping JS
 	reqJS, _ := http.NewRequest("GET", "https://playground.thirdweb.com"+jsFile, nil)
 	reqJS.Header.Set("User-Agent", "Mozilla/5.0")
 	respJS, err := httpClient.Do(reqJS)
@@ -66,18 +62,21 @@ func getClientId() (string, error) {
 	return "", fmt.Errorf("Client ID not found")
 }
 
-// Berubah mengembalikan string, BUKAN *ChatResponse
-func SendChatToAI(messages []Message) (string, error) {
+// Kita kembalikan map interface{} agar struktur JSON "ASLI" dari Thirdweb tidak hilang
+func SendChatToAI(messages []Message) (map[string]interface{}, error) {
 	clientID, err := getClientId()
 	if err != nil {
 		fmt.Println("Warning: Could not scrape Client ID:", err)
-		return "", err
 	}
 
+	// Payload mirip dengan yang di ainostream.py
 	payload := map[string]interface{}{
 		"messages": messages,
-		"stream":   true, // <-- WAJIB TRUE AGAR THIRDWEB TIDAK ERROR 500
-		"context":  map[string]interface{}{"chain_ids": []string{}, "auto_execute_transactions": false},
+		"stream":   false, // Gunakan FALSE karena API Asli mendukungnya jika format benar
+		"context": map[string]interface{}{
+			"chain_ids":                 []string{},
+			"auto_execute_transactions": false,
+		},
 	}
 
 	jsonData, _ := json.Marshal(payload)
@@ -94,34 +93,19 @@ func SendChatToAI(messages []Message) (string, error) {
 	client := &http.Client{Timeout: 60 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("AI Provider error status: %d", resp.StatusCode)
+	// Parse secara dinamis respons ASLI (message, session_id, dll)
+	var rawResponse map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&rawResponse); err != nil {
+		return nil, fmt.Errorf("failed to read response: %v", err)
 	}
 
-	// BUFFERING: Mengumpulkan potongan Stream menjadi satu text utuh
-	var fullResponse strings.Builder
-	scanner := bufio.NewScanner(resp.Body)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "data:") {
-			jsonStr := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
-			if jsonStr == "" || jsonStr == "[DONE]" {
-				continue
-			}
-
-			var data struct {
-				V string `json:"v"`
-			}
-			if err := json.Unmarshal([]byte(jsonStr), &data); err == nil {
-				fullResponse.WriteString(data.V)
-			}
-		}
+	if resp.StatusCode != 200 {
+		return rawResponse, fmt.Errorf("API Error %d", resp.StatusCode)
 	}
 
-	return fullResponse.String(), nil
+	return rawResponse, nil
 }

@@ -9,27 +9,22 @@ import (
 func HandleChat(c *gin.Context) {
 	var req ChatRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid format", "details": err.Error()})
 		return
 	}
 
-	// Dapatkan text utuh dari Service yang sudah di-buffer
-	responseText, err := SendChatToAI(req.Messages)
+	// Teruskan pesan ke Thirdweb API
+	originalResponse, err := SendChatToAI(req.Messages)
+
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to connect to AI provider: " + err.Error()})
+		// Jika error dari Thirdweb (misal 500), tampilkan rawResponse-nya untuk debugging
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":            err.Error(),
+			"thirdweb_details": originalResponse,
+		})
 		return
 	}
 
-	// Kirim JSON rapi (Non-streaming) ke Bot/Python Anda
-	c.JSON(http.StatusOK, gin.H{
-		"id": "chatcmpl-gate",
-		"choices": []gin.H{
-			{
-				"message": gin.H{
-					"role":    "assistant",
-					"content": responseText,
-				},
-			},
-		},
-	})
+	// 🚀 OUTPUTKAN JSON ASLI (Sama persis seperti Python Anda)
+	c.JSON(http.StatusOK, originalResponse)
 }
