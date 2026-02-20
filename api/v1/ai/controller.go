@@ -2,6 +2,7 @@ package ai
 
 import (
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,16 +13,18 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// Memanggil service proxy
+	// Memanggil service
 	result, err := SendChatToAI(req.Messages)
+
 	if err != nil {
+		// Menampilkan error dengan detail asli dari Thirdweb jika ada
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "ai_provider_failed",
-			"info":  err.Error(),
+			"error":            err.Error(),
+			"thirdweb_details": result,
 		})
 		return
 	}
 
-	// Kirimkan bodi respons asli dari Thirdweb ke client
+	// Outputkan persis aslinya
 	c.JSON(http.StatusOK, result)
 }
