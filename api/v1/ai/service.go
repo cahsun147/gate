@@ -14,77 +14,98 @@ import (
 
 var clientIdCache = cache.New(5*time.Hour, 10*time.Hour)
 
+const (
+	pageURL   = "https://playground.thirdweb.com/ai/chat"
+	baseURL   = "https://playground.thirdweb.com"
+	apiURL    = "https://api.thirdweb.com/ai/chat"
+	userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36"
+)
+
 func getClientId() (string, error) {
 	if id, found := clientIdCache.Get("thirdweb_client_id"); found {
 		return id.(string), nil
 	}
 
 	client := &http.Client{Timeout: 15 * time.Second}
-	req, _ := http.NewRequest("GET", "https://playground.thirdweb.com/ai/chat", nil)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-
-	resp, err := client.Do(req)
+	resp, err := client.Get(pageURL)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to fetch page: %v", err)
 	}
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
 	reJS := regexp.MustCompile(`/_next/static/chunks/app/ai/chat/page-[^"']+\.js`)
-	jsFile := reJS.FindString(string(body))
-	if jsFile == "" {
+	jsPaths := reJS.FindAllString(string(body), -1)
+	if len(jsPaths) == 0 {
 		return "", fmt.Errorf("JS file path not found")
 	}
 
-	reqJS, _ := http.NewRequest("GET", "https://playground.thirdweb.com"+jsFile, nil)
-	reqJS.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-	respJS, err := client.Do(reqJS)
-	if err != nil {
-		return "", err
+	// Deduplikasi path
+	uniquePaths := make(map[string]bool)
+	for _, p := range jsPaths {
+		uniquePaths[p] = true
 	}
-	defer respJS.Body.Close()
 
-	jsBody, _ := io.ReadAll(respJS.Body)
 	patterns := []string{`"x-client-id"\s*:\s*"([a-f0-9]{32})"`, `clientId\s*:\s*"([a-f0-9]{32})"`}
-	for _, p := range patterns {
-		match := regexp.MustCompile(p).FindStringSubmatch(string(jsBody))
-		if len(match) >= 2 {
-			clientId := match[1]
-			clientIdCache.Set("thirdweb_client_id", clientId, cache.DefaultExpiration)
-			return clientId, nil
+
+	for path := range uniquePaths {
+		reqJS, _ := http.NewRequest("GET", baseURL+path, nil)
+		reqJS.Header.Set("User-Agent", userAgent)
+		respJS, err := client.Do(reqJS)
+		if err != nil {
+			continue
+		}
+
+		jsBody, _ := io.ReadAll(respJS.Body)
+		respJS.Body.Close()
+
+		for _, p := range patterns {
+			match := regexp.MustCompile(p).FindStringSubmatch(string(jsBody))
+			if len(match) >= 2 {
+				clientId := match[1]
+				clientIdCache.Set("thirdweb_client_id", clientId, cache.DefaultExpiration)
+				return clientId, nil
+			}
 		}
 	}
-	return "", fmt.Errorf("Client ID not found")
+
+	return "", fmt.Errorf("client ID not found")
 }
 
-func SendChatToAI(messages []Message) (map[string]interface{}, error) {
+func SendChatToAI(messages []Message) (*ChatResponse, error) {
 	clientID, err := getClientId()
 	if err != nil {
 		return nil, fmt.Errorf("auth_init_failed: %v", err)
 	}
 
-	// PAYLOAD SEMPURNA: Sama persis dengan test Python Anda
-	payload := map[string]interface{}{
-		"messages": messages,
-		"stream":   false,
-		"context": map[string]interface{}{ // <-- INI YANG BIKIN THIRDWEB ERROR 500 KEMARIN KARENA HILANG
-			"chain_ids":                 []string{},
-			"auto_execute_transactions": false,
+	payload := ChatPayload{
+		Messages: messages,
+		Stream:   false,
+		Context: ChatContext{
+			ChainIds:                []string{},
+			AutoExecuteTransactions: false,
 		},
 	}
 
-	jsonData, _ := json.Marshal(payload)
-	req, _ := http.NewRequest("POST", "https://playground.thirdweb.com/api/chat", bytes.NewBuffer(jsonData))
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("marshal_error: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("request_creation_failed: %v", err)
+	}
 
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	if clientID != "" {
 		req.Header.Set("x-client-id", clientID)
 	}
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-	req.Header.Set("Origin", "https://playground.thirdweb.com")
-	req.Header.Set("Referer", "https://playground.thirdweb.com/ai/chat")
+	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("Origin", baseURL)
+	req.Header.Set("Referer", pageURL)
 
-	// Timeout panjang karena AI butuh waktu ngetik di server sana
 	client := &http.Client{Timeout: 60 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -92,20 +113,19 @@ func SendChatToAI(messages []Message) (map[string]interface{}, error) {
 	}
 	defer resp.Body.Close()
 
-	bodyBytes, _ := io.ReadAll(resp.Body)
-
-	// Proses Body JSON
-	var rawResponse map[string]interface{}
-	if len(bodyBytes) > 0 {
-		if err := json.Unmarshal(bodyBytes, &rawResponse); err != nil {
-			return nil, fmt.Errorf("Thirdweb API Error %d: %s", resp.StatusCode, string(bodyBytes))
-		}
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read_body_failed: %v", err)
 	}
 
-	// Jika status bukan 200, kembalikan JSON error dari Thirdweb
 	if resp.StatusCode != http.StatusOK {
-		return rawResponse, fmt.Errorf("API Error %d", resp.StatusCode)
+		return nil, fmt.Errorf("api_error_%d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
-	return rawResponse, nil
+	var chatResp ChatResponse
+	if err := json.Unmarshal(bodyBytes, &chatResp); err != nil {
+		return nil, fmt.Errorf("decode_error: %v | body: %s", err, string(bodyBytes))
+	}
+
+	return &chatResp, nil
 }
