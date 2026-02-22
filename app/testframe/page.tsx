@@ -4,7 +4,7 @@ import React from 'react'
 import { useEffect, useState } from 'react'
 import { Animator } from '@arwes/react'
 
-import { FrameEnergLIne, FrameLinesAssembled, FrameXGate } from '@/components'
+import { FrameEnergLIne, FrameGateFolderTab, FrameGateFolderTabGlass, FrameXGate } from '@/components'
 
 const PageTestFrame = (): JSX.Element => {
   const [active, setActive] = useState(true)
@@ -26,43 +26,18 @@ const PageTestFrame = (): JSX.Element => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="relative h-[240px] overflow-hidden">
               <FrameEnergLIne />
-              <div className="relative z-10 h-full flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-lg tracking-widest">SYSTEM ONLINE</div>
-                  <div className="text-xs opacity-70">FrameEnergLIne</div>
-                </div>
-              </div>
             </div>
 
             <div className="relative h-[240px] overflow-hidden">
               <FrameXGate />
-              <div className="relative z-10 h-full flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-lg tracking-widest">XGATE</div>
-                  <div className="text-xs opacity-70">FrameXGate</div>
-                </div>
-              </div>
             </div>
 
             <div className="relative h-[240px] overflow-hidden md:col-span-2">
-              <FrameLinesAssembled
-                style={
-                  {
-                    '--arwes-frames-bg-color': 'hsl(180deg 75% 50% / 5%)',
-                    '--arwes-frames-line-color': '#20dfdf',
-                    '--arwes-frames-deco-color': '#20dfdf'
-                  } as React.CSSProperties
-                }
-                largeLineWidth={2}
-                smallLineWidth={4}
-                smallLineLength={24}
-              />
-              <div className="relative z-10 h-full flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-lg tracking-widest">ASSEMBLED</div>
-                  <div className="text-xs opacity-70">FrameLinesAssembled</div>
-                </div>
-              </div>
+              <FrameGateFolderTab />
+            </div>
+
+            <div className="relative h-[240px] overflow-hidden md:col-span-2">
+              <FrameGateFolderTabGlass />
             </div>
           </div>
         </Animator>
