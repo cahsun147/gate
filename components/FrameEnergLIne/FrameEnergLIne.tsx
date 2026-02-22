@@ -114,7 +114,7 @@ const FrameEnergLIne = memo((props: FrameEnergLIneProps): JSX.Element => {
   useFrameAssembler(elementRef)
 
   return (
-    <Animator duration={{ enter: 1.5, exit: 1.5 }}>
+    <Animator duration={{ enter: 4, exit: 1.5 }}>
       <div ref={elementRef} className={className} style={{ position: 'absolute', inset: 0, ...style }}>
         <FrameBase {...({ settings: frameSettings, animated: false } as any)} />
       </div>
