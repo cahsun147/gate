@@ -15,9 +15,12 @@ const PageTestFrame = (): JSX.Element => {
   const [active, setActive] = useState(true)
 
   useEffect(() => {
-    const tid = setTimeout(() => setActive(!active), active ? 3_000 : 1_500)
-    return () => clearTimeout(tid)
-  }, [active])
+    const tid = setInterval(() => {
+      setActive(false)
+      setTimeout(() => setActive(true), 1500)
+    }, 3000)
+    return () => clearInterval(tid)
+  }, [])
 
   return (
     <div className="flex-1 min-w-0 min-h-0 p-6 overflow-auto">
@@ -27,7 +30,7 @@ const PageTestFrame = (): JSX.Element => {
           <p className="text-sm opacity-70">Halaman ini untuk testing visual custom frames.</p>
         </div>
 
-        <Animator active={active} duration={{ enter: 5, exit: 5 }} manager="sequence">
+        <Animator active={active} duration={{ enter: 5, exit: 5 }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="relative h-[240px] overflow-hidden">
               <FrameEnergLIne />
