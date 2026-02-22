@@ -1,0 +1,74 @@
+'use client'
+
+import React from 'react'
+import { useEffect, useState } from 'react'
+import { Animator } from '@arwes/react'
+
+import { FrameEnergLIne, FrameLinesAssembled, FrameXGate } from '@/components'
+
+const PageTestFrame = (): JSX.Element => {
+  const [active, setActive] = useState(true)
+
+  useEffect(() => {
+    const tid = setTimeout(() => setActive(!active), active ? 3_000 : 1_500)
+    return () => clearTimeout(tid)
+  }, [active])
+
+  return (
+    <div className="flex-1 min-w-0 min-h-0 p-6 overflow-auto">
+      <div className="max-w-5xl mx-auto flex flex-col gap-6">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-semibold">Test Frame</h1>
+          <p className="text-sm opacity-70">Halaman ini untuk testing visual custom frames.</p>
+        </div>
+
+        <Animator active={active} duration={{ enter: 1, exit: 1 }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="relative h-[240px] overflow-hidden">
+              <FrameEnergLIne />
+              <div className="relative z-10 h-full flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-lg tracking-widest">SYSTEM ONLINE</div>
+                  <div className="text-xs opacity-70">FrameEnergLIne</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative h-[240px] overflow-hidden">
+              <FrameXGate />
+              <div className="relative z-10 h-full flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-lg tracking-widest">XGATE</div>
+                  <div className="text-xs opacity-70">FrameXGate</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative h-[240px] overflow-hidden md:col-span-2">
+              <FrameLinesAssembled
+                style={
+                  {
+                    '--arwes-frames-bg-color': 'hsl(180deg 75% 50% / 5%)',
+                    '--arwes-frames-line-color': '#20dfdf',
+                    '--arwes-frames-deco-color': '#20dfdf'
+                  } as React.CSSProperties
+                }
+                largeLineWidth={2}
+                smallLineWidth={4}
+                smallLineLength={24}
+              />
+              <div className="relative z-10 h-full flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-lg tracking-widest">ASSEMBLED</div>
+                  <div className="text-xs opacity-70">FrameLinesAssembled</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Animator>
+      </div>
+    </div>
+  )
+}
+
+export default PageTestFrame
