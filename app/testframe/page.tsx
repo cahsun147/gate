@@ -4,7 +4,12 @@ import React from 'react'
 import { useEffect, useState } from 'react'
 import { Animator } from '@arwes/react'
 
-import { FrameEnergLIne, FrameGateFolderTab, FrameGateFolderTabGlass, FrameXGate } from '@/components'
+import {
+  FrameEnergLIne,
+  FrameGateFolderTabAssembler,
+  FrameGateFolderTabGlassAssembler,
+  FrameXGate
+} from '@/components'
 
 const PageTestFrame = (): JSX.Element => {
   const [active, setActive] = useState(true)
@@ -33,11 +38,11 @@ const PageTestFrame = (): JSX.Element => {
             </div>
 
             <div className="relative h-[240px] overflow-hidden md:col-span-2">
-              <FrameGateFolderTab />
+              <FrameGateFolderTabAssembler />
             </div>
 
             <div className="relative h-[240px] overflow-hidden md:col-span-2">
-              <FrameGateFolderTabGlass />
+              <FrameGateFolderTabGlassAssembler />
             </div>
           </div>
         </Animator>

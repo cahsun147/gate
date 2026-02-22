@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { FrameBase, useFrameAssembler, type FrameSettings } from '@arwes/react'
+import { Animator, FrameBase, useFrameAssembler, type FrameSettings } from '@arwes/react'
 
 const folderTabPathArwes: NonNullable<FrameSettings['elements']>[number] extends { path: infer P }
   ? P
@@ -136,7 +136,7 @@ const FrameGateFolderTab = memo((props: FrameGateFolderTabProps): JSX.Element =>
       )}
 
       <div style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none' }}>
-        <FrameBase settings={frameSettings} />
+        <FrameBase {...({ settings: frameSettings, animated: false } as any)} />
       </div>
     </div>
   )
@@ -152,4 +152,31 @@ const FrameGateFolderTabGlass = memo(
 
 FrameGateFolderTabGlass.displayName = 'FrameGateFolderTabGlass'
 
-export { FrameGateFolderTab, FrameGateFolderTabGlass }
+const FrameGateFolderTabAssembler = memo((props: FrameGateFolderTabProps): JSX.Element => {
+  return (
+    <Animator duration={{ enter: 1.5, exit: 1.5 }}>
+      <FrameGateFolderTab {...props} />
+    </Animator>
+  )
+})
+
+FrameGateFolderTabAssembler.displayName = 'FrameGateFolderTabAssembler'
+
+const FrameGateFolderTabGlassAssembler = memo(
+  (props: Omit<FrameGateFolderTabProps, 'glass'>): JSX.Element => {
+    return (
+      <Animator duration={{ enter: 1.5, exit: 1.5 }}>
+        <FrameGateFolderTabGlass {...props} />
+      </Animator>
+    )
+  }
+)
+
+FrameGateFolderTabGlassAssembler.displayName = 'FrameGateFolderTabGlassAssembler'
+
+export {
+  FrameGateFolderTab,
+  FrameGateFolderTabGlass,
+  FrameGateFolderTabAssembler,
+  FrameGateFolderTabGlassAssembler
+}

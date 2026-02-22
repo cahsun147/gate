@@ -129,7 +129,7 @@ const FrameXGate = memo((props: FrameXGateProps): JSX.Element => {
 
   return (
     <div ref={elementRef} className={className} style={{ position: 'absolute', inset: 0, ...style }}>
-      <FrameBase settings={frameSettings} />
+      <FrameBase {...({ settings: frameSettings, animated: false } as any)} />
     </div>
   )
 })
