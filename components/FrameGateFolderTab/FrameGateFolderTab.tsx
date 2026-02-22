@@ -153,14 +153,28 @@ const FrameGateFolderTabGlass = memo(
 FrameGateFolderTabGlass.displayName = 'FrameGateFolderTabGlass'
 
 const FrameGateFolderTabAssembler = memo((props: FrameGateFolderTabProps): JSX.Element => {
-  return <FrameGateFolderTab {...props} />
+  const elementRef = useRef<HTMLDivElement>(null)
+  useFrameAssembler(elementRef)
+  
+  return (
+    <div ref={elementRef} style={{ position: 'absolute', inset: 0 }}>
+      <FrameGateFolderTab {...props} />
+    </div>
+  )
 })
 
 FrameGateFolderTabAssembler.displayName = 'FrameGateFolderTabAssembler'
 
 const FrameGateFolderTabGlassAssembler = memo(
   (props: Omit<FrameGateFolderTabProps, 'glass'>): JSX.Element => {
-    return <FrameGateFolderTabGlass {...props} />
+    const elementRef = useRef<HTMLDivElement>(null)
+    useFrameAssembler(elementRef)
+    
+    return (
+      <div ref={elementRef} style={{ position: 'absolute', inset: 0 }}>
+        <FrameGateFolderTabGlass {...props} />
+      </div>
+    )
   }
 )
 
