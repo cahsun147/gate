@@ -153,22 +153,14 @@ const FrameGateFolderTabGlass = memo(
 FrameGateFolderTabGlass.displayName = 'FrameGateFolderTabGlass'
 
 const FrameGateFolderTabAssembler = memo((props: FrameGateFolderTabProps): JSX.Element => {
-  return (
-    <Animator duration={{ enter: 1.5, exit: 1.5 }}>
-      <FrameGateFolderTab {...props} />
-    </Animator>
-  )
+  return <FrameGateFolderTab {...props} />
 })
 
 FrameGateFolderTabAssembler.displayName = 'FrameGateFolderTabAssembler'
 
 const FrameGateFolderTabGlassAssembler = memo(
   (props: Omit<FrameGateFolderTabProps, 'glass'>): JSX.Element => {
-    return (
-      <Animator duration={{ enter: 1.5, exit: 1.5 }}>
-        <FrameGateFolderTabGlass {...props} />
-      </Animator>
-    )
+    return <FrameGateFolderTabGlass {...props} />
   }
 )
 
