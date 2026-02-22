@@ -27,7 +27,7 @@ const PageTestFrame = (): JSX.Element => {
           <p className="text-sm opacity-70">Halaman ini untuk testing visual custom frames.</p>
         </div>
 
-        <Animator active={active} duration={{ enter: 1, exit: 1 }}>
+        <Animator active={active} duration={{ enter: 5, exit: 5 }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="relative h-[240px] overflow-hidden">
               <FrameEnergLIne />
