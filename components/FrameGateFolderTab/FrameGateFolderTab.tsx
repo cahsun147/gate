@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useMemo, useRef, type CSSProperties } from 'react'
+import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { FrameBase, useFrameAssembler, type FrameSettings } from '@arwes/react'
 
 const folderTabPathArwes: NonNullable<FrameSettings['elements']>[number] extends { path: infer P }
@@ -58,6 +58,10 @@ const getPathString = (w: number, h: number): string => {
 export type FrameGateFolderTabProps = {
   className?: string
   style?: CSSProperties
+  size?: {
+    width: number
+    height: number
+  }
   glass?: boolean
   glassBlur?: number
   glassBackgroundColor?: string
@@ -69,6 +73,7 @@ const FrameGateFolderTab = memo((props: FrameGateFolderTabProps): JSX.Element =>
   const {
     className,
     style,
+    size,
     glass = false,
     glassBlur = 10,
     glassBackgroundColor = 'rgba(255, 255, 255, 0.05)',
@@ -79,14 +84,38 @@ const FrameGateFolderTab = memo((props: FrameGateFolderTabProps): JSX.Element =>
   const elementRef = useRef<HTMLDivElement>(null)
   useFrameAssembler(elementRef)
 
-  const clipPath = useMemo(() => {
+  const [bounds, setBounds] = useState<{ width: number; height: number }>(() => ({
+    width: size?.width ?? 0,
+    height: size?.height ?? 0
+  }))
+
+  useEffect(() => {
+    if (size) {
+      setBounds({ width: size.width, height: size.height })
+      return
+    }
+
     const el = elementRef.current
-    if (!el) return undefined
-    const rect = el.getBoundingClientRect()
-    const w = Math.max(1, rect.width)
-    const h = Math.max(1, rect.height)
+    if (!el) return
+
+    const update = () => {
+      const rect = el.getBoundingClientRect()
+      setBounds({ width: rect.width, height: rect.height })
+    }
+
+    update()
+
+    const ro = new ResizeObserver(() => update())
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [size])
+
+  const clipPath = useMemo(() => {
+    const w = Math.max(1, bounds.width)
+    const h = Math.max(1, bounds.height)
+    if (!w || !h) return undefined
     return `path('${getPathString(w, h)}')`
-  }, [])
+  }, [bounds.height, bounds.width])
 
   return (
     <div ref={elementRef} className={className} style={{ position: 'absolute', inset: 0, ...style }}>
