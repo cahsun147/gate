@@ -157,9 +157,11 @@ const FrameGateFolderTabAssembler = memo((props: FrameGateFolderTabProps): JSX.E
   useFrameAssembler(elementRef)
   
   return (
-    <div ref={elementRef} style={{ position: 'absolute', inset: 0 }}>
-      <FrameGateFolderTab {...props} />
-    </div>
+    <Animator duration={{ enter: 1.5, exit: 1.5 }}>
+      <div ref={elementRef} style={{ position: 'absolute', inset: 0 }}>
+        <FrameGateFolderTab {...props} />
+      </div>
+    </Animator>
   )
 })
 
@@ -171,9 +173,11 @@ const FrameGateFolderTabGlassAssembler = memo(
     useFrameAssembler(elementRef)
     
     return (
-      <div ref={elementRef} style={{ position: 'absolute', inset: 0 }}>
-        <FrameGateFolderTabGlass {...props} />
-      </div>
+      <Animator duration={{ enter: 1.5, exit: 1.5 }}>
+        <div ref={elementRef} style={{ position: 'absolute', inset: 0 }}>
+          <FrameGateFolderTabGlass {...props} />
+        </div>
+      </Animator>
     )
   }
 )
