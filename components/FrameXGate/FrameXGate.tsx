@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useRef, type CSSProperties } from 'react'
-import { FrameBase, useFrameAssembler, type FrameSettings } from '@arwes/react'
+import { Animator, FrameBase, useFrameAssembler, type FrameSettings } from '@arwes/react'
 
 const frameSettings: FrameSettings = {
   elements: [
