@@ -2,7 +2,13 @@
 
 import React from 'react'
 import { useEffect, useState } from 'react'
-import { Animator } from '@arwes/react'
+import { 
+  Animator,
+  AnimatorGeneralProvider,
+  Animated,
+  FrameBase,
+  type FrameSettings
+} from '@arwes/react'
 
 import {
   FrameEnergLIne,
@@ -30,25 +36,27 @@ const PageTestFrame = (): JSX.Element => {
           <p className="text-sm opacity-70">Halaman ini untuk testing visual custom frames.</p>
         </div>
 
-        <Animator active={active} duration={{ enter: 1.5, exit: 1.5 }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="relative h-[240px] overflow-hidden">
-              <FrameEnergLIne />
-            </div>
+        <AnimatorGeneralProvider disabled={false} dismissed={false} duration={{ enter: 1.5, exit: 1.5 }}>
+          <Animator root active={active}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="relative h-[240px] overflow-hidden">
+                <FrameEnergLIne />
+              </div>
 
-            <div className="relative h-[240px] overflow-hidden">
-              <FrameXGate />
-            </div>
+              <div className="relative h-[240px] overflow-hidden">
+                <FrameXGate />
+              </div>
 
-            <div className="relative h-[240px] overflow-hidden md:col-span-2">
-              <FrameGateFolderTabAssembler />
-            </div>
+              <div className="relative h-[240px] overflow-hidden md:col-span-2">
+                <FrameGateFolderTabAssembler />
+              </div>
 
-            <div className="relative h-[240px] overflow-hidden md:col-span-2">
-              <FrameGateFolderTabGlassAssembler />
+              <div className="relative h-[240px] overflow-hidden md:col-span-2">
+                <FrameGateFolderTabGlassAssembler />
+              </div>
             </div>
-          </div>
-        </Animator>
+          </Animator>
+        </AnimatorGeneralProvider>
       </div>
     </div>
   )
