@@ -16,7 +16,8 @@ import {
   FrameGateFolderTabGlassAssembler,
   FrameXGate,
   GateOmniTerminal,
-  GateOmniTerminalAssembler
+  GateOmniTerminalAssembler,
+  GateOmniTerminalAssemblerEnterOnly
 } from '@/components'
 
 const PageTestFrame = (): JSX.Element => {
@@ -63,6 +64,15 @@ const PageTestFrame = (): JSX.Element => {
                 </div>
                 <div className="relative w-full h-[350px]">
                   <GateOmniTerminalAssembler />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                <div className="relative w-full h-[350px]">
+                  <GateOmniTerminalAssemblerEnterOnly />
+                </div>
+                <div className="relative w-full h-[350px]">
+                  {/* Placeholder untuk comparison */}
                 </div>
               </div>
             </div>

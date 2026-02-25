@@ -1,1 +1,1 @@
-export { GateOmniTerminal, GateOmniTerminalAssembler } from './GateOmniTerminal'
+export { GateOmniTerminal, GateOmniTerminalAssembler, GateOmniTerminalAssemblerEnterOnly } from './GateOmniTerminal'
