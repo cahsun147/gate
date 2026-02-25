@@ -14,7 +14,9 @@ import {
   FrameEnergLIne,
   FrameGateFolderTabAssembler,
   FrameGateFolderTabGlassAssembler,
-  FrameXGate
+  FrameXGate,
+  GateOmniTerminal,
+  GateOmniTerminalAssembler
 } from '@/components'
 
 const PageTestFrame = (): JSX.Element => {
@@ -53,6 +55,14 @@ const PageTestFrame = (): JSX.Element => {
 
               <div className="relative h-[240px] overflow-hidden md:col-span-2">
                 <FrameGateFolderTabGlassAssembler />
+              </div>
+
+              <div className="relative h-[350px] overflow-hidden md:col-span-2">
+                <GateOmniTerminal />
+              </div>
+
+              <div className="relative h-[350px] overflow-hidden md:col-span-2">
+                <GateOmniTerminalAssembler />
               </div>
             </div>
           </Animator>
