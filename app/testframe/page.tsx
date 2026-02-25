@@ -57,12 +57,13 @@ const PageTestFrame = (): JSX.Element => {
                 <FrameGateFolderTabGlassAssembler />
               </div>
 
-              <div className="relative h-[350px] overflow-hidden md:col-span-2">
-                <GateOmniTerminal />
-              </div>
-
-              <div className="relative h-[350px] overflow-hidden md:col-span-2">
-                <GateOmniTerminalAssembler />
+              <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                <div className="relative" style={{ width: 500, height: 350 }}>
+                  <GateOmniTerminal />
+                </div>
+                <div className="relative" style={{ width: 500, height: 350 }}>
+                  <GateOmniTerminalAssembler />
+                </div>
               </div>
             </div>
           </Animator>

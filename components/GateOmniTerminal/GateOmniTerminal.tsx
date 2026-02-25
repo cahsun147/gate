@@ -127,9 +127,38 @@ const GateOmniTerminalAssembler = memo((props: GateOmniTerminalProps): JSX.Eleme
         }
       `}</style>
 
-      {/* Animated Frame */}
+      {/* Animated Frame - HANYA DECO YANG BERKEDIP */}
       <div ref={elementRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-        <FrameBase settings={omniFrameSettings} />
+        <FrameBase settings={{
+          ...omniFrameSettings,
+          elements: [
+            // Background dan border TANPA animasi
+            ...omniFrameSettings.elements.slice(0, 3),
+            // HANYA data ports yang berkedip
+            ...[0, 1].map(i => ({
+              type: 'rect' as const,
+              name: 'deco',
+              className: 'blink-anim',
+              style: { fill: '#20dfdf' },
+              x: i === 0 ? 5 : '100% - 8',
+              y: '50% - 15',
+              width: 3,
+              height: 30
+            })),
+            // Top tag yang berkedip
+            {
+              type: 'path',
+              name: 'deco',
+              className: 'blink-anim',
+              style: { fill: 'rgba(32, 223, 223, 0.2)', stroke: '#20dfdf', strokeWidth: '1' },
+              path: [
+                ['M', '50% - 60', 0], ['H', '50% + 60'], 
+                ['v', 15], ['l', -10, 10], ['H', '50% - 50'], 
+                ['l', -10, -10]
+              ]
+            }
+          ]
+        }} />
       </div>
       
       {/* Layer Konten */}
