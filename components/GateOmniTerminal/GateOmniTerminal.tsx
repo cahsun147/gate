@@ -81,7 +81,7 @@ const GateOmniTerminal = memo((props: GateOmniTerminalProps): JSX.Element => {
   const { className, style, children } = props
 
   return (
-    <div className={className} style={{ position: 'relative', ...style }}>
+    <div className={className} style={{ position: 'absolute', inset: 0, ...style }}>
       {/* Frame Utama */}
       <FrameBase settings={omniFrameSettings} />
       
@@ -114,7 +114,7 @@ const GateOmniTerminalAssembler = memo((props: GateOmniTerminalProps): JSX.Eleme
   useFrameAssembler(elementRef)
 
   return (
-    <div className={className} style={{ position: 'relative', ...style }}>
+    <div className={className} style={{ position: 'absolute', inset: 0, ...style }}>
       {/* CSS KEYFRAMES UNTUK BERKEDIP */}
       <style>{`
         @keyframes sciFiBlink {
