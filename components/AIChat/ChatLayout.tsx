@@ -6,14 +6,13 @@ import {
   Animator,
   BleepsOnAnimator,
   cx,
-  FrameOctagon,
   Illuminator,
   styleFrameClipOctagon
 } from '@arwes/react'
 import { Menu, Xmark } from 'iconoir-react'
-
 import { type BleepNames, theme } from '@/config'
 import { useAppBreakpoint } from '../tools/useAppBreakpoint'
+import { GateOmniTerminalAssemblerEnterOnly } from '@/components'
 
 type ChatLayoutProps = {
   sidebar:
@@ -92,14 +91,7 @@ export function ChatLayout(props: ChatLayoutProps): JSX.Element {
                   <aside className="sticky top-0 flex w-full min-w-0 max-w-[16rem] min-h-0 h-full">
                     <Animator>
                       <Animated className="relative flex w-full min-h-0 h-full" animated={['flicker']}>
-                        <FrameOctagon
-                          style={{
-                            // @ts-expect-error css variables
-                            '--arwes-frames-bg-color': theme.colors.primary.main(9, { alpha: 0.1 }),
-                            '--arwes-frames-line-color': theme.colors.primary.main(9, { alpha: 0.5 })
-                          }}
-                          squareSize={theme.spacen(2)}
-                        />
+                        <GateOmniTerminalAssemblerEnterOnly />
                         {isXL && (
                           <div className="absolute inset-0 overflow-hidden">
                             <Illuminator
@@ -130,14 +122,7 @@ export function ChatLayout(props: ChatLayoutProps): JSX.Element {
                       }}
                       animated={['flicker']}
                     >
-                      <FrameOctagon
-                        style={{
-                          // @ts-expect-error css variables
-                          '--arwes-frames-bg-color': theme.colors.primary.main(9, { alpha: 0.1 }),
-                          '--arwes-frames-line-color': theme.colors.primary.main(9, { alpha: 0.5 })
-                        }}
-                        squareSize={theme.spacen(isLG ? 4 : 2)}
-                      />
+                      <GateOmniTerminalAssemblerEnterOnly />
                       {isXL && (
                         <div className="absolute inset-0 overflow-hidden">
                           <Illuminator
@@ -146,7 +131,7 @@ export function ChatLayout(props: ChatLayoutProps): JSX.Element {
                           />
                         </div>
                       )}
-                      <div className="relative flex flex-col flex-1 min-w-0 min-h-0 p-4 md:p-6 overflow-hidden">
+                      <div className="relative flex flex-col p-4 w-full min-h-0 h-full overflow-hidden">
                         {children}
                       </div>
                     </Animated>
