@@ -236,7 +236,7 @@ const GateOmniTerminalAssemblerEnterOnly = memo((props: GateOmniTerminalProps): 
               path: [
                 ['M', '50% - 60', 0], ['H', '50% + 60'], 
                 ['v', 15], ['l', -10, 10], ['H', '50% - 50'], 
-                ['l', -10, -10']
+                ['l', -10, -10]
               ]
             }
           ]
