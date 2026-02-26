@@ -42,25 +42,25 @@ const PageTestFrame = (): JSX.Element => {
         <AnimatorGeneralProvider disabled={false} dismissed={false}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="relative h-[240px] overflow-hidden">
-              <Animator active={active} duration={{ enter: 1.0, exit: 0.8 }}>
+              <Animator active={active} duration={{ enter: 2.0, exit: 1.8 }}>
                 <FrameEnergLIne />
               </Animator>
             </div>
 
             <div className="relative h-[240px] overflow-hidden">
-              <Animator active={active} duration={{ enter: 1.5, exit: 1.2 }}>
+              <Animator active={active} duration={{ enter: 2.5, exit: 2.2 }}>
                 <FrameXGate />
               </Animator>
             </div>
 
             <div className="relative h-[240px] overflow-hidden md:col-span-2">
-              <Animator active={active} duration={{ enter: 2.0, exit: 1.0 }}>
+              <Animator active={active} duration={{ enter: 5.0, exit: 2.5 }}>
                 <FrameGateFolderTabAssembler />
               </Animator>
             </div>
 
             <div className="relative h-[240px] overflow-hidden md:col-span-2">
-              <Animator active={active} duration={{ enter: 1.8, exit: 1.5 }}>
+              <Animator active={active} duration={{ enter: 5.8, exit: 3.5 }}>
                 <FrameGateFolderTabGlassAssembler />
               </Animator>
             </div>
