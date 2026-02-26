@@ -39,22 +39,7 @@ const omniFrameSettings: FrameSettings = {
         ['l', -40, 40], ['H', '100% - 60']
       ]
     },
-    // 3. SECONDARY BORDER: Garis halus yang membingkai area teks
-    {
-      type: 'path',
-      name: 'line',
-      style: { 
-        stroke: 'var(--arwes-frames-line-color, rgba(32, 223, 223, 0.3))', 
-        strokeWidth: '1', 
-        fill: 'none' 
-      },
-      path: [
-        // Border dalam
-        ['M', 50, 50], ['H', '100% - 50'], 
-        ['V', '100% - 50'], ['H', 50], ['V', 50]
-      ]
-    },
-    // 4. DATA PORTS: Konektor data di kiri dan kanan
+    // 3. DATA PORTS: Konektor data di kiri dan kanan
     {
       type: 'rect',
       name: 'deco',
@@ -73,7 +58,7 @@ const omniFrameSettings: FrameSettings = {
       width: 3,
       height: 30
     },
-    // 5. TOP TAG: Label identifikasi di bagian atas
+    // 4. TOP TAG: Label identifikasi di bagian atas
     {
       type: 'path',
       name: 'deco',
@@ -88,7 +73,7 @@ const omniFrameSettings: FrameSettings = {
         ['l', -10, -10]
       ]
     },
-    // 6. DATA PORTS: Aksen visual fungsional di sisi samping
+    // 5. DATA PORTS: Aksen visual fungsional di sisi samping
     ...[0, 1].map(i => ({
       type: 'rect' as const,
       name: 'deco',
@@ -98,7 +83,7 @@ const omniFrameSettings: FrameSettings = {
       width: 3,
       height: 30
     })),
-    // 7. TOP ID TAG: Area kecil untuk label atau judul
+    // 6. TOP ID TAG: Area kecil untuk label atau judul
     {
       type: 'path',
       name: 'deco',
