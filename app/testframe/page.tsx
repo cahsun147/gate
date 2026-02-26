@@ -40,43 +40,55 @@ const PageTestFrame = (): JSX.Element => {
         </div>
 
         <AnimatorGeneralProvider disabled={false} dismissed={false} duration={{ enter: 1.5, exit: 1.5 }}>
-          <Animator root active={active}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="relative h-[240px] overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="relative h-[240px] overflow-hidden">
+              <Animator active={active}>
                 <FrameEnergLIne />
-              </div>
+              </Animator>
+            </div>
 
-              <div className="relative h-[240px] overflow-hidden">
+            <div className="relative h-[240px] overflow-hidden">
+              <Animator active={active}>
                 <FrameXGate />
-              </div>
+              </Animator>
+            </div>
 
-              <div className="relative h-[240px] overflow-hidden md:col-span-2">
+            <div className="relative h-[240px] overflow-hidden md:col-span-2">
+              <Animator active={active}>
                 <FrameGateFolderTabAssembler />
-              </div>
+              </Animator>
+            </div>
 
-              <div className="relative h-[240px] overflow-hidden md:col-span-2">
+            <div className="relative h-[240px] overflow-hidden md:col-span-2">
+              <Animator active={active}>
                 <FrameGateFolderTabGlassAssembler />
-              </div>
+              </Animator>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
-                <div className="relative w-full h-[350px]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+              <div className="relative w-full h-[350px]">
+                <Animator active={active}>
                   <GateOmniTerminal />
-                </div>
-                <div className="relative w-full h-[350px]">
-                  <GateOmniTerminalAssembler />
-                </div>
+                </Animator>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
-                <div className="relative w-full h-[350px]">
-                  <GateOmniTerminalAssemblerEnterOnly />
-                </div>
-                <div className="relative w-full h-[350px]">
-                  {/* Placeholder untuk comparison */}
-                </div>
+              <div className="relative w-full h-[350px]">
+                <Animator active={active}>
+                  <GateOmniTerminalAssembler />
+                </Animator>
               </div>
             </div>
-          </Animator>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+              <div className="relative w-full h-[350px]">
+                <Animator active={active}>
+                  <GateOmniTerminalAssemblerEnterOnly />
+                </Animator>
+              </div>
+              <div className="relative w-full h-[350px]">
+                {/* Placeholder untuk comparison */}
+              </div>
+            </div>
+          </div>
         </AnimatorGeneralProvider>
       </div>
     </div>
