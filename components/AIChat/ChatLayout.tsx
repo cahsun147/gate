@@ -122,7 +122,13 @@ export function ChatLayout(props: ChatLayoutProps): JSX.Element {
                       }}
                       animated={['flicker']}
                     >
-                      <GateOmniTerminalAssemblerEnterOnly />
+                      <GateOmniTerminalAssemblerEnterOnly 
+                        style={{
+                          // @ts-expect-error css variables
+                          '--arwes-frames-bg-color': theme.colors.primary.main(9, { alpha: 0.1 }),
+                          '--arwes-frames-line-color': theme.colors.primary.main(9, { alpha: 0.5 })
+                        }}
+                      />
                       {isXL && (
                         <div className="absolute inset-0 overflow-hidden">
                           <Illuminator

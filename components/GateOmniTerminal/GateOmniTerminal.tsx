@@ -75,15 +75,28 @@ export type GateOmniTerminalProps = {
   className?: string
   style?: CSSProperties
   children?: React.ReactNode
+  frameSettings?: Partial<FrameSettings>
 }
 
 const GateOmniTerminal = memo((props: GateOmniTerminalProps): JSX.Element => {
-  const { className, style, children } = props
+  const { className, style, children, frameSettings } = props
+
+  const mergedFrameSettings = {
+    ...omniFrameSettings,
+    ...frameSettings,
+    elements: [
+      ...omniFrameSettings.elements.slice(0, 3),
+      ...omniFrameSettings.elements.slice(3).map(element => ({
+        ...element,
+        ...frameSettings?.elements?.find(e => e.name === element.name)
+      }))
+    ]
+  } as FrameSettings
 
   return (
     <div className={className} style={{ position: 'absolute', inset: 0, ...style }}>
       {/* Frame Utama */}
-      <FrameBase settings={omniFrameSettings} />
+      <FrameBase settings={mergedFrameSettings} />
       
       {/* Layer Konten */}
       <div style={{ 
@@ -109,9 +122,41 @@ const GateOmniTerminal = memo((props: GateOmniTerminalProps): JSX.Element => {
 GateOmniTerminal.displayName = 'GateOmniTerminal'
 
 const GateOmniTerminalAssembler = memo((props: GateOmniTerminalProps): JSX.Element => {
-  const { className, style, children } = props
+  const { className, style, children, frameSettings } = props
   const elementRef = useRef<HTMLDivElement>(null)
   useFrameAssembler(elementRef)
+
+  const mergedFrameSettings = {
+    ...omniFrameSettings,
+    ...frameSettings,
+    elements: [
+      // Background dan border TANPA animasi
+      ...omniFrameSettings.elements.slice(0, 3),
+      // HANYA data ports yang berkedip
+      ...[0, 1].map(i => ({
+        type: 'rect' as const,
+        name: 'deco',
+        className: 'blink-anim',
+        style: { fill: '#20dfdf' },
+        x: i === 0 ? 5 : '100% - 8',
+        y: '50% - 15',
+        width: 3,
+        height: 30
+      })),
+      // Top tag yang berkedip
+      {
+        type: 'path' as const,
+        name: 'deco',
+        className: 'blink-anim',
+        style: { fill: 'rgba(32, 223, 223, 0.2)', stroke: '#20dfdf', strokeWidth: '1' },
+        path: [
+          ['M', '50% - 60', 0], ['H', '50% + 60'], 
+          ['v', 15], ['l', -10, 10], ['H', '50% - 50'], 
+          ['l', -10, -10]
+        ]
+      }
+    ]
+  } as FrameSettings
 
   return (
     <div className={className} style={{ position: 'absolute', inset: 0, ...style }}>
@@ -129,36 +174,7 @@ const GateOmniTerminalAssembler = memo((props: GateOmniTerminalProps): JSX.Eleme
 
       {/* Animated Frame - HANYA DECO YANG BERKEDIP */}
       <div ref={elementRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-        <FrameBase settings={{
-          ...omniFrameSettings,
-          elements: [
-            // Background dan border TANPA animasi
-            ...omniFrameSettings.elements.slice(0, 3),
-            // HANYA data ports yang berkedip
-            ...[0, 1].map(i => ({
-              type: 'rect' as const,
-              name: 'deco',
-              className: 'blink-anim',
-              style: { fill: '#20dfdf' },
-              x: i === 0 ? 5 : '100% - 8',
-              y: '50% - 15',
-              width: 3,
-              height: 30
-            })),
-            // Top tag yang berkedip
-            {
-              type: 'path',
-              name: 'deco',
-              className: 'blink-anim',
-              style: { fill: 'rgba(32, 223, 223, 0.2)', stroke: '#20dfdf', strokeWidth: '1' },
-              path: [
-                ['M', '50% - 60', 0], ['H', '50% + 60'], 
-                ['v', 15], ['l', -10, 10], ['H', '50% - 50'], 
-                ['l', -10, -10]
-              ]
-            }
-          ]
-        }} />
+        <FrameBase settings={mergedFrameSettings} />
       </div>
       
       {/* Layer Konten */}
@@ -191,9 +207,41 @@ const GateOmniTerminalAssembler = memo((props: GateOmniTerminalProps): JSX.Eleme
 GateOmniTerminalAssembler.displayName = 'GateOmniTerminalAssembler'
 
 const GateOmniTerminalAssemblerEnterOnly = memo((props: GateOmniTerminalProps): JSX.Element => {
-  const { className, style, children } = props
+  const { className, style, children, frameSettings } = props
   const elementRef = useRef<HTMLDivElement>(null)
   useFrameAssembler(elementRef)
+
+  const mergedFrameSettings = {
+    ...omniFrameSettings,
+    ...frameSettings,
+    elements: [
+      // Background dan border TANPA animasi
+      ...omniFrameSettings.elements.slice(0, 3),
+      // HANYA data ports yang berkedip
+      ...[0, 1].map(i => ({
+        type: 'rect' as const,
+        name: 'deco',
+        className: 'blink-anim',
+        style: { fill: '#20dfdf' },
+        x: i === 0 ? 5 : '100% - 8',
+        y: '50% - 15',
+        width: 3,
+        height: 30
+      })),
+      // Top tag yang berkedip
+      {
+        type: 'path' as const,
+        name: 'deco',
+        className: 'blink-anim',
+        style: { fill: 'rgba(32, 223, 223, 0.2)', stroke: '#20dfdf', strokeWidth: '1' },
+        path: [
+          ['M', '50% - 60', 0], ['H', '50% + 60'], 
+          ['v', 15], ['l', -10, 10], ['H', '50% - 50'], 
+          ['l', -10, -10]
+        ]
+      }
+    ]
+  } as FrameSettings
 
   return (
     <div className={className} style={{ position: 'absolute', inset: 0, ...style }}>
@@ -211,36 +259,7 @@ const GateOmniTerminalAssemblerEnterOnly = memo((props: GateOmniTerminalProps): 
 
       {/* Animated Frame - HANYA DECO YANG BERKEDIP */}
       <div ref={elementRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-        <FrameBase settings={{
-          ...omniFrameSettings,
-          elements: [
-            // Background dan border TANPA animasi
-            ...omniFrameSettings.elements.slice(0, 3),
-            // HANYA data ports yang berkedip
-            ...[0, 1].map(i => ({
-              type: 'rect' as const,
-              name: 'deco',
-              className: 'blink-anim',
-              style: { fill: '#20dfdf' },
-              x: i === 0 ? 5 : '100% - 8',
-              y: '50% - 15',
-              width: 3,
-              height: 30
-            })),
-            // Top tag yang berkedip
-            {
-              type: 'path',
-              name: 'deco',
-              className: 'blink-anim',
-              style: { fill: 'rgba(32, 223, 223, 0.2)', stroke: '#20dfdf', strokeWidth: '1' },
-              path: [
-                ['M', '50% - 60', 0], ['H', '50% + 60'], 
-                ['v', 15], ['l', -10, 10], ['H', '50% - 50'], 
-                ['l', -10, -10]
-              ]
-            }
-          ]
-        }} />
+        <FrameBase settings={mergedFrameSettings} />
       </div>
       
       {/* Layer Konten */}
