@@ -5,13 +5,13 @@ import { Animator, FrameBase, useFrameAssembler, type FrameSettings } from '@arw
 
 const omniFrameSettings: FrameSettings = {
   elements: [
-    // 1. BASE LAYER: Latar belakang dengan sudut "Stealth"
+    // 1. BACKGROUND: Latar belakang utama
     {
       type: 'path',
       name: 'bg',
       style: { 
-        fill: 'rgba(10, 30, 30, 0.9)', 
-        stroke: 'rgba(32, 223, 223, 0.1)',
+        fill: 'var(--arwes-frames-bg-color, rgba(10, 30, 30, 0.9))', 
+        stroke: 'var(--arwes-frames-line-color, rgba(32, 223, 223, 0.1))',
         strokeWidth: '1' 
       },
       path: [
@@ -26,7 +26,11 @@ const omniFrameSettings: FrameSettings = {
     {
       type: 'path',
       name: 'line',
-      style: { stroke: '#20dfdf', strokeWidth: '3', fill: 'none' },
+      style: { 
+        stroke: 'var(--arwes-frames-line-color, #20dfdf)', 
+        strokeWidth: '3', 
+        fill: 'none' 
+      },
       path: [
         // Pojok Kiri Atas
         ['M', 0, 60], ['V', 40], ['l', 40, -40], ['H', 60],
@@ -39,29 +43,70 @@ const omniFrameSettings: FrameSettings = {
     {
       type: 'path',
       name: 'line',
-      style: { stroke: '#20dfdf', strokeWidth: '0.5', opacity: 0.6, fill: 'none' },
+      style: { 
+        stroke: 'var(--arwes-frames-line-color, rgba(32, 223, 223, 0.3))', 
+        strokeWidth: '1', 
+        fill: 'none' 
+      },
       path: [
-        ['M', 50, 10], ['H', '100% - 50'],
-        ['M', 50, '100% - 10'], ['H', '100% - 50'],
-        ['M', 10, 50], ['V', '100% - 50'],
-        ['M', '100% - 10', 50], ['V', '100% - 50']
+        // Border dalam
+        ['M', 50, 50], ['H', '100% - 50'], 
+        ['V', '100% - 50'], ['H', 50], ['V', 50]
       ]
     },
-    // 4. DATA PORTS: Aksen visual fungsional di sisi samping
+    // 4. DATA PORTS: Konektor data di kiri dan kanan
+    {
+      type: 'rect',
+      name: 'deco',
+      style: { fill: 'var(--arwes-frames-line-color, #20dfdf)' },
+      x: 5,
+      y: '50% - 15',
+      width: 3,
+      height: 30
+    },
+    {
+      type: 'rect',
+      name: 'deco',
+      style: { fill: 'var(--arwes-frames-line-color, #20dfdf)' },
+      x: '100% - 8',
+      y: '50% - 15',
+      width: 3,
+      height: 30
+    },
+    // 5. TOP TAG: Label identifikasi di bagian atas
+    {
+      type: 'path',
+      name: 'deco',
+      style: { 
+        fill: 'rgba(32, 223, 223, 0.2)', 
+        stroke: 'var(--arwes-frames-line-color, #20dfdf)', 
+        strokeWidth: '1' 
+      },
+      path: [
+        ['M', '50% - 60', 0], ['H', '50% + 60'], 
+        ['v', 15], ['l', -10, 10], ['H', '50% - 50'], 
+        ['l', -10, -10]
+      ]
+    },
+    // 6. DATA PORTS: Aksen visual fungsional di sisi samping
     ...[0, 1].map(i => ({
       type: 'rect' as const,
       name: 'deco',
-      style: { fill: '#20dfdf' },
+      style: { fill: 'var(--arwes-frames-line-color, #20dfdf)' },
       x: i === 0 ? 5 : '100% - 8',
       y: '50% - 15',
       width: 3,
       height: 30
     })),
-    // 5. TOP ID TAG: Area kecil untuk label atau judul
+    // 7. TOP ID TAG: Area kecil untuk label atau judul
     {
       type: 'path',
       name: 'deco',
-      style: { fill: 'rgba(32, 223, 223, 0.2)', stroke: '#20dfdf', strokeWidth: '1' },
+      style: { 
+        fill: 'var(--arwes-frames-tag-color, rgba(32, 223, 223, 0.2))', 
+        stroke: 'var(--arwes-frames-line-color, #20dfdf)', 
+        strokeWidth: '1' 
+      },
       path: [
         ['M', '50% - 60', 0], ['H', '50% + 60'], 
         ['v', 15], ['l', -10, 10], ['H', '50% - 50'], 
