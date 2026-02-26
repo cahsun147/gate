@@ -39,40 +39,40 @@ const PageTestFrame = (): JSX.Element => {
           <p className="text-sm opacity-70">Halaman ini untuk testing visual custom frames.</p>
         </div>
 
-        <AnimatorGeneralProvider disabled={false} dismissed={false} duration={{ enter: 1.5, exit: 1.5 }}>
+        <AnimatorGeneralProvider disabled={false} dismissed={false}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="relative h-[240px] overflow-hidden">
-              <Animator active={active}>
+              <Animator active={active} duration={{ enter: 1.0, exit: 0.8 }}>
                 <FrameEnergLIne />
               </Animator>
             </div>
 
             <div className="relative h-[240px] overflow-hidden">
-              <Animator active={active}>
+              <Animator active={active} duration={{ enter: 1.5, exit: 1.2 }}>
                 <FrameXGate />
               </Animator>
             </div>
 
             <div className="relative h-[240px] overflow-hidden md:col-span-2">
-              <Animator active={active}>
+              <Animator active={active} duration={{ enter: 2.0, exit: 1.0 }}>
                 <FrameGateFolderTabAssembler />
               </Animator>
             </div>
 
             <div className="relative h-[240px] overflow-hidden md:col-span-2">
-              <Animator active={active}>
+              <Animator active={active} duration={{ enter: 1.8, exit: 1.5 }}>
                 <FrameGateFolderTabGlassAssembler />
               </Animator>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
               <div className="relative w-full h-[350px]">
-                <Animator active={active}>
+                <Animator active={active} duration={{ enter: 2.5, exit: 2.0 }}>
                   <GateOmniTerminal />
                 </Animator>
               </div>
               <div className="relative w-full h-[350px]">
-                <Animator active={active}>
+                <Animator active={active} duration={{ enter: 3.0, exit: 2.5 }}>
                   <GateOmniTerminalAssembler />
                 </Animator>
               </div>
@@ -80,9 +80,7 @@ const PageTestFrame = (): JSX.Element => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
               <div className="relative w-full h-[350px]">
-                <Animator active={active}>
-                  <GateOmniTerminalAssemblerEnterOnly />
-                </Animator>
+                <GateOmniTerminalAssemblerEnterOnly />
               </div>
               <div className="relative w-full h-[350px]">
                 {/* Placeholder untuk comparison */}
