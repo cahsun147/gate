@@ -6,6 +6,7 @@ import {
   Animator,
   BleepsOnAnimator,
   cx,
+  FrameOctagon,
   Illuminator,
   styleFrameClipOctagon
 } from '@arwes/react'
@@ -91,7 +92,14 @@ export function ChatLayout(props: ChatLayoutProps): JSX.Element {
                   <aside className="sticky top-0 flex w-full min-w-0 max-w-[16rem] min-h-0 h-full">
                     <Animator>
                       <Animated className="relative flex w-full min-h-0 h-full" animated={['flicker']}>
-                        <GateOmniTerminalAssemblerEnterOnly />
+                        <FrameOctagon
+                          style={{
+                            // @ts-expect-error css variables
+                            '--arwes-frames-bg-color': theme.colors.primary.main(9, { alpha: 0.1 }),
+                            '--arwes-frames-line-color': theme.colors.primary.main(9, { alpha: 0.5 })
+                          }}
+                          squareSize={theme.spacen(2)}
+                        />
                         {isXL && (
                           <div className="absolute inset-0 overflow-hidden">
                             <Illuminator
