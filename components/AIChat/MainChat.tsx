@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Send, MediaImage, Xmark, NavArrowDown, NavArrowUp } from 'iconoir-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { GateOmniTerminalAssemblerEnterOnly } from '@/components'
 
 export type ChatMessage = {
   role: 'user' | 'assistant'
@@ -171,101 +172,102 @@ export function MainChat(props: MainChatProps): JSX.Element {
   }
 
   return (
-    <div className="flex flex-1 flex-col min-w-0 min-h-0">
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="min-h-full flex flex-col justify-end gap-6">
-          {messages.length === 0 ? (
-            <div className="w-full text-primary-main-4">
-              <div className="flex flex-col items-center justify-center py-10">
-                <div className="w-16 h-16 bg-primary-main-3/[0.05] border border-primary-main-9/40 rounded-2xl mb-4 flex items-center justify-center text-3xl">
-                  🤖
+    <GateOmniTerminalAssemblerEnterOnly>
+      <div className="flex flex-1 flex-col min-w-0 min-h-0">
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="min-h-full flex flex-col justify-end gap-6">
+            {messages.length === 0 ? (
+              <div className="w-full text-primary-main-4">
+                <div className="flex flex-col items-center justify-center py-10">
+                  <div className="w-16 h-16 bg-primary-main-3/[0.05] border border-primary-main-9/40 rounded-2xl mb-4 flex items-center justify-center text-3xl">
+                    🤖
+                  </div>
+                  <h2 className="text-xl font-semibold text-primary-high-2">{title}</h2>
                 </div>
-                <h2 className="text-xl font-semibold text-primary-high-2">{title}</h2>
               </div>
-            </div>
-          ) : (
-            messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex gap-4 w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
+            ) : (
+              messages.map((msg, i) => (
                 <div
-                  className={`px-4 py-3 rounded-2xl max-w-[85%] text-xs sm:text-sm md:text-base leading-relaxed border ${
-                    msg.role === 'user'
-                      ? 'bg-primary-main-3/[0.05] border-primary-main-9/40 text-primary-high-2'
-                      : 'bg-black/30 border-primary-main-9/30 text-primary-high-2'
-                  }`}
+                  key={i}
+                  className={`flex gap-4 w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  {msg.type === 'image' && msg.role === 'user' && (
-                    <div className="mb-2 text-xs text-primary-main-4 flex items-center gap-1">
-                      <MediaImage width={12} height={12} /> [Image Attached]
-                    </div>
-                  )}
-                  {msg.role === 'assistant' ? (
-                    <MarkdownMessage content={msg.content} />
-                  ) : (
-                    <div className="whitespace-pre-wrap">{msg.content}</div>
-                  )}
+                  <div
+                    className={`px-4 py-3 rounded-2xl max-w-[85%] text-xs sm:text-sm md:text-base leading-relaxed border ${
+                      msg.role === 'user'
+                        ? 'bg-primary-main-3/[0.05] border-primary-main-9/40 text-primary-high-2'
+                        : 'bg-black/30 border-primary-main-9/30 text-primary-high-2'
+                    }`}
+                  >
+                    {msg.type === 'image' && msg.role === 'user' && (
+                      <div className="mb-2 text-xs text-primary-main-4 flex items-center gap-1">
+                        <MediaImage width={12} height={12} /> [Image Attached]
+                      </div>
+                    )}
+                    {msg.role === 'assistant' ? (
+                      <MarkdownMessage content={msg.content} />
+                    ) : (
+                      <div className="whitespace-pre-wrap">{msg.content}</div>
+                    )}
+                  </div>
                 </div>
+              ))
+            )}
+
+            {isLoading && presence && (
+              <div className="w-full flex gap-4">
+                <span className="animate-pulse text-primary-main-4 text-xs sm:text-sm">{presence}</span>
               </div>
-            ))
-          )}
+            )}
 
-          {isLoading && presence && (
-            <div className="w-full flex gap-4">
-              <span className="animate-pulse text-primary-main-4 text-xs sm:text-sm">{presence}</span>
-            </div>
-          )}
+            {isLoading && !presence && !messages[messages.length - 1]?.content && (
+              <div className="w-full flex gap-4">
+                <span className="animate-pulse text-primary-main-4 text-xs sm:text-sm">Thinking...</span>
+              </div>
+            )}
 
-          {isLoading && !presence && !messages[messages.length - 1]?.content && (
-            <div className="w-full flex gap-4">
-              <span className="animate-pulse text-primary-main-4 text-xs sm:text-sm">Thinking...</span>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} />
+          </div>
         </div>
-      </div>
 
-      <div className="pt-6">
-        <div className="w-full relative">
-          {selectedImage && (
-            <div className="absolute -top-16 left-0 bg-black/70 p-2 rounded border border-primary-main-9/40 flex items-center gap-2">
-              <img src={selectedImage} alt="Preview" className="h-10 w-10 object-cover rounded" />
-              <button type="button" onClick={onClearImage} className="text-error-main-4 hover:text-error-high-2">
-                <Xmark width={14} height={14} />
-              </button>
-            </div>
-          )}
-
-
-          <form ref={formRef} onSubmit={onSubmit} className="relative flex flex-col gap-2">
-            <div className="relative w-full bg-black/30 border border-primary-main-9/25 rounded-2xl overflow-hidden transition-colors focus-within:border-primary-high-2">
-              <textarea
-                ref={textareaRef}
-                rows={1}
-                value={input}
-                onChange={(e) => onInputChange(e.target.value)}
-                onKeyDown={onInputKeyDown}
-                placeholder="Message XGate AI..."
-                className={
-                  `w-full min-h-12 bg-transparent text-primary-high-2 p-3 ` +
-                  `${showInputResizeToggle ? 'pr-12' : 'pr-3'} ` +
-                  `focus:outline-none resize-none`
-                }
-                disabled={isLoading}
-              />
-
-              {showInputResizeToggle && (
-                <button
-                  type="button"
-                  onClick={() => setIsInputExpanded((v) => !v)}
-                  className="absolute right-2 top-2 w-9 h-9 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 hover:bg-primary-main-3/[0.05] rounded-lg transition-colors"
-                  aria-label={isInputExpanded ? 'Collapse input' : 'Expand input'}
-                >
-                  {isInputExpanded ? <NavArrowUp width={18} height={18} /> : <NavArrowDown width={18} height={18} />}
+        <div className="pt-6">
+          <div className="w-full relative">
+            {selectedImage && (
+              <div className="absolute -top-16 left-0 bg-black/70 p-2 rounded border border-primary-main-9/40 flex items-center gap-2">
+                <img src={selectedImage} alt="Preview" className="h-10 w-10 object-cover rounded" />
+                <button type="button" onClick={onClearImage} className="text-error-main-4 hover:text-error-high-2">
+                  <Xmark width={14} height={14} />
                 </button>
-              )}
+              </div>
+            )}
+
+            <form ref={formRef} onSubmit={onSubmit} className="relative flex flex-col gap-2">
+              <div className="relative w-full bg-black/30 border border-primary-main-9/25 rounded-2xl overflow-hidden transition-colors focus-within:border-primary-high-2">
+                <textarea
+                  ref={textareaRef}
+                  rows={1}
+                  value={input}
+                  onChange={(e) => onInputChange(e.target.value)}
+                  onKeyDown={onInputKeyDown}
+                  placeholder="Message XGate AI..."
+                  className={
+                    `w-full min-h-12 bg-transparent text-primary-high-2 p-3 ` +
+                    `${showInputResizeToggle ? 'pr-12' : 'pr-3'} ` +
+                    `focus:outline-none resize-none`
+                  }
+                  disabled={isLoading}
+                />
+
+                {showInputResizeToggle && (
+                  <button
+                    type="button"
+                    onClick={() => setIsInputExpanded((v) => !v)}
+                    className="absolute right-2 top-2 w-9 h-9 flex items-center justify-center text-primary-main-4 hover:text-primary-high-2 hover:bg-primary-main-3/[0.05] rounded-lg transition-colors"
+                    aria-label={isInputExpanded ? 'Collapse input' : 'Expand input'}
+                  >
+                    {isInputExpanded ? <NavArrowUp width={18} height={18} /> : <NavArrowDown width={18} height={18} />}
+                  </button>
+                )}
+              </div>
 
               <div className="flex items-center justify-between px-1 pb-1">
                 <label
@@ -287,10 +289,10 @@ export function MainChat(props: MainChatProps): JSX.Element {
                   <Send width={16} height={16} />
                 </button>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </GateOmniTerminalAssemblerEnterOnly>
   )
 }
