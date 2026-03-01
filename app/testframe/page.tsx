@@ -2,22 +2,16 @@
 
 import React from 'react'
 import { useEffect, useState } from 'react'
-import { 
-  Animator,
-  AnimatorGeneralProvider,
-  Animated,
-  FrameBase,
-  type FrameSettings
-} from '@arwes/react'
+import { Animator, AnimatorGeneralProvider } from '@arwes/react'
 
 import {
   FrameEnergLIne,
   FrameGateFolderTabAssembler,
   FrameGateFolderTabGlassAssembler,
   FrameXGate,
-  GateOmniTerminal,
-  GateOmniTerminalAssembler,
-  GateOmniTerminalAssemblerEnterOnly
+  FrameGateOmniTerminal,
+  FrameGateOmniTerminalAssembler,
+  FrameGateOmniTerminalAssemblerEnterOnly
 } from '@/components'
 
 const PageTestFrame = (): JSX.Element => {
@@ -60,27 +54,48 @@ const PageTestFrame = (): JSX.Element => {
             </div>
 
             <div className="relative h-[240px] overflow-hidden md:col-span-2">
-              <Animator active={active} duration={{ enter: 5.8, exit: 3.5 }}>
-                <FrameGateFolderTabGlassAssembler />
-              </Animator>
+              <FrameGateFolderTabAssembler
+                style={
+                  {
+                    '--arwes-frames-bg-color': 'hsl(60, 75%, 10%)',
+                    '--arwes-frames-bg-filter': 'drop-shadow(0 0 2px hsl(60, 75%, 10%))',
+                    '--arwes-frames-line-color': 'hsl(60, 75%, 25%)',
+                    '--arwes-frames-line-filter': 'drop-shadow(0 0 2px hsl(60, 75%, 25%))',
+                    '--arwes-frames-deco-color': 'hsl(60, 75%, 50%)',
+                    '--arwes-frames-deco-filter': 'drop-shadow(0 0 2px hsl(60, 75%, 50%))'
+                  } as React.CSSProperties
+                }
+              />
+            </div>
+
+            <div className="relative h-[240px] overflow-hidden md:col-span-2">
+              <FrameGateFolderTabGlassAssembler
+                style={
+                  {
+                    '--arwes-frames-bg-color': 'hsl(180deg 75% 50% / 8%)',
+                    '--arwes-frames-line-color': 'hsl(180deg 75% 50%)',
+                    '--arwes-frames-deco-color': 'hsl(180deg 75% 50% / 65%)'
+                  } as React.CSSProperties
+                }
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
               <div className="relative w-full h-[350px]">
                 <Animator active={active} duration={{ enter: 2.5, exit: 2.0 }}>
-                  <GateOmniTerminal />
+                  <FrameGateOmniTerminal />
                 </Animator>
               </div>
               <div className="relative w-full h-[350px]">
                 <Animator active={active} duration={{ enter: 3.0, exit: 2.5 }}>
-                  <GateOmniTerminalAssembler />
+                  <FrameGateOmniTerminalAssembler />
                 </Animator>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
               <div className="relative w-full h-[350px]">
-                <GateOmniTerminalAssemblerEnterOnly />
+                <FrameGateOmniTerminalAssemblerEnterOnly />
               </div>
               <div className="relative w-full h-[350px]">
                 {/* Placeholder untuk comparison */}

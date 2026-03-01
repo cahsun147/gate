@@ -1,7 +1,23 @@
 'use client'
 
 import { memo, useRef, type CSSProperties } from 'react'
-import { Animator, FrameBase, useFrameAssembler, type FrameSettings } from '@arwes/react'
+import { FrameBase, useFrameAssembler, type FrameSettings } from '@arwes/react'
+
+import { getFrameStyleVarsFromDefaults, mergeFrameStyleVars, type FrameStyleVars } from '@/config'
+
+const defaults = {
+  line: {
+    color: '#20dfdf',
+    filter: 'drop-shadow(0 0 2px rgba(32, 223, 223, 0.35))'
+  },
+  bg: {
+    color: 'rgba(8, 24, 24, 0.8)',
+    stroke: 'rgba(32, 223, 223, 0.25)'
+  },
+  deco: {
+    color: '#20dfdf'
+  }
+}
 
 const frameSettings: FrameSettings = {
   elements: [
@@ -9,8 +25,8 @@ const frameSettings: FrameSettings = {
       type: 'path',
       name: 'bg',
       style: {
-        fill: 'rgba(8, 24, 24, 0.8)',
-        stroke: 'rgba(32, 223, 223, 0.25)',
+        fill: 'var(--arwes-frames-bg-color, rgba(8, 24, 24, 0.8))',
+        stroke: 'var(--arwes-frames-bg-stroke, rgba(32, 223, 223, 0.25))',
         strokeWidth: '1'
       },
       path: [
@@ -30,9 +46,10 @@ const frameSettings: FrameSettings = {
       type: 'path',
       name: 'line',
       style: {
-        stroke: '#20dfdf',
+        stroke: 'var(--arwes-frames-line-color, #20dfdf)',
         strokeWidth: '2',
-        fill: 'none'
+        fill: 'none',
+        filter: 'var(--arwes-frames-line-filter, none)'
       },
       path: [
         ['M', 12, 0.5],
@@ -49,10 +66,11 @@ const frameSettings: FrameSettings = {
       type: 'path',
       name: 'line',
       style: {
-        stroke: '#20dfdf',
+        stroke: 'var(--arwes-frames-line-color, #20dfdf)',
         strokeWidth: '1',
         fill: 'none',
-        opacity: 0.5
+        opacity: 0.5,
+        filter: 'var(--arwes-frames-line-filter, none)'
       },
       path: [
         ['M', 24, 0.5],
@@ -69,8 +87,9 @@ const frameSettings: FrameSettings = {
       type: 'rect',
       name: 'deco',
       style: {
-        fill: '#20dfdf',
-        opacity: 0.9
+        fill: 'var(--arwes-frames-deco-color, #20dfdf)',
+        opacity: 0.9,
+        filter: 'var(--arwes-frames-deco-filter, none)'
       },
       x: 16,
       y: 16,
@@ -81,8 +100,9 @@ const frameSettings: FrameSettings = {
       type: 'rect',
       name: 'deco',
       style: {
-        fill: '#20dfdf',
-        opacity: 0.9
+        fill: 'var(--arwes-frames-deco-color, #20dfdf)',
+        opacity: 0.9,
+        filter: 'var(--arwes-frames-deco-filter, none)'
       },
       x: '100% - 19',
       y: 16,
@@ -93,8 +113,9 @@ const frameSettings: FrameSettings = {
       type: 'rect',
       name: 'deco',
       style: {
-        fill: '#20dfdf',
-        opacity: 0.9
+        fill: 'var(--arwes-frames-deco-color, #20dfdf)',
+        opacity: 0.9,
+        filter: 'var(--arwes-frames-deco-filter, none)'
       },
       x: 16,
       y: '100% - 19',
@@ -105,8 +126,9 @@ const frameSettings: FrameSettings = {
       type: 'rect',
       name: 'deco',
       style: {
-        fill: '#20dfdf',
-        opacity: 0.9
+        fill: 'var(--arwes-frames-deco-color, #20dfdf)',
+        opacity: 0.9,
+        filter: 'var(--arwes-frames-deco-filter, none)'
       },
       x: '100% - 19',
       y: '100% - 19',
@@ -124,11 +146,20 @@ export type FrameXGateProps = {
 const FrameXGate = memo((props: FrameXGateProps): JSX.Element => {
   const { className, style } = props
 
+  const styleFrameVars = mergeFrameStyleVars(
+    getFrameStyleVarsFromDefaults(defaults),
+    style as unknown as FrameStyleVars
+  )
+
   const elementRef = useRef<HTMLDivElement>(null)
   useFrameAssembler(elementRef)
 
   return (
-    <div ref={elementRef} className={className} style={{ position: 'absolute', inset: 0, ...style }}>
+    <div
+      ref={elementRef}
+      className={className}
+      style={{ position: 'absolute', inset: 0, ...(styleFrameVars as any), ...style }}
+    >
       <FrameBase {...({ settings: frameSettings, animated: false } as any)} />
     </div>
   )

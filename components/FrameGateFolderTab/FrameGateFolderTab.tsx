@@ -3,6 +3,8 @@
 import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Animator, FrameBase, useFrameAssembler, type FrameSettings } from '@arwes/react'
 
+import { getFrameStyleVarsFromDefaults, mergeFrameStyleVars, type FrameStyleVars } from '@/config'
+
 const folderTabPathArwes: NonNullable<FrameSettings['elements']>[number] extends { path: infer P }
   ? P
   : any = [
@@ -20,16 +22,23 @@ const folderTabPathArwes: NonNullable<FrameSettings['elements']>[number] extends
   ['Q', 1.5, 1.5, 25.5, 1.5]
 ]
 
+const defaults = {
+  line: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    filter: 'drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))'
+  }
+}
+
 const frameSettings: FrameSettings = {
   elements: [
     {
       type: 'path',
       name: 'line',
       style: {
-        stroke: 'rgba(255, 255, 255, 0.8)',
+        stroke: 'var(--arwes-frames-line-color, rgba(255, 255, 255, 0.8))',
         strokeWidth: '2',
         fill: 'none',
-        filter: 'drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))'
+        filter: 'var(--arwes-frames-line-filter, drop-shadow(0 0 2px rgba(255, 255, 255, 0.5)))'
       },
       path: folderTabPathArwes
     }
@@ -81,6 +90,11 @@ const FrameGateFolderTab = memo((props: FrameGateFolderTabProps): JSX.Element =>
     glassBoxShadow = '0 4px 30px rgba(0, 0, 0, 0.2)'
   } = props
 
+  const styleFrameVars = useMemo(() => {
+    const defaultsVars = getFrameStyleVarsFromDefaults(defaults)
+    return mergeFrameStyleVars(defaultsVars, style as unknown as FrameStyleVars)
+  }, [style])
+
   const elementRef = useRef<HTMLDivElement>(null)
   useFrameAssembler(elementRef)
 
@@ -118,7 +132,11 @@ const FrameGateFolderTab = memo((props: FrameGateFolderTabProps): JSX.Element =>
   }, [bounds.height, bounds.width])
 
   return (
-    <div ref={elementRef} className={className} style={{ position: 'absolute', inset: 0, ...style }}>
+    <div
+      ref={elementRef}
+      className={className}
+      style={{ position: 'absolute', inset: 0, ...(styleFrameVars as any), ...style }}
+    >
       {glass && (
         <div
           style={{
