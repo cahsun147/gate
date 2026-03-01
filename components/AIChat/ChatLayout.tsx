@@ -13,7 +13,7 @@ import {
 import { Menu, Xmark } from 'iconoir-react'
 import { type BleepNames, theme } from '@/config'
 import { useAppBreakpoint } from '../tools/useAppBreakpoint'
-import { GateOmniTerminalAssemblerEnterOnly } from '@/components'
+import { FrameGateOmniTerminalAssemblerEnterOnly } from '@/components'
 
 type ChatLayoutProps = {
   sidebar:
@@ -130,7 +130,7 @@ export function ChatLayout(props: ChatLayoutProps): JSX.Element {
                       }}
                       animated={['flicker']}
                     >
-                      <GateOmniTerminalAssemblerEnterOnly 
+                      <FrameGateOmniTerminalAssemblerEnterOnly 
                         style={{
                           // @ts-expect-error css variables
                           '--arwes-frames-bg-color': theme.colors.primary.main(9, { alpha: 0.1 }),
