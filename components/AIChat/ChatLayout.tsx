@@ -133,6 +133,8 @@ export function ChatLayout(props: ChatLayoutProps): JSX.Element {
                       <FrameGateOmniTerminalAssemblerEnterOnly 
                         style={{
                           // @ts-expect-error css variables
+                          '--arwes-frames-bg-color': 'hsl(0, 75%, 10%)',
+                          '--arwes-frames-bg-filter': 'drop-shadow(0 0 4px hsl(0, 75%, 10%))',
                           '--arwes-frames-line-color': 'hsl(0, 75%, 30%)',
                           '--arwes-frames-line-filter': 'drop-shadow(0 0 2px hsl(0, 75%, 30%))',
                           '--arwes-frames-deco-color': 'hsl(0, 100%, 60%)',
