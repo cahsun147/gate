@@ -13,7 +13,8 @@ export default function PrivacyPolicyPage() {
       maxWidth: '800px',
       margin: '0 auto',
       padding: '20px',
-      color: '#333'
+      color: '#ffffff',
+      backgroundColor: '#000000'
     }}>
       <h1 style={{
         color: '#2c3e50',
