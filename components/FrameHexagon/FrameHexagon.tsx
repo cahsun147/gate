@@ -31,13 +31,13 @@ const defaults = {
 
 // Based on public/hexagon.svg (viewBox 0 0 87 100)
 const hexagonPath: FrameSettingsPathDefinition = [
-  ['M', '100% - 0.897', 25.288],
-  ['V', '100% - 25.289'],
-  ['L', '50%', '100% - 0.577'],
-  ['L', 0.5, '100% - 25.289'],
+  ['M', '99%', 25.288],
+  ['V', '75%'],
+  ['L', '50%', '99%'],
+  ['L', '1%', '75%'],
   ['V', 25.288],
   ['L', '50%', 0.576],
-  ['L', '100% - 0.897', 25.288, 'Z']
+  ['L', '99%', 25.288, 'Z']
 ]
 
 const frameSettings: FrameSettings = {
