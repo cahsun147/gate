@@ -8,6 +8,7 @@ import {
   FrameEnergLIne,
   FrameGateFolderTabAssembler,
   FrameGateFolderTabGlassAssembler,
+  FrameHexagon,
   FrameXGate,
   FrameGateOmniTerminal,
   FrameGateOmniTerminalAssembler,
@@ -44,6 +45,12 @@ const PageTestFrame = (): JSX.Element => {
             <div className="relative h-[240px] overflow-hidden">
               <Animator active={active} duration={{ enter: 2.5, exit: 2.2 }}>
                 <FrameXGate />
+              </Animator>
+            </div>
+
+            <div className="relative h-[240px] overflow-hidden">
+              <Animator active={active} duration={{ enter: 2.5, exit: 2.2 }}>
+                <FrameHexagon />
               </Animator>
             </div>
 
