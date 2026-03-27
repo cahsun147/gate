@@ -5,19 +5,17 @@ import { Animator, FrameBase, useFrameAssembler, type FrameSettings } from '@arw
 
 import { getFrameStyleVarsFromDefaults, mergeFrameStyleVars, type FrameStyleVars } from '@/config'
 
-const folderTabPathArwes: NonNullable<FrameSettings['elements']>[number] extends { path: infer P }
-  ? P
-  : any = [
+const folderTabPathArwes = [
   ['M', 25.5, 1.5],
   ['H', 226.5],
   ['C', 234.78, 1.5, 241.5, 8.21, 241.5, 16.5],
   ['C', 241.5, 24.78, 248.21, 31.5, 256.5, 31.5],
-  ['H', '100% - 25.5'],
-  ['Q', '100% - 1.5', 31.5, '100% - 1.5', 55.5],
-  ['V', '100% - 25.5'],
-  ['Q', '100% - 1.5', '100% - 1.5', '100% - 25.5', '100% - 1.5'],
+  ['H', 'calc(100% - 25.5px)'],
+  ['Q', 'calc(100% - 1.5px)', 31.5, 'calc(100% - 1.5px)', 55.5],
+  ['V', 'calc(100% - 25.5px)'],
+  ['Q', 'calc(100% - 1.5px)', 'calc(100% - 1.5px)', 'calc(100% - 25.5px)', 'calc(100% - 1.5px)'],
   ['H', 25.5],
-  ['Q', 1.5, '100% - 1.5', 1.5, '100% - 25.5'],
+  ['Q', 1.5, 'calc(100% - 1.5px)', 1.5, 'calc(100% - 25.5px)'],
   ['V', 25.5],
   ['Q', 1.5, 1.5, 25.5, 1.5]
 ]

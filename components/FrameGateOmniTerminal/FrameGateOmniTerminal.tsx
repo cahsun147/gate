@@ -34,13 +34,15 @@ const omniFrameSettings: FrameSettings = {
       },
       path: [
         ['M', 40, 0],
-        ['H', '100% - 40'],
+        ['H', 'calc(100% - 40px)'],
         ['l', 40, 40],
-        ['V', '100% - 40'],
+        ['V', 'calc(100% - 40px)'],
         ['l', -40, 40],
         ['H', 40],
         ['l', -40, -40],
-        ['V', 40]
+        ['V', 40],
+        ['l', 40, -40],
+        'Z'
       ]
     },
     {
@@ -53,14 +55,22 @@ const omniFrameSettings: FrameSettings = {
         filter: 'var(--arwes-frames-line-filter, none)'
       },
       path: [
-        ['M', 0, 60],
-        ['V', 40],
-        ['l', 40, -40],
-        ['H', 60],
-        ['M', '100%', '100% - 60'],
-        ['V', '100% - 40'],
+        ['M', 60, 0],
+        ['H', 40],
         ['l', -40, 40],
-        ['H', '100% - 60']
+        ['V', 60],
+        ['M', 'calc(100% - 60px)', 0],
+        ['H', 'calc(100% - 40px)'],
+        ['l', 40, 40],
+        ['V', 60],
+        ['M', 0, 'calc(100% - 60px)'],
+        ['V', 'calc(100% - 40px)'],
+        ['l', 40, 40],
+        ['H', 60],
+        ['M', '100%', 'calc(100% - 60px)'],
+        ['V', 'calc(100% - 40px)'],
+        ['l', -40, 40],
+        ['H', 'calc(100% - 60px)']
       ]
     },
     {
@@ -82,8 +92,8 @@ const omniFrameSettings: FrameSettings = {
         fill: 'var(--arwes-frames-deco-color, #20dfdf)',
         filter: 'var(--arwes-frames-deco-filter, none)'
       },
-      x: '100% - 8',
-      y: '50% - 15',
+      x: 'calc(100% - 8px)',
+      y: 'calc(50% - 15px)',
       width: 3,
       height: 30
     },
@@ -112,8 +122,8 @@ const omniFrameSettings: FrameSettings = {
         fill: 'var(--arwes-frames-deco-color, #20dfdf)',
         filter: 'var(--arwes-frames-deco-filter, none)'
       },
-      x: i === 0 ? 5 : '100% - 8',
-      y: '50% - 15',
+      x: i === 0 ? 5 : 'calc(100% - 8px)',
+      y: 'calc(50% - 15px)',
       width: 3,
       height: 30
     })),
