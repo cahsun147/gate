@@ -13,7 +13,6 @@ import { getFrameStyleVarsFromDefaults, mergeFrameStyleVars, type FrameStyleVars
 
 const defaults = {
   line: {
-    
     color: '#20dfdf',
     filter: 'drop-shadow(0 0 2px rgba(32, 223, 223, 0.35))'
   },
@@ -72,7 +71,7 @@ const frameSettings: FrameSettings = {
         filter: 'var(--arwes-frames-deco-filter, none)',
         opacity: 0.9
       },
-      x: '50% - 1.5',
+      x: 'calc(50% - 1.5px)',
       y: 8,
       width: 3,
       height: 3

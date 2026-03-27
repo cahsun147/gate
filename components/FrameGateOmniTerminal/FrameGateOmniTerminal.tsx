@@ -213,8 +213,8 @@ const FrameGateOmniTerminalAssembler = memo((props: FrameGateOmniTerminalProps):
         name: 'deco',
         className: 'blink-anim',
         style: { fill: 'var(--arwes-frames-deco-color, #20dfdf)' },
-        x: i === 0 ? 5 : '100% - 8',
-        y: '50% - 15',
+        x: i === 0 ? 5 : 'calc(100% - 8px)',
+        y: 'calc(50% - 15px)',
         width: 3,
         height: 30
       })),
