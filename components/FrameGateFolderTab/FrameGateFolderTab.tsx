@@ -1,11 +1,11 @@
 'use client'
 
 import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { Animator, FrameBase, useFrameAssembler, type FrameSettings } from '@arwes/react'
+import { Animator, FrameBase, useFrameAssembler, type FrameSettings, type FrameSettingsPathDefinition } from '@arwes/react'
 
 import { getFrameStyleVarsFromDefaults, mergeFrameStyleVars, type FrameStyleVars } from '@/config'
 
-const folderTabPathArwes = [
+const folderTabPathArwes: FrameSettingsPathDefinition = [
   ['M', 25.5, 1.5],
   ['H', 226.5],
   ['C', 234.78, 1.5, 241.5, 8.21, 241.5, 16.5],
@@ -17,7 +17,7 @@ const folderTabPathArwes = [
   ['H', 25.5],
   ['Q', 1.5, 'calc(100% - 1.5px)', 1.5, 'calc(100% - 25.5px)'],
   ['V', 25.5],
-  ['Q', 1.5, 1.5, 25.5, 1.5]
+  ['Q', 1.5, 1.5, 25.5, 1.5, 'Z']
 ]
 
 const defaults = {
