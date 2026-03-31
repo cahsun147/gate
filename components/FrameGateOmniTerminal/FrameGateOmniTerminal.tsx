@@ -34,15 +34,13 @@ const omniFrameSettings: FrameSettings = {
       },
       path: [
         ['M', 40, 0],
-        ['H', 'calc(100% - 40px)'],
+        ['H', '100% - 40'],
         ['l', 40, 40],
-        ['V', 'calc(100% - 40px)'],
+        ['V', '100% - 40'],
         ['l', -40, 40],
         ['H', 40],
         ['l', -40, -40],
-        ['V', 40],
-        ['l', 40, -40],
-        'Z'
+        ['V', 40]
       ]
     },
     {
@@ -55,22 +53,14 @@ const omniFrameSettings: FrameSettings = {
         filter: 'var(--arwes-frames-line-filter, none)'
       },
       path: [
-        ['M', 60, 0],
-        ['H', 40],
-        ['l', -40, 40],
-        ['V', 60],
-        ['M', 'calc(100% - 60px)', 0],
-        ['H', 'calc(100% - 40px)'],
-        ['l', 40, 40],
-        ['V', 60],
-        ['M', 0, 'calc(100% - 60px)'],
-        ['V', 'calc(100% - 40px)'],
-        ['l', 40, 40],
+        ['M', 0, 60],
+        ['V', 40],
+        ['l', 40, -40],
         ['H', 60],
-        ['M', 'calc(100%)', 'calc(100% - 60px)'],
-        ['V', 'calc(100% - 40px)'],
+        ['M', '100%', '100% - 60'],
+        ['V', '100% - 40'],
         ['l', -40, 40],
-        ['H', 'calc(100% - 60px)']
+        ['H', '100% - 60']
       ]
     },
     {
@@ -81,7 +71,7 @@ const omniFrameSettings: FrameSettings = {
         filter: 'var(--arwes-frames-deco-filter, none)'
       },
       x: 5,
-      y: 'calc(50% - 15px)',
+      y: '50% - 15',
       width: 3,
       height: 30
     },
@@ -92,8 +82,8 @@ const omniFrameSettings: FrameSettings = {
         fill: 'var(--arwes-frames-deco-color, #20dfdf)',
         filter: 'var(--arwes-frames-deco-filter, none)'
       },
-      x: 'calc(100% - 8px)',
-      y: 'calc(50% - 15px)',
+      x: '100% - 8',
+      y: '50% - 15',
       width: 3,
       height: 30
     },
@@ -107,11 +97,11 @@ const omniFrameSettings: FrameSettings = {
         filter: 'var(--arwes-frames-deco-filter, none)'
       },
       path: [
-        ['M', 'calc(50% - 60px)', 0],
-        ['H', 'calc(50% + 60px)'],
+        ['M', '50% - 60', 0],
+        ['H', '50% + 60'],
         ['v', 15],
         ['l', -10, 10],
-        ['H', 'calc(50% - 50px)'],
+        ['H', '50% - 50'],
         ['l', -10, -10]
       ]
     },
@@ -122,8 +112,8 @@ const omniFrameSettings: FrameSettings = {
         fill: 'var(--arwes-frames-deco-color, #20dfdf)',
         filter: 'var(--arwes-frames-deco-filter, none)'
       },
-      x: i === 0 ? 5 : 'calc(100% - 8px)',
-      y: 'calc(50% - 15px)',
+      x: i === 0 ? 5 : '100% - 8',
+      y: '50% - 15',
       width: 3,
       height: 30
     })),
@@ -136,11 +126,11 @@ const omniFrameSettings: FrameSettings = {
         strokeWidth: '1'
       },
       path: [
-        ['M', 'calc(50% - 60px)', 0],
-        ['H', 'calc(50% + 60px)'],
+        ['M', '50% - 60', 0],
+        ['H', '50% + 60'],
         ['v', 15],
         ['l', -10, 10],
-        ['H', 'calc(50% - 50px)'],
+        ['H', '50% - 50'],
         ['l', -10, -10]
       ]
     }
@@ -213,8 +203,8 @@ const FrameGateOmniTerminalAssembler = memo((props: FrameGateOmniTerminalProps):
         name: 'deco',
         className: 'blink-anim',
         style: { fill: 'var(--arwes-frames-deco-color, #20dfdf)' },
-        x: i === 0 ? 5 : 'calc(100% - 8px)',
-        y: 'calc(50% - 15px)',
+        x: i === 0 ? 5 : '100% - 8',
+        y: '50% - 15',
         width: 3,
         height: 30
       })),
@@ -228,11 +218,11 @@ const FrameGateOmniTerminalAssembler = memo((props: FrameGateOmniTerminalProps):
           strokeWidth: '1'
         },
         path: [
-          ['M', 'calc(50% - 60px)', 0],
-          ['H', 'calc(50% + 60px)'],
+          ['M', '50% - 60', 0],
+          ['H', '50% + 60'],
           ['v', 15],
           ['l', -10, 10],
-          ['H', 'calc(50% - 50px)'],
+          ['H', '50% - 50'],
           ['l', -10, -10]
         ]
       }

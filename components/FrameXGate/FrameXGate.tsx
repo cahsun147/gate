@@ -31,9 +31,9 @@ const frameSettings: FrameSettings = {
       },
       path: [
         ['M', 24, 0.5],
-        ['H', 'calc(100% - 24px)'],
+        ['H', '100% - 24'],
         ['l', 24, 24],
-        ['V', 'calc(100% - 24px)'],
+        ['V', '100% - 24'],
         ['l', -24, 24],
         ['H', 24],
         ['l', -24, -24],
@@ -53,13 +53,13 @@ const frameSettings: FrameSettings = {
       },
       path: [
         ['M', 12, 0.5],
-        ['H', 'calc(100% - 12px)'],
-        ['M', 'calc(100% - 0.5px)', 12],
-        ['V', 'calc(100% - 12px)'],
-        ['M', 12, 'calc(100% - 0.5px)'],
-        ['H', 'calc(100% - 12px)'],
+        ['H', '100% - 12'],
+        ['M', '100% - 0.5', 12],
+        ['V', '100% - 12'],
+        ['M', 12, '100% - 0.5'],
+        ['H', '100% - 12'],
         ['M', 0.5, 12],
-        ['V', 'calc(100% - 12px)']
+        ['V', '100% - 12']
       ]
     },
     {
@@ -75,11 +75,11 @@ const frameSettings: FrameSettings = {
       path: [
         ['M', 24, 0.5],
         ['h', 18],
-        ['M', 'calc(100% - 42px)', 0.5],
+        ['M', '100% - 42', 0.5],
         ['h', 18],
-        ['M', 24, 'calc(100% - 0.5px)'],
+        ['M', 24, '100% - 0.5'],
         ['h', 18],
-        ['M', 'calc(100% - 42px)', 'calc(100% - 0.5px)'],
+        ['M', '100% - 42', '100% - 0.5'],
         ['h', 18]
       ]
     },
@@ -104,7 +104,7 @@ const frameSettings: FrameSettings = {
         opacity: 0.9,
         filter: 'var(--arwes-frames-deco-filter, none)'
       },
-      x: 'calc(100% - 19px)',
+      x: '100% - 19',
       y: 16,
       width: 3,
       height: 3
@@ -118,7 +118,7 @@ const frameSettings: FrameSettings = {
         filter: 'var(--arwes-frames-deco-filter, none)'
       },
       x: 16,
-      y: 'calc(100% - 19px)',
+      y: '100% - 19',
       width: 3,
       height: 3
     },
@@ -130,8 +130,8 @@ const frameSettings: FrameSettings = {
         opacity: 0.9,
         filter: 'var(--arwes-frames-deco-filter, none)'
       },
-      x: 'calc(100% - 19px)',
-      y: 'calc(100% - 19px)',
+      x: '100% - 19',
+      y: '100% - 19',
       width: 3,
       height: 3
     }

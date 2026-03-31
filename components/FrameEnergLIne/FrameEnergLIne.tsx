@@ -31,17 +31,17 @@ const frameSettings: FrameSettings = {
       },
       path: [
         ['M', 40, 0],
-        ['H', 'calc(100% - 40px)'],
+        ['H', '100% - 40'],
         ['l', 40, 40],
-        ['V', 'calc(50% - 30px)'],
+        ['V', '50% - 30'],
         ['l', -15, 15],
         ['v', 30],
         ['l', 15, 15],
-        ['V', 'calc(100% - 40px)'],
+        ['V', '100% - 40'],
         ['l', -40, 40],
         ['H', 40],
         ['l', -40, -40],
-        ['V', 'calc(50% + 30px)'],
+        ['V', '50% + 30'],
         ['l', 15, -15],
         ['v', -30],
         ['l', -15, -15],
@@ -59,9 +59,9 @@ const frameSettings: FrameSettings = {
         filter: 'var(--arwes-frames-line-filter, none)'
       },
       path: [
-        ['M', 'calc(100% - 15px)', 'calc(50% - 15px)'],
+        ['M', '100% - 15', '50% - 15'],
         ['v', 30],
-        ['M', 15, 'calc(50% - 15px)'],
+        ['M', 15, '50% - 15'],
         ['v', 30]
       ]
     },
@@ -76,7 +76,7 @@ const frameSettings: FrameSettings = {
         filter: 'var(--arwes-frames-line-filter, none)'
       },
       path: [
-        ['M', 15, 'calc(50% - 15px)'],
+        ['M', 15, '50% - 15'],
         ['l', 15, -15],
         ['V', 40],
         ['l', 10, -10]
@@ -87,7 +87,7 @@ const frameSettings: FrameSettings = {
       name: 'line',
       style: { stroke: '#20dfdf', strokeWidth: '1', fill: 'none', opacity: 0.5 },
       path: [
-        ['M', 'calc(100% - 15px)', 'calc(50% - 15px)'],
+        ['M', '100% - 15', '50% - 15'],
         ['l', -15, -15],
         ['V', 40],
         ['l', -10, -10]
@@ -98,11 +98,11 @@ const frameSettings: FrameSettings = {
       name: 'deco',
       style: { fill: 'var(--arwes-frames-deco-color, #20dfdf)', filter: 'var(--arwes-frames-deco-filter, none)' },
       path: [
-        ['M', 'calc(50% - 20px)', 5],
+        ['M', '50% - 20', 5],
         ['h', 40],
         ['v', 2],
         ['h', -40], 'Z',
-        ['M', 'calc(50% - 10px)', 'calc(100% - 7px)'],
+        ['M', '50% - 10', '100% - 7'],
         ['h', 20],
         ['v', 2],
         ['h', -20], 'Z'
@@ -112,7 +112,7 @@ const frameSettings: FrameSettings = {
       type: 'rect',
       name: 'deco',
       style: { fill: 'var(--arwes-frames-deco-color, #20dfdf)', filter: 'var(--arwes-frames-deco-filter, none)' },
-      x: 'calc(100% - 35px)',
+      x: '100% - 35',
       y: 15,
       width: 4,
       height: 4
@@ -122,7 +122,7 @@ const frameSettings: FrameSettings = {
       name: 'deco',
       style: { fill: 'var(--arwes-frames-deco-color, #20dfdf)', filter: 'var(--arwes-frames-deco-filter, none)' },
       x: 31,
-      y: 'calc(100% - 19px)',
+      y: '100% - 19',
       width: 4,
       height: 4
     }
