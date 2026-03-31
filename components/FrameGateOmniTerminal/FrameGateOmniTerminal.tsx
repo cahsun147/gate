@@ -67,7 +67,7 @@ const omniFrameSettings: FrameSettings = {
         ['V', 'calc(100% - 40px)'],
         ['l', 40, 40],
         ['H', 60],
-        ['M', '100%', 'calc(100% - 60px)'],
+        ['M', 'calc(100%)', 'calc(100% - 60px)'],
         ['V', 'calc(100% - 40px)'],
         ['l', -40, 40],
         ['H', 'calc(100% - 60px)']
