@@ -11,70 +11,76 @@ import {
 
 import { getFrameStyleVarsFromDefaults, mergeFrameStyleVars, type FrameStyleVars } from '@/config'
 
+// Menyesuaikan warna default ke tema Oranye (Neon) dari referensi Anda
 const defaults = {
   line: {
-    color: '#20dfdf',
-    filter: 'drop-shadow(0 0 2px rgba(32, 223, 223, 0.35))'
+    color: '#ffaa00',
+    filter: 'drop-shadow(0 0 5px #ffaa00)'
   },
   bg: {
-    color: 'rgba(8, 24, 24, 0.8)',
-    stroke: 'rgba(32, 223, 223, 0.25)',
+    color: '#ffaa00',
     filter: 'none'
   },
   deco: {
-    color: '#20dfdf',
+    color: '#ffaa00',
     filter: 'none'
   }
 }
 
-// Terjemahan dari SVG M86.103 25.2881 V74.7109 L43.3013 99.4229 L0.500488 74.7109 V25.2881 L43.3013 0.576172 L86.103 25.2881 Z
-// Diubah menjadi proporsi calc() Arwes yang valid agar responsif & bebas error
+// Path Segienam Vertikal
+// Diubah menggunakan calc() agar responsif dan tidak menyebabkan error parser Arwes
 const hexagonPath: FrameSettingsPathDefinition = [
-  ['M', 'calc(100% - 1px)', 'calc(25%)'],
-  ['V', 'calc(75%)'],
-  ['L', 'calc(50%)', 'calc(100% - 1px)'],
-  ['L', 1, 'calc(75%)'],
-  ['V', 'calc(25%)'],
-  ['L', 'calc(50%)', 1],
-  ['L', 'calc(100% - 1px)', 'calc(25%)']
+  ['M', 'calc(100% - 1px)', 'calc(25%)'], // Kanan Atas
+  ['V', 'calc(75%)'],                     // Turun ke Kanan Bawah
+  ['L', 'calc(50%)', 'calc(100% - 1px)'], // Titik Bawah Tengah
+  ['L', 1, 'calc(75%)'],                  // Kiri Bawah
+  ['V', 'calc(25%)'],                     // Naik ke Kiri Atas
+  ['L', 'calc(50%)', 1],                  // Titik Atas Tengah
+  'Z'                                     // Tutup Path
 ]
 
 const frameSettings: FrameSettings = {
   elements: [
+    // 1. BACKGROUND FILL
     {
       type: 'path',
       name: 'bg',
       style: {
-        fill: 'var(--arwes-frames-bg-color, rgba(8, 24, 24, 0.8))',
-        stroke: 'var(--arwes-frames-bg-stroke, rgba(32, 223, 223, 0.25))',
-        strokeWidth: '1',
+        fill: 'var(--arwes-frames-bg-color, #ffaa00)',
+        opacity: 0.1, // Sesuai referensi fillOpacity
+        strokeWidth: 0,
         filter: 'var(--arwes-frames-bg-filter, none)'
       },
       path: hexagonPath
     },
+    // 2. MAIN STROKE (Garis Luar Neon)
     {
       type: 'path',
       name: 'line',
       style: {
-        stroke: 'var(--arwes-frames-line-color, #20dfdf)',
+        stroke: 'var(--arwes-frames-line-color, #ffaa00)',
         strokeWidth: '2',
         fill: 'none',
-        filter: 'var(--arwes-frames-line-filter, none)'
+        filter: 'var(--arwes-frames-line-filter, drop-shadow(0 0 5px #ffaa00))'
       },
       path: hexagonPath
     },
+    // 3. DEKORASI (Bracket kecil di tengah)
     {
-      type: 'rect',
+      type: 'path',
       name: 'deco',
       style: {
-        fill: 'var(--arwes-frames-deco-color, #20dfdf)',
-        filter: 'var(--arwes-frames-deco-filter, none)',
-        opacity: 0.9
+        stroke: 'var(--arwes-frames-deco-color, #ffaa00)',
+        strokeWidth: '2',
+        fill: 'none',
+        filter: 'var(--arwes-frames-deco-filter, none)'
       },
-      x: 'calc(50% - 1.5px)',
-      y: 8,
-      width: 3,
-      height: 3
+      path: [
+        ['M', 5, 'calc(45%)'],
+        ['V', 'calc(55%)'],
+        ['M', 'calc(100% - 5px)', 'calc(45%)'],
+        ['V', 'calc(55%)']
+      ]
     }
   ]
 }
@@ -82,10 +88,11 @@ const frameSettings: FrameSettings = {
 export type FrameHexagonProps = {
   className?: string
   style?: CSSProperties
+  children?: React.ReactNode // Menambahkan properti children untuk teks di dalam
 }
 
 const FrameHexagon = memo((props: FrameHexagonProps): JSX.Element => {
-  const { className, style } = props
+  const { className, style, children } = props
 
   const styleFrameVars = mergeFrameStyleVars(
     getFrameStyleVarsFromDefaults(defaults),
@@ -103,6 +110,26 @@ const FrameHexagon = memo((props: FrameHexagonProps): JSX.Element => {
         style={{ position: 'absolute', inset: 0, ...(styleFrameVars as any), ...style }}
       >
         <FrameBase {...({ settings: frameSettings, animated: false } as any)} />
+        
+        {/* Konten di Dalam Frame */}
+        {children && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              fontFamily: 'monospace',
+              color: 'var(--arwes-frames-line-color, #ffaa00)',
+              textShadow: '0 0 5px var(--arwes-frames-line-color, #ffaa00)',
+              zIndex: 1
+            }}
+          >
+            {children}
+          </div>
+        )}
       </div>
     </Animator>
   )

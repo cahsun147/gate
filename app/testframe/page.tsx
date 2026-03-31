@@ -49,10 +49,11 @@ const PageTestFrame = (): JSX.Element => {
               </Animator>
             </div>
 
-            <div className="relative h-[240px] overflow-hidden">
-              <Animator active={active} duration={{ enter: 2.5, exit: 2.2 }}>
-                <FrameHexagon />
-              </Animator>
+            <div style={{ position: 'relative', width: 174, height: 200, margin: '0 auto' }}>
+              <FrameHexagon>
+                <div style={{ fontSize: '10px', opacity: 0.7 }}>CORE</div>
+                <div style={{ fontSize: '28px', fontWeight: 'bold' }}>01</div>
+              </FrameHexagon>
             </div>
 
             <div className="relative h-[240px] overflow-hidden md:col-span-2">
