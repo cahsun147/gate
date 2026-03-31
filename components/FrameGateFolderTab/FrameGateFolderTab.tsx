@@ -17,7 +17,7 @@ const folderTabPathArwes: FrameSettingsPathDefinition = [
   ['H', 25.5],
   ['Q', 1.5, 'calc(100% - 1.5px)', 1.5, 'calc(100% - 25.5px)'],
   ['V', 25.5],
-  ['Q', 1.5, 1.5, 25.5, 1.5, 'Z']
+  ['Q', 1.5, 1.5, 25.5, 1.5], 'Z'
 ]
 
 const defaults = {
