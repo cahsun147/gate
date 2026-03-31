@@ -15,6 +15,7 @@ import {
   FrameGateOmniTerminalAssemblerEnterOnly
 } from '@/components'
 
+
 const PageTestFrame = (): JSX.Element => {
   const [active, setActive] = useState(true)
 
