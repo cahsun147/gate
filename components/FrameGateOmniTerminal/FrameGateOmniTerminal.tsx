@@ -81,7 +81,7 @@ const omniFrameSettings: FrameSettings = {
         filter: 'var(--arwes-frames-deco-filter, none)'
       },
       x: 5,
-      y: '50% - 15',
+      y: 'calc(50% - 15px)',
       width: 3,
       height: 30
     },
@@ -107,11 +107,11 @@ const omniFrameSettings: FrameSettings = {
         filter: 'var(--arwes-frames-deco-filter, none)'
       },
       path: [
-        ['M', '50% - 60', 0],
-        ['H', '50% + 60'],
+        ['M', 'calc(50% - 60px)', 0],
+        ['H', 'calc(50% + 60px)'],
         ['v', 15],
         ['l', -10, 10],
-        ['H', '50% - 50'],
+        ['H', 'calc(50% - 50px)'],
         ['l', -10, -10]
       ]
     },
@@ -136,11 +136,11 @@ const omniFrameSettings: FrameSettings = {
         strokeWidth: '1'
       },
       path: [
-        ['M', '50% - 60', 0],
-        ['H', '50% + 60'],
+        ['M', 'calc(50% - 60px)', 0],
+        ['H', 'calc(50% + 60px)'],
         ['v', 15],
         ['l', -10, 10],
-        ['H', '50% - 50'],
+        ['H', 'calc(50% - 50px)'],
         ['l', -10, -10]
       ]
     }
@@ -228,11 +228,11 @@ const FrameGateOmniTerminalAssembler = memo((props: FrameGateOmniTerminalProps):
           strokeWidth: '1'
         },
         path: [
-          ['M', '50% - 60', 0],
-          ['H', '50% + 60'],
+          ['M', 'calc(50% - 60px)', 0],
+          ['H', 'calc(50% + 60px)'],
           ['v', 15],
           ['l', -10, 10],
-          ['H', '50% - 50'],
+          ['H', 'calc(50% - 50px)'],
           ['l', -10, -10]
         ]
       }
