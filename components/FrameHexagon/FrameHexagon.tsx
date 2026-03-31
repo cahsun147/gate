@@ -11,7 +11,6 @@ import {
 
 import { getFrameStyleVarsFromDefaults, mergeFrameStyleVars, type FrameStyleVars } from '@/config'
 
-// Menyesuaikan warna default ke tema Oranye (Neon) dari referensi Anda
 const defaults = {
   line: {
     color: '#ffaa00',
@@ -27,16 +26,14 @@ const defaults = {
   }
 }
 
-// Path Segienam Vertikal
-// Diubah menggunakan calc() agar responsif dan tidak menyebabkan error parser Arwes
+// Path Segienam tanpa Z
 const hexagonPath: FrameSettingsPathDefinition = [
-  ['M', 'calc(100% - 1px)', 'calc(25%)'], // Kanan Atas
-  ['V', 'calc(75%)'],                     // Turun ke Kanan Bawah
-  ['L', 'calc(50%)', 'calc(100% - 1px)'], // Titik Bawah Tengah
-  ['L', 1, 'calc(75%)'],                  // Kiri Bawah
-  ['V', 'calc(25%)'],                     // Naik ke Kiri Atas
-  ['L', 'calc(50%)', 1],                  // Titik Atas Tengah
-  'Z'                                     // Tutup Path
+  ['M', '100%', '25%'], // Kanan Atas
+  ['V', '75%'],         // Turun ke Kanan Bawah
+  ['L', '50%', '100%'], // Titik Bawah Tengah
+  ['L', 0, '75%'],      // Kiri Bawah
+  ['V', '25%'],         // Naik ke Kiri Atas
+  ['L', '50%', 0]       // Titik Atas Tengah
 ]
 
 const frameSettings: FrameSettings = {
@@ -47,13 +44,13 @@ const frameSettings: FrameSettings = {
       name: 'bg',
       style: {
         fill: 'var(--arwes-frames-bg-color, #ffaa00)',
-        opacity: 0.1, // Sesuai referensi fillOpacity
+        opacity: 0.1,
         strokeWidth: 0,
         filter: 'var(--arwes-frames-bg-filter, none)'
       },
       path: hexagonPath
     },
-    // 2. MAIN STROKE (Garis Luar Neon)
+    // 2. MAIN STROKE
     {
       type: 'path',
       name: 'line',
@@ -76,10 +73,10 @@ const frameSettings: FrameSettings = {
         filter: 'var(--arwes-frames-deco-filter, none)'
       },
       path: [
-        ['M', 5, 'calc(45%)'],
-        ['V', 'calc(55%)'],
-        ['M', 'calc(100% - 5px)', 'calc(45%)'],
-        ['V', 'calc(55%)']
+        ['M', 5, '45%'], 
+        ['V', '55%'],
+        ['M', '100% - 5', '45%'],
+        ['V', '55%']
       ]
     }
   ]
@@ -88,7 +85,7 @@ const frameSettings: FrameSettings = {
 export type FrameHexagonProps = {
   className?: string
   style?: CSSProperties
-  children?: React.ReactNode // Menambahkan properti children untuk teks di dalam
+  children?: React.ReactNode
 }
 
 const FrameHexagon = memo((props: FrameHexagonProps): JSX.Element => {
@@ -111,7 +108,6 @@ const FrameHexagon = memo((props: FrameHexagonProps): JSX.Element => {
       >
         <FrameBase {...({ settings: frameSettings, animated: false } as any)} />
         
-        {/* Konten di Dalam Frame */}
         {children && (
           <div
             style={{
