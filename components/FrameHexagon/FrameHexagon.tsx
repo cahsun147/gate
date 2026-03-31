@@ -25,17 +25,18 @@ const defaults = {
     color: '#20dfdf',
     filter: 'none'
   }
-  
 }
 
+// Terjemahan dari SVG M86.103 25.2881 V74.7109 L43.3013 99.4229 L0.500488 74.7109 V25.2881 L43.3013 0.576172 L86.103 25.2881 Z
+// Diubah menjadi proporsi calc() Arwes yang valid agar responsif & bebas error
 const hexagonPath: FrameSettingsPathDefinition = [
-  ['M', 'calc(99%)', 25.288],
+  ['M', 'calc(100% - 1px)', 'calc(25%)'],
   ['V', 'calc(75%)'],
-  ['L', 'calc(50%)', 'calc(99%)'],
-  ['L', 'calc(1%)', 'calc(75%)'],
-  ['V', 25.288],
-  ['L', 'calc(50%)', 0.576],
-  ['L', 'calc(99%)', 25.288]
+  ['L', 'calc(50%)', 'calc(100% - 1px)'],
+  ['L', 1, 'calc(75%)'],
+  ['V', 'calc(25%)'],
+  ['L', 'calc(50%)', 1],
+  ['L', 'calc(100% - 1px)', 'calc(25%)']
 ]
 
 const frameSettings: FrameSettings = {
