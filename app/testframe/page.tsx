@@ -52,10 +52,12 @@ const PageTestFrame = (): JSX.Element => {
             <div style={{ position: 'relative', width: 174, height: 200, margin: '0 auto' }}>
               <FrameHexagon
                 style={{
-                  '--arwes-frames-bg-color': 'hsl(45deg 100% 50% / 10%)',
-                  '--arwes-frames-line-color': 'hsl(45deg 100% 50%)',
-                  '--arwes-frames-line-filter': 'drop-shadow(0 0 8px hsl(45deg 100% 50%))',
-                  '--arwes-frames-deco-color': 'hsl(45deg 100% 50%)'
+                  '--arwes-frames-bg-color': 'hsl(60, 75%, 10%)',
+                    '--arwes-frames-bg-filter': 'drop-shadow(0 0 2px hsl(60, 75%, 10%))',
+                    '--arwes-frames-line-color': 'hsla(0, 96%, 46%, 1.00)',
+                    '--arwes-frames-line-filter': 'drop-shadow(0 0 2px hsla(29, 98%, 59%, 1.00))',
+                    '--arwes-frames-deco-color': 'hsla(150, 75%, 50%, 1.00)',
+                    '--arwes-frames-deco-filter': 'drop-shadow(0 0 2px hsl(150, 75%, 50%))'
                 } as React.CSSProperties}
               >
                 <div style={{ fontSize: '10px', opacity: 0.7 }}>CORE</div>
