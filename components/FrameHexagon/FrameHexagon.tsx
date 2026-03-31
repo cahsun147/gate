@@ -36,7 +36,7 @@ const hexagonPath: FrameSettingsPathDefinition = [
   ['L', '1%', '75%'],
   ['V', 25.288],
   ['L', '50%', 0.576],
-  ['L', '99%', 25.288, 'Z']
+  ['L', '99%', 25.288,]
 ]
 
 const frameSettings: FrameSettings = {
