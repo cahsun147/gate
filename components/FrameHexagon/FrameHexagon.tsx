@@ -78,7 +78,7 @@ const frameSettings: FrameSettings = {
       path: [
         ['M', 5, '45%'], 
         ['V', '55%'],
-        ['M', 'calc(100% - 5px)', '45%'],
+        ['M', '100% - 5', '45%'],
         ['V', '55%']
       ]
     }
