@@ -13,15 +13,16 @@ import { getFrameStyleVarsFromDefaults, mergeFrameStyleVars, type FrameStyleVars
 
 const defaults = {
   line: {
-    color: '#ffaa00',
-    filter: 'drop-shadow(0 0 5px #ffaa00)'
+    color: '#20dfdf',
+    filter: 'drop-shadow(0 0 2px rgba(32, 223, 223, 0.35))'
   },
   bg: {
-    color: '#ffaa00',
+    color: 'rgba(8, 24, 24, 0.8)',
+    stroke: 'rgba(32, 223, 223, 0.25)',
     filter: 'none'
   },
   deco: {
-    color: '#ffaa00',
+    color: '#20dfdf',
     filter: 'none'
   }
 }
@@ -33,7 +34,8 @@ const hexagonPath: FrameSettingsPathDefinition = [
   ['L', '50%', '100%'], // Titik Bawah Tengah
   ['L', 0, '75%'],      // Kiri Bawah
   ['V', '25%'],         // Naik ke Kiri Atas
-  ['L', '50%', 0]       // Titik Atas Tengah
+  ['L', '50%', 0],      // Titik Atas Tengah
+  ['L', '100%', '25%']  // Tutup path kembali ke titik awal
 ]
 
 const frameSettings: FrameSettings = {
@@ -43,9 +45,10 @@ const frameSettings: FrameSettings = {
       type: 'path',
       name: 'bg',
       style: {
-        fill: 'var(--arwes-frames-bg-color, #ffaa00)',
+        fill: 'var(--arwes-frames-bg-color, rgba(8, 24, 24, 0.8))',
+        stroke: 'var(--arwes-frames-bg-stroke, rgba(32, 223, 223, 0.25))',
+        strokeWidth: '1',
         opacity: 0.1,
-        strokeWidth: 0,
         filter: 'var(--arwes-frames-bg-filter, none)'
       },
       path: hexagonPath
@@ -55,10 +58,10 @@ const frameSettings: FrameSettings = {
       type: 'path',
       name: 'line',
       style: {
-        stroke: 'var(--arwes-frames-line-color, #ffaa00)',
+        stroke: 'var(--arwes-frames-line-color, #20dfdf)',
         strokeWidth: '2',
         fill: 'none',
-        filter: 'var(--arwes-frames-line-filter, drop-shadow(0 0 5px #ffaa00))'
+        filter: 'var(--arwes-frames-line-filter, drop-shadow(0 0 2px rgba(32, 223, 223, 0.35)))'
       },
       path: hexagonPath
     },
@@ -67,7 +70,7 @@ const frameSettings: FrameSettings = {
       type: 'path',
       name: 'deco',
       style: {
-        stroke: 'var(--arwes-frames-deco-color, #ffaa00)',
+        stroke: 'var(--arwes-frames-deco-color, #20dfdf)',
         strokeWidth: '2',
         fill: 'none',
         filter: 'var(--arwes-frames-deco-filter, none)'
@@ -75,7 +78,7 @@ const frameSettings: FrameSettings = {
       path: [
         ['M', 5, '45%'], 
         ['V', '55%'],
-        ['M', '100% - 5', '45%'],
+        ['M', 'calc(100% - 5px)', '45%'],
         ['V', '55%']
       ]
     }
